@@ -1,0 +1,13 @@
+polars==1.31.0
+pandas==2.3.0
+numpy==1.26.4
+matplotlib==3.10.3
+seaborn==0.13.2
+scikit-learn==1.7.0
+scikit-learn-extra==0.3.0
+BigEDA==0.0.61
+PyDistances==0.0.50
+FastKmedoids==0.0.47
+PyMachineLearning==0.0.23
+setuptools
+tqdm
