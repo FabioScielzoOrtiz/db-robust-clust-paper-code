@@ -4,6 +4,7 @@ import numpy as np
 def get_config():
     
     config = {
+        'random_state': 123,
         'n_splits': 10, # TODO: cambiar por el mejor split
         'frac_sample_size': 0.1, # TODO: cambiar por la mejor frac sample size
         'n_clusters': 4,

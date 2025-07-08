@@ -80,7 +80,10 @@ def get_avg_results(results, pivoted_results, iterable):
 
     for k1 in avg_results.keys():
         for k2 in iterable:
-            avg_results[k1][k2] = np.mean(pivoted_results[k1][k2])
+            if isinstance(pivoted_results[k1][k2][0], np.ndarray):
+                avg_results[k1][k2] = pivoted_results[k1][k2]
+            else:
+                avg_results[k1][k2] = np.mean(pivoted_results[k1][k2])
 
     return avg_results
 
@@ -246,5 +249,18 @@ def avg_results_to_dfs(avg_results):
 
 ########################################################################################################################################################################
 
+def get_GGower_distances_names(quant_distances_names, binary_distances_names, multiclass_distances_names, robust_method):
+
+    combinations_names = []
+    for d1 in quant_distances_names:
+        for d2 in binary_distances_names:
+            for d3 in multiclass_distances_names:
+                if 'robust' not in d1:
+                    combinations_names.append(f'{d1}-{d2}-{d3}') 
+                else:
+                    for r in robust_method:
+                        combinations_names.append(f'{d1}_{r}-{d2}-{d3}')
+
+    return combinations_names
 
 ########################################################################################################################################################################
