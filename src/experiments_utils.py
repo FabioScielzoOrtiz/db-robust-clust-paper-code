@@ -2,6 +2,7 @@
 
 import time
 import numpy as np
+import pandas as pd
 from FastKmedoids.models import FastKmedoidsGGower, FoldFastKmedoidsGGower
 from FastKmedoids.metrics import adjusted_accuracy
 from collections import defaultdict
@@ -206,5 +207,17 @@ def get_avg_results_two_iterables(results, pivoted_results, iterable1, iterable2
                 avg_results[k1][v1][v2] = np.mean(pivoted_results[k1][v1][v2])
 
     return avg_results
+
+########################################################################################################################################################################
+
+def avg_results_to_dfs(avg_results):
+    dfs = {}
+    for key, subdict in avg_results.items():
+        rows = [(k1, k2, v) for k1, inner in subdict.items() for k2, v in inner.items()]
+        dfs[key] = pd.DataFrame(rows, columns=['n_splits', 'frac_sample_sizes', key])
+    return dfs
+
+########################################################################################################################################################################
+
 
 ########################################################################################################################################################################
