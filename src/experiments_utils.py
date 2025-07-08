@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 from FastKmedoids.models import FastKmedoidsGGower, FoldFastKmedoidsGGower
 from FastKmedoids.metrics import adjusted_accuracy
+from sklearn.metrics import adjusted_rand_score
 from collections import defaultdict
 def nested_dict():
     return defaultdict(nested_dict)
@@ -133,6 +134,32 @@ def make_experiment_3(X, y, n_splits, frac_sample_sizes, n_clusters, method, ini
             
             except Exception as e:
                 print('Exception:', e)
+
+    return results
+
+########################################################################################################################################################################
+
+def make_experiment_4(X, y, models):
+    
+    model_names = list(models.keys())
+
+    results = {
+        'time': {k: {} for k in model_names}, 
+        'adj_accuracy': {k: {} for k in model_names}, 
+        'ARI': {k: {} for k in model_names},
+        'labels': {k: {} for k in model_names},
+        'adj_labels': {k: {} for k in model_names}
+    }
+
+    for model_name, model in models.items():
+        print(model_name)
+        start_time = time.time()
+        model.fit(X)
+        end_time = time.time()
+        results['time'][model_name] = end_time - start_time
+        results['labels'][model_name] = model.labels_
+        results['adj_accuracy'][model_name], results['adj_labels'][model_name] = adjusted_accuracy(y_pred=results['labels'][model_name] , y_true=y)
+        results['ARI'][model_name] = adjusted_rand_score(labels_pred=results['adj_labels'][model_name], labels_true=y)
 
     return results
 
