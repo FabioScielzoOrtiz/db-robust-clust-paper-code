@@ -57,7 +57,7 @@ def make_experiment_1(X, y, frac_sample_sizes, n_clusters, method, init, max_ite
             results['ARI'][frac_sample_size] = adjusted_rand_score(labels_pred=adj_labels, labels_true=y)
 
         except Exception as e:
-            print(e)
+            print(f'Exception: {e}')
 
     return results
 
@@ -108,15 +108,12 @@ def make_experiment_2(n_samples_list, models, random_state):
             
             X, y = get_simulation_1(n_samples=n_samples, random_state=random_state)
 
-            try:
-                start_time = time.time()
-                model.fit(X)
-                end_time = time.time()
-                results['time'][n_samples][model_name] = end_time - start_time
-                results['adj_accuracy'][n_samples][model_name], adj_labels = adjusted_accuracy(y_pred=model.labels_ , y_true=y)
-                results['ARI'][n_samples][model_name] = adjusted_rand_score(labels_pred=adj_labels, labels_true=y)
-            except Exception as e:
-                print(f'Exception: {e}')
+            start_time = time.time()
+            model.fit(X)
+            end_time = time.time()
+            results['time'][n_samples][model_name] = end_time - start_time
+            results['adj_accuracy'][n_samples][model_name], adj_labels = adjusted_accuracy(y_pred=model.labels_ , y_true=y)
+            results['ARI'][n_samples][model_name] = adjusted_rand_score(labels_pred=model.labels_, labels_true=y)
 
     return results
 
@@ -191,17 +188,14 @@ def make_experiment_4(X, y, models):
 
     for model_name, model in models.items():
         print(model_name)
-        try:
-            start_time = time.time()
-            model.fit(X)
-            end_time = time.time()
-            results['time'][model_name] = end_time - start_time
-            results['labels'][model_name] = model.labels_
-            results['adj_accuracy'][model_name], results['adj_labels'][model_name] = adjusted_accuracy(y_pred=results['labels'][model_name] , y_true=y)
-            results['ARI'][model_name] = adjusted_rand_score(labels_pred=results['adj_labels'][model_name], labels_true=y)
-        except Exception as e:
-            print(f'Exception: {e}')
-            results['not_feasible_models'].append(model_name)
+        start_time = time.time()
+        model.fit(X)
+        end_time = time.time()
+        results['time'][model_name] = end_time - start_time
+        results['labels'][model_name] = model.labels_
+        results['adj_accuracy'][model_name], results['adj_labels'][model_name] = adjusted_accuracy(y_pred=results['labels'][model_name] , y_true=y)
+        results['ARI'][model_name] = adjusted_rand_score(labels_pred=results['adj_labels'][model_name], labels_true=y)
+
 
     return results
 

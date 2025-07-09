@@ -6,7 +6,7 @@ seaborn==0.13.2
 scikit-learn==1.7.0
 scikit-learn-extra==0.3.0
 BigEDA==0.0.61
-PyDistances==0.0.50
+PyDistances==0.0.51
 FastKmedoids==0.0.47
 PyMachineLearning==0.0.23
 setuptools

@@ -5,7 +5,7 @@ def get_config():
     
     config = {
         'random_state': 123,
-        'frac_sample_size': 0.1, # TODO: cambiar por la mejor frac sample size smu 1
+        'frac_sample_size': 0.05, # TODO: cambiar por la mejor frac sample size smu 1
         'n_clusters': 4,
         'method': 'pam',
         'init': 'heuristic',
@@ -18,7 +18,7 @@ def get_config():
         'n_iters': 20,
         'VG_sample_size': 1000,
         'VG_n_samples': 5,
-        'n_samples_list': [1000, 5000]
+        'n_samples_list': [5000, 10000]
     }
 
     return config
