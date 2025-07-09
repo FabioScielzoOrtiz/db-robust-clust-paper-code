@@ -151,18 +151,23 @@ def make_experiment_4(X, y, models):
         'adj_accuracy': {k: {} for k in model_names}, 
         'ARI': {k: {} for k in model_names},
         'labels': {k: {} for k in model_names},
-        'adj_labels': {k: {} for k in model_names}
+        'adj_labels': {k: {} for k in model_names},
+        'not_feasible_models': []
     }
 
     for model_name, model in models.items():
         print(model_name)
-        start_time = time.time()
-        model.fit(X)
-        end_time = time.time()
-        results['time'][model_name] = end_time - start_time
-        results['labels'][model_name] = model.labels_
-        results['adj_accuracy'][model_name], results['adj_labels'][model_name] = adjusted_accuracy(y_pred=results['labels'][model_name] , y_true=y)
-        results['ARI'][model_name] = adjusted_rand_score(labels_pred=results['adj_labels'][model_name], labels_true=y)
+        try:
+            start_time = time.time()
+            model.fit(X)
+            end_time = time.time()
+            results['time'][model_name] = end_time - start_time
+            results['labels'][model_name] = model.labels_
+            results['adj_accuracy'][model_name], results['adj_labels'][model_name] = adjusted_accuracy(y_pred=results['labels'][model_name] , y_true=y)
+            results['ARI'][model_name] = adjusted_rand_score(labels_pred=results['adj_labels'][model_name], labels_true=y)
+        except Exception as e:
+            print(f'Exception: {e}')
+            results['not_feasible_models'].append(model_name)
 
     return results
 
