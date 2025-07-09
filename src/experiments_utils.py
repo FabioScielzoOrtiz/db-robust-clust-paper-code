@@ -20,10 +20,11 @@ def make_experiment_1(X, y, frac_sample_sizes, n_clusters, method, init, max_ite
     results = {
         'time': {}, 
         'adj_accuracy': {}, 
+        'ARI': {}, 
     }
     
-    for frac_size in frac_sample_sizes:
-        print('frac_size:', frac_size)
+    for frac_sample_size in frac_sample_sizes:
+        print('frac_sample_size:', frac_sample_size)
         
         try:
 
@@ -33,7 +34,7 @@ def make_experiment_1(X, y, frac_sample_sizes, n_clusters, method, init, max_ite
                 init=init, 
                 max_iter=max_iter, 
                 random_state=random_state,
-                frac_sample_size=frac_size, 
+                frac_sample_size=frac_sample_size, 
                 p1=p1, 
                 p2=p2, 
                 p3=p3, 
@@ -51,9 +52,10 @@ def make_experiment_1(X, y, frac_sample_sizes, n_clusters, method, init, max_ite
             start_time = time.time()
             fast_kmedoids.fit(X=X) 
             end_time = time.time()
-            results['time'][frac_size] = end_time - start_time
-            results['adj_accuracy'][frac_size], _ = adjusted_accuracy(y_pred=fast_kmedoids.labels_, y_true=y)
-        
+            results['time'][frac_sample_size] = end_time - start_time
+            results['adj_accuracy'][frac_sample_size], adj_labels = adjusted_accuracy(y_pred=fast_kmedoids.labels_, y_true=y)
+            results['ARI'][frac_sample_size] = adjusted_rand_score(labels_pred=adj_labels, labels_true=y)
+
         except Exception as e:
             print(e)
 
@@ -90,17 +92,18 @@ def get_avg_results(results, pivoted_results, iterable):
 
 ########################################################################################################################################################################
 
-def make_experiment_2(n_sample_list, models, random_state):
+def make_experiment_2(n_samples_list, models, random_state):
     
     results = {
-        'time': {k: {} for k in n_sample_list}, 
-        'adj_accuracy': {k: {} for k in n_sample_list}, 
+        'time': {k: {} for k in n_samples_list}, 
+        'adj_accuracy': {k: {} for k in n_samples_list}, 
+        'ARI': {k: {} for k in n_samples_list}, 
     }
 
     for model_name, model in models.items():
         print(model_name)
 
-        for n_samples in n_sample_list:
+        for n_samples in n_samples_list:
             print(n_samples)
             
             X, y = get_simulation_1(n_samples=n_samples, random_state=random_state)
@@ -110,7 +113,8 @@ def make_experiment_2(n_sample_list, models, random_state):
                 model.fit(X)
                 end_time = time.time()
                 results['time'][n_samples][model_name] = end_time - start_time
-                results['adj_accuracy'][n_samples][model_name], _ = adjusted_accuracy(y_pred=model.labels_ , y_true=y)
+                results['adj_accuracy'][n_samples][model_name], adj_labels = adjusted_accuracy(y_pred=model.labels_ , y_true=y)
+                results['ARI'][n_samples][model_name] = adjusted_rand_score(labels_pred=adj_labels, labels_true=y)
             except Exception as e:
                 print(f'Exception: {e}')
 
@@ -124,13 +128,14 @@ def make_experiment_3(X, y, n_splits, frac_sample_sizes, n_clusters, method, ini
 
     results = {
         'time': {k: {} for k in n_splits},
-        'adj_accuracy': {k: {} for k in n_splits}
+        'adj_accuracy': {k: {} for k in n_splits},
+        'ARI': {k: {} for k in n_splits}
     }
            
     for split in n_splits:
         print('n_splits:', split)
-        for frac_size in frac_sample_sizes:
-            print('frac_size:', frac_size)
+        for frac_sample_size in frac_sample_sizes:
+            print('frac_sample_size:', frac_sample_size)
 
             try:
             
@@ -140,7 +145,7 @@ def make_experiment_3(X, y, n_splits, frac_sample_sizes, n_clusters, method, ini
                     init=init, 
                     max_iter=max_iter, 
                     random_state=random_state,
-                    frac_sample_size=frac_size, 
+                    frac_sample_size=frac_sample_size, 
                     p1=p1, 
                     p2=p2, 
                     p3=p3, 
@@ -161,9 +166,9 @@ def make_experiment_3(X, y, n_splits, frac_sample_sizes, n_clusters, method, ini
                 start_time = time.time()
                 fold_fast_kmedoids.fit(X=X) 
                 end_time = time.time()
-                results['time'][split][frac_size] = end_time - start_time
-                results['adj_accuracy'][split][frac_size], _ = adjusted_accuracy(y_pred=fold_fast_kmedoids.labels_, y_true=y)
-            
+                results['time'][split][frac_sample_size] = end_time - start_time
+                results['adj_accuracy'][split][frac_sample_size], adj_labels = adjusted_accuracy(y_pred=fold_fast_kmedoids.labels_, y_true=y)
+                results['ARI'][split][frac_sample_size] = adjusted_rand_score(labels_pred=adj_labels, labels_true=y)           
             except Exception as e:
                 print('Exception:', e)
 

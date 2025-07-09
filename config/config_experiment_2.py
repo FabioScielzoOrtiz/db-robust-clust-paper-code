@@ -18,6 +18,7 @@ def get_config():
         'n_iters': 20,
         'VG_sample_size': 1000,
         'VG_n_samples': 5,
+        'n_samples_list': [1000, 5000]
     }
 
     return config
