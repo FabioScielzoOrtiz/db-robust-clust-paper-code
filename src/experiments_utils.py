@@ -6,6 +6,7 @@ import pandas as pd
 from FastKmedoids.models import FastKmedoidsGGower, FoldFastKmedoidsGGower
 from FastKmedoids.metrics import adjusted_accuracy
 from sklearn.metrics import adjusted_rand_score
+from simulations_utils import get_simulation_1
 from collections import defaultdict
 def nested_dict():
     return defaultdict(nested_dict)
@@ -86,6 +87,34 @@ def get_avg_results(results, pivoted_results, iterable):
                 avg_results[k1][k2] = np.mean(pivoted_results[k1][k2])
 
     return avg_results
+
+########################################################################################################################################################################
+
+def make_experiment_2(n_sample_list, models, random_state):
+    
+    results = {
+        'time': {k: {} for k in n_sample_list}, 
+        'adj_accuracy': {k: {} for k in n_sample_list}, 
+    }
+
+    for model_name, model in models.items():
+        print(model_name)
+
+        for n_samples in n_sample_list:
+            print(n_samples)
+            
+            X, y = get_simulation_1(n_samples=n_samples, random_state=random_state)
+
+            try:
+                start_time = time.time()
+                model.fit(X)
+                end_time = time.time()
+                results['time'][n_samples][model_name] = end_time - start_time
+                results['adj_accuracy'][n_samples][model_name], _ = adjusted_accuracy(y_pred=model.labels_ , y_true=y)
+            except Exception as e:
+                print(f'Exception: {e}')
+
+    return results
 
 ########################################################################################################################################################################
 
@@ -245,11 +274,11 @@ def get_avg_results_two_iterables(results, pivoted_results, iterable1, iterable2
 
 ########################################################################################################################################################################
 
-def avg_results_to_dfs(avg_results):
+def avg_results_to_dfs(avg_results, column_1, column_2):
     dfs = {}
     for key, subdict in avg_results.items():
         rows = [(k1, k2, v) for k1, inner in subdict.items() for k2, v in inner.items()]
-        dfs[key] = pd.DataFrame(rows, columns=['n_splits', 'frac_sample_sizes', key])
+        dfs[key] = pd.DataFrame(rows, columns=[column_1, column_2, key])
     return dfs
 
 ########################################################################################################################################################################

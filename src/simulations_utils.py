@@ -27,10 +27,10 @@ def process_simulated_data(X):
 
 ########################################################################################################################################################################
 
-def get_simulation_1(random_state=123, return_outlier_idx=False):
+def get_simulation_1(random_state=123, n_samples=35000, return_outlier_idx=False):
         
     # Data simulation
-    X, y = make_blobs(n_samples=35000, centers=4, cluster_std=[2,2,2,3], n_features=8, random_state=random_state)
+    X, y = make_blobs(n_samples=n_samples, centers=4, cluster_std=[2,2,2,3], n_features=8, random_state=random_state)
 
     # Process simulated data
     X = process_simulated_data(X)
@@ -45,3 +45,5 @@ def get_simulation_1(random_state=123, return_outlier_idx=False):
         return X, y, outliers_idx
     else:
         return X, y
+
+########################################################################################################################################################################
