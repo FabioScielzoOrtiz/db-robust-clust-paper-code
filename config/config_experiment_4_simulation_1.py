@@ -5,8 +5,8 @@ def get_config():
     
     config = {
         'random_state': 123,
-        'n_splits': 10, # TODO: cambiar por el mejor split simu 1
-        'frac_sample_size': 0.1, # TODO: cambiar por la mejor frac sample size smu 1
+        'n_splits': 5, 
+        'frac_sample_size': 0.1,
         'n_clusters': 4,
         'method': 'pam',
         'init': 'heuristic',

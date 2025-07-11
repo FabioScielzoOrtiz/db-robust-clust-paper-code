@@ -182,17 +182,28 @@ def make_experiment_4(X, y, models):
         'adj_accuracy': {k: {} for k in model_names}, 
         'ARI': {k: {} for k in model_names},
         'labels': {k: {} for k in model_names},
-        'adj_labels': {k: {} for k in model_names},
-        'not_feasible_models': []
+        'adj_labels': {k: {} for k in model_names}
     }
+
+    X_np = X.to_numpy()
 
     for model_name, model in models.items():
         print(model_name)
+
         start_time = time.time()
-        model.fit(X)
+        if model_name == 'SubKmeans':
+            model.fit(X_np)
+        else:
+            model.fit(X)
         end_time = time.time()
+        
         results['time'][model_name] = end_time - start_time
-        results['labels'][model_name] = model.labels_
+        if model_name == 'GaussianMixture':
+            results['labels'][model_name] = model.predict(X)
+        elif 'Spectral' in model_name:
+            results['labels'][model_name] = model.row_labels_
+        else:
+            results['labels'][model_name] = model.labels_
         results['adj_accuracy'][model_name], results['adj_labels'][model_name] = adjusted_accuracy(y_pred=results['labels'][model_name] , y_true=y)
         results['ARI'][model_name] = adjusted_rand_score(labels_pred=results['adj_labels'][model_name], labels_true=y)
 
@@ -295,5 +306,10 @@ def get_GGower_distances_names(quant_distances_names, binary_distances_names, mu
                         combinations_names.append(f'{d1}_{r}-{d2}-{d3}')
 
     return combinations_names
+
+########################################################################################################################################################################
+
+def split_list_in_chunks(list, chunk_size):
+    return [list[i : i + chunk_size] for i in range(0, len(list), chunk_size)]
 
 ########################################################################################################################################################################

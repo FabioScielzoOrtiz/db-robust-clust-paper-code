@@ -3,8 +3,8 @@ import numpy as np
 def get_config():
     
     config = {
-        'n_splits': np.array([5, 10, 20, 30, 40]),
-        'frac_sample_sizes': np.array([0.005, 0.02, 0.05, 0.1, 0.25]), 
+        'n_splits': np.array([5, 10, 20, 40]),
+        'frac_sample_sizes': np.array([0.005, 0.05, 0.1, 0.25]), 
         'n_clusters': 4,
         'method': 'pam',
         'init': 'heuristic',
