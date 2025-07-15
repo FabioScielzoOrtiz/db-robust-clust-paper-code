@@ -113,7 +113,7 @@ def make_experiment_2(n_samples_list, models, random_state):
             end_time = time.time()
             results['time'][n_samples][model_name] = end_time - start_time
             results['adj_accuracy'][n_samples][model_name], adj_labels = adjusted_accuracy(y_pred=model.labels_ , y_true=y)
-            results['ARI'][n_samples][model_name] = adjusted_rand_score(labels_pred=model.labels_, labels_true=y)
+            results['ARI'][n_samples][model_name] = adjusted_rand_score(labels_pred=adj_labels, labels_true=y)
 
     return results
 
