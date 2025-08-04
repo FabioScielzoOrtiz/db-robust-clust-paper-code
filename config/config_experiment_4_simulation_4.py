@@ -5,8 +5,8 @@ def get_config():
     
     config = {
         'random_state': 123,
-        'n_splits': 10, # TODO: define
-        'frac_sample_size': 0.05, # TODO: define
+        'n_splits': 10,
+        'frac_sample_size': 0.005,
         'n_clusters': 3,
         'method': 'pam',
         'init': 'heuristic',
