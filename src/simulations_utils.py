@@ -92,7 +92,7 @@ def get_simulation_4(random_state=123, n_samples=300000, return_outlier_idx=Fals
     
 ########################################################################################################################################################################
 
-def get_simulation_6(random_state=123, n_samples=300000, return_outlier_idx=False):
+def get_simulation_7(random_state=123, n_samples=300000):
         
     # Data simulation
     X, y = make_blobs(n_samples=n_samples, centers=3, cluster_std=[2,2,3], n_features=8, random_state=random_state)
@@ -100,15 +100,6 @@ def get_simulation_6(random_state=123, n_samples=300000, return_outlier_idx=Fals
     # Process simulated data
     X = process_simulated_data(X)
 
-    # Outlier contamination
-    X, outliers_idx_X1 = outlier_contamination(X, col_name='X1', prop_above=0.085, sigma=2, random_state=123)
-    X, outliers_idx_X2 = outlier_contamination(X, col_name='X2', prop_below=0.10, sigma=2, random_state=123)
-    X, outliers_idx_X4 = outlier_contamination(X, col_name='X4', prop_below=0.06, sigma=2, random_state=123)
-
-    if return_outlier_idx:
-        outliers_idx = outliers_idx_X1.copy() if np.array_equal(outliers_idx_X1, outliers_idx_X2, outliers_idx_X4) else np.unique(np.concatenate([outliers_idx_X1, outliers_idx_X2, outliers_idx_X4]))
-        return X, y, outliers_idx
-    else:
-        return X, y
+    return X, y
     
 ########################################################################################################################################################################

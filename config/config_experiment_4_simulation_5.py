@@ -5,8 +5,9 @@ def get_config():
     
     config = {
         'random_state': 123,
-        'frac_sample_size': 0.05,
-        'n_clusters': 4,
+        'n_splits': 10,
+        'frac_sample_size': 0.005,
+        'n_clusters': 3,
         'method': 'pam',
         'init': 'heuristic',
         'max_iter': 100,
@@ -18,7 +19,8 @@ def get_config():
         'n_iters': 20,
         'VG_sample_size': 1000,
         'VG_n_samples': 5,
-        'n_samples_list': [5000, 10000, 20000, 30000]
+        'shuffle': True, 
+        'kfold_random_state': 111,
     }
 
     return config
