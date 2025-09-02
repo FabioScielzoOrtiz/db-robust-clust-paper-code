@@ -3,7 +3,7 @@ import numpy as np
 def get_config():
     
     config = {
-        'frac_sample_sizes': np.array([0.0005, 0.005, 0.01, 0.05, 0.1, 0.20]),
+        'frac_sample_sizes': np.array([0.0005, 0.005, 0.01, 0.05, 0.08]),
         'n_clusters': 3,
         'method': 'pam',
         'init': 'heuristic',
