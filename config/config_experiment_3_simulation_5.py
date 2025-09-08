@@ -4,7 +4,7 @@ def get_config():
     
     config = {
         'n_splits': np.array([5, 10, 20, 40]),
-        'frac_sample_sizes': np.array([0.005, 0.05, 0.1, 0.15]), 
+        'frac_sample_sizes': np.array([0.0005, 0.005, 0.01]), 
         'n_clusters': 3,
         'method': 'pam',
         'init': 'heuristic',

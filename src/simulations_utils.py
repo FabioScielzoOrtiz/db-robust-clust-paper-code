@@ -40,7 +40,7 @@ def get_simulation_1(random_state=123, n_samples=35000, return_outlier_idx=False
     X, outliers_idx_X2 = outlier_contamination(X, col_name='X2', prop_below=0.05, sigma=2, random_state=123)
 
     if return_outlier_idx:
-        outliers_idx = outliers_idx_X1.copy() if np.array_equal(outliers_idx_X1, outliers_idx_X2) else np.unique(np.concatenate(outliers_idx_X1, outliers_idx_X2))
+        outliers_idx = outliers_idx_X1.copy() if np.array_equal(outliers_idx_X1, outliers_idx_X2) else np.unique(np.concatenate([outliers_idx_X1, outliers_idx_X2]))
         return X, y, outliers_idx
     else:
         return X, y
@@ -60,7 +60,7 @@ def get_simulation_3(random_state=123, n_samples=100000, return_outlier_idx=Fals
     X, outliers_idx_X2 = outlier_contamination(X, col_name='X2', prop_below=0.05, sigma=2, random_state=123)
 
     if return_outlier_idx:
-        outliers_idx = outliers_idx_X1.copy() if np.array_equal(outliers_idx_X1, outliers_idx_X2) else np.unique(np.concatenate(outliers_idx_X1, outliers_idx_X2))
+        outliers_idx = outliers_idx_X1.copy() if np.array_equal(outliers_idx_X1, outliers_idx_X2) else np.unique(np.concatenate([outliers_idx_X1, outliers_idx_X2]))
         return X, y, outliers_idx
     else:
         return X, y
@@ -80,7 +80,7 @@ def get_simulation_4(random_state=123, n_samples=300000, return_outlier_idx=Fals
     X, outliers_idx_X2 = outlier_contamination(X, col_name='X2', prop_below=0.05, sigma=2, random_state=123)
 
     if return_outlier_idx:
-        outliers_idx = outliers_idx_X1.copy() if np.array_equal(outliers_idx_X1, outliers_idx_X2) else np.unique(np.concatenate(outliers_idx_X1, outliers_idx_X2))
+        outliers_idx = outliers_idx_X1.copy() if np.array_equal(outliers_idx_X1, outliers_idx_X2) else np.unique(np.concatenate([outliers_idx_X1, outliers_idx_X2]))
         return X, y, outliers_idx
     else:
         return X, y
@@ -100,14 +100,14 @@ def get_simulation_5(random_state=123, n_samples=1000000, return_outlier_idx=Fal
     X, outliers_idx_X2 = outlier_contamination(X, col_name='X2', prop_below=0.05, sigma=2, random_state=123)
 
     if return_outlier_idx:
-        outliers_idx = outliers_idx_X1.copy() if np.array_equal(outliers_idx_X1, outliers_idx_X2) else np.unique(np.concatenate(outliers_idx_X1, outliers_idx_X2))
+        outliers_idx = outliers_idx_X1.copy() if np.array_equal(outliers_idx_X1, outliers_idx_X2) else np.unique(np.concatenate([outliers_idx_X1, outliers_idx_X2]))
         return X, y, outliers_idx
     else:
         return X, y
 
 ########################################################################################################################################################################
 
-def get_simulation_6(random_state=123, n_samples=1000000, return_outlier_idx=False):
+def get_simulation_6(random_state=123, n_samples=300000, return_outlier_idx=False):
         
     # Data simulation
     X, y = make_blobs(n_samples=n_samples, centers=3, cluster_std=[2,2,3], n_features=8, random_state=random_state)
@@ -121,7 +121,7 @@ def get_simulation_6(random_state=123, n_samples=1000000, return_outlier_idx=Fal
     X, outliers_idx_X3 = outlier_contamination(X, col_name='X4', prop_below=0.06, sigma=2, random_state=123)
 
     if return_outlier_idx:
-        outliers_idx = outliers_idx_X1.copy() if np.array_equal(outliers_idx_X1, outliers_idx_X2) else np.unique(np.concatenate(outliers_idx_X1, outliers_idx_X2))
+        outliers_idx = outliers_idx_X1.copy() if np.array_equal(outliers_idx_X1, outliers_idx_X2, outliers_idx_X3) else np.unique(np.concatenate([outliers_idx_X1, outliers_idx_X2, outliers_idx_X3]))
         return X, y, outliers_idx
     else:
         return X, y
