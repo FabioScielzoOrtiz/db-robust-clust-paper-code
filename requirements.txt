@@ -13,3 +13,5 @@ clustpy
 setuptools
 tqdm
 aif360
+ucimlrepo
+pyarrow
