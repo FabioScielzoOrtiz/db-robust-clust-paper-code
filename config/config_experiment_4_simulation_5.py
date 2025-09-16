@@ -5,7 +5,7 @@ def get_config():
     
     config = {
         'random_state': 123,
-        'n_splits': 10,
+        'n_splits': 20,
         'frac_sample_size': 0.005,
         'n_clusters': 3,
         'method': 'pam',

@@ -33,11 +33,12 @@ df = df[quant_cols + binary_cols + multiclass_cols]
 
 # Encode categorical variables
 
-exceptions = ['checking_status', 'savings_status', 'employment']
-categorical_cols = [col for col in df.columns if df[col].dtype == pl.Categorical]
 encoding = {}
+ordinal_cols = ['checking_status', 'savings_status', 'employment']
+categorical_cols = [col for col in df.columns if df[col].dtype == pl.Categorical]
+nominal_cols = [x for x in categorical_cols if x not in ordinal_cols]
 
-for col in [x for x in categorical_cols if x not in exceptions]:        
+for col in nominal_cols:        
     unique_values_sorted = sorted(df[col].unique().to_list())
     new_values = list(range(0, len(unique_values_sorted)))
     encoding[col] = dict(zip(unique_values_sorted, new_values))
