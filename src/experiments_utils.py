@@ -4,8 +4,8 @@ import time
 import numpy as np
 import pandas as pd
 from FastKmedoids.models import FastKmedoidsGGower, FoldFastKmedoidsGGower
-from FastKmedoids.metrics import adjusted_accuracy
-from sklearn.metrics import adjusted_rand_score
+from FastKmedoids.metrics import adjusted_score
+from sklearn.metrics import accuracy_score, adjusted_rand_score
 from simulations_utils import get_simulation_1
 from collections import defaultdict
 def nested_dict():
@@ -15,7 +15,7 @@ def nested_dict():
 
 def make_experiment_1(X, y, frac_sample_sizes, n_clusters, method, init, max_iter, random_state, 
                       p1, p2, p3, d1, d2, d3, robust_method, alpha, epsilon, n_iters, 
-                      VG_sample_size, VG_n_samples):
+                      VG_sample_size, VG_n_samples, metric=accuracy_score):
 
     results = {
         'time': {}, 
@@ -26,38 +26,38 @@ def make_experiment_1(X, y, frac_sample_sizes, n_clusters, method, init, max_ite
     for frac_sample_size in frac_sample_sizes:
         print('frac_sample_size:', frac_sample_size)
         
-        try:
+        #try:
 
-            fast_kmedoids = FastKmedoidsGGower(
-                n_clusters=n_clusters, 
-                method=method, 
-                init=init, 
-                max_iter=max_iter, 
-                random_state=random_state,
-                frac_sample_size=frac_sample_size, 
-                p1=p1, 
-                p2=p2, 
-                p3=p3, 
-                d1=d1, 
-                d2=d2, 
-                d3=d3, 
-                robust_method=robust_method, 
-                alpha=alpha, 
-                epsilon=epsilon, 
-                n_iters=n_iters, 
-                VG_sample_size=VG_sample_size, 
-                VG_n_samples=VG_n_samples
-            )
-            
-            start_time = time.time()
-            fast_kmedoids.fit(X=X) 
-            end_time = time.time()
-            results['time'][frac_sample_size] = end_time - start_time
-            results['adj_accuracy'][frac_sample_size], adj_labels = adjusted_accuracy(y_pred=fast_kmedoids.labels_, y_true=y)
-            results['ARI'][frac_sample_size] = adjusted_rand_score(labels_pred=adj_labels, labels_true=y)
+        fast_kmedoids = FastKmedoidsGGower(
+            n_clusters=n_clusters, 
+            method=method, 
+            init=init, 
+            max_iter=max_iter, 
+            random_state=random_state,
+            frac_sample_size=frac_sample_size, 
+            p1=p1, 
+            p2=p2, 
+            p3=p3, 
+            d1=d1, 
+            d2=d2, 
+            d3=d3, 
+            robust_method=robust_method, 
+            alpha=alpha, 
+            epsilon=epsilon, 
+            n_iters=n_iters, 
+            VG_sample_size=VG_sample_size, 
+            VG_n_samples=VG_n_samples
+        )
+        
+        start_time = time.time()
+        fast_kmedoids.fit(X=X) 
+        end_time = time.time()
+        results['time'][frac_sample_size] = end_time - start_time
+        results['adj_accuracy'][frac_sample_size], adj_labels = adjusted_score(y_pred=fast_kmedoids.labels_, y_true=y, metric=metric)
+        results['ARI'][frac_sample_size] = adjusted_rand_score(labels_pred=adj_labels, labels_true=y)
 
-        except Exception as e:
-            print(f'Exception: {e}')
+        #except Exception as e:
+        #    print(f'Exception: {e}')
 
     return results
 
@@ -92,7 +92,7 @@ def get_avg_results(results, pivoted_results, iterable):
 
 ########################################################################################################################################################################
 
-def make_experiment_2(n_samples_list, models, random_state):
+def make_experiment_2(n_samples_list, models, random_state, metric=accuracy_score):
     
     results = {
         'time': {k: {} for k in n_samples_list}, 
@@ -112,7 +112,7 @@ def make_experiment_2(n_samples_list, models, random_state):
             model.fit(X)
             end_time = time.time()
             results['time'][n_samples][model_name] = end_time - start_time
-            results['adj_accuracy'][n_samples][model_name], adj_labels = adjusted_accuracy(y_pred=model.labels_ , y_true=y)
+            results['adj_accuracy'][n_samples][model_name], adj_labels = adjusted_score(y_pred=model.labels_, y_true=y, metric=metric)
             results['ARI'][n_samples][model_name] = adjusted_rand_score(labels_pred=adj_labels, labels_true=y)
 
     return results
@@ -121,7 +121,7 @@ def make_experiment_2(n_samples_list, models, random_state):
 
 def make_experiment_3(X, y, n_splits, frac_sample_sizes, n_clusters, method, init, max_iter, random_state, 
                       p1, p2, p3, d1, d2, d3, robust_method, alpha, epsilon, n_iters, shuffle, kfold_random_state,
-                      VG_sample_size, VG_n_samples):
+                      VG_sample_size, VG_n_samples, metric=accuracy_score):
 
     results = {
         'time': {k: {} for k in n_splits},
@@ -164,7 +164,7 @@ def make_experiment_3(X, y, n_splits, frac_sample_sizes, n_clusters, method, ini
                 fold_fast_kmedoids.fit(X=X) 
                 end_time = time.time()
                 results['time'][split][frac_sample_size] = end_time - start_time
-                results['adj_accuracy'][split][frac_sample_size], adj_labels = adjusted_accuracy(y_pred=fold_fast_kmedoids.labels_, y_true=y)
+                results['adj_accuracy'][split][frac_sample_size], adj_labels = adjusted_score(y_pred=fold_fast_kmedoids.labels_, y_true=y, metric=metric)
                 results['ARI'][split][frac_sample_size] = adjusted_rand_score(labels_pred=adj_labels, labels_true=y)           
             except Exception as e:
                 print('Exception:', e)
@@ -173,7 +173,7 @@ def make_experiment_3(X, y, n_splits, frac_sample_sizes, n_clusters, method, ini
 
 ########################################################################################################################################################################
 
-def make_experiment_4(X, y, models):
+def make_experiment_4(X, y, models, metric=accuracy_score):
     
     model_names = list(models.keys())
 
@@ -204,7 +204,7 @@ def make_experiment_4(X, y, models):
             results['labels'][model_name] = model.row_labels_
         else:
             results['labels'][model_name] = model.labels_
-        results['adj_accuracy'][model_name], results['adj_labels'][model_name] = adjusted_accuracy(y_pred=results['labels'][model_name] , y_true=y)
+        results['adj_accuracy'][model_name], results['adj_labels'][model_name] = adjusted_score(y_pred=results['labels'][model_name] , y_true=y, metric=metric)
         results['ARI'][model_name] = adjusted_rand_score(labels_pred=results['adj_labels'][model_name], labels_true=y)
 
 
