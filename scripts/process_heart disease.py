@@ -22,7 +22,9 @@ y = pl.from_pandas(heart_disease.data.targets)
 ################################################################################################
 
 # Remove missing values
-X = X.drop_nulls()
+df = pl.concat([X,y], how='horizontal').drop_nulls()
+X = df[:, :(df.shape[1]-1)]
+y = pl.DataFrame(df[:, df.shape[1]-1])
 
 ################################################################################################
 

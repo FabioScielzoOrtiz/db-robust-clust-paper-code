@@ -1,12 +1,10 @@
-import numpy as np
-
-
 def get_config():
     
     config = {
         'random_state': 123,
-        'n_splits': 7, 
-        'frac_sample_size': 0.40,
+        'n_splits': 10, 
+        'frac_sample_size_fast_kmedoids': 0.3,
+        'frac_sample_size_fold_fast_kmedoids': 0.2,
         'n_clusters': None,
         'method': 'pam',
         'init': 'heuristic',
@@ -14,8 +12,8 @@ def get_config():
         'p1': None,
         'p2': None,
         'p3': None,
-        'alpha': 0.05,
-        'epsilon': 0.05,
+        'alpha': 0.072,
+        'epsilon': 0.072,
         'n_iters': 20,
         'VG_sample_size': 1000,
         'VG_n_samples': 5,

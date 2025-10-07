@@ -23,7 +23,8 @@ df = pl.from_pandas(df_raw)
 ################################################################################################
 
 # Sort variables according to data type
-quant_cols = [col for col, dtype in zip(df.columns, df.dtypes) if dtype != pl.Categorical]
+ordinal_cols = ['checking_status', 'savings_status', 'employment']
+quant_cols = [col for col, dtype in zip(df.columns, df.dtypes) if dtype != pl.Categorical] + ordinal_cols
 cat_cols = [col for col in df.columns if col not in quant_cols]
 binary_cols = [col for col in cat_cols if len(df[col].unique()) == 2]
 multiclass_cols = [col for col in cat_cols if col not in binary_cols]
@@ -34,14 +35,17 @@ df = df[quant_cols + binary_cols + multiclass_cols]
 # Encode categorical variables
 
 encoding = {}
-ordinal_cols = ['checking_status', 'savings_status', 'employment']
 categorical_cols = [col for col in df.columns if df[col].dtype == pl.Categorical]
 nominal_cols = [x for x in categorical_cols if x not in ordinal_cols]
+
+# Encoding for nominal cols
 
 for col in nominal_cols:        
     unique_values_sorted = sorted(df[col].unique().to_list())
     new_values = list(range(0, len(unique_values_sorted)))
     encoding[col] = dict(zip(unique_values_sorted, new_values))
+
+# Encoding for ordinal cols
 
 encoding['checking_status'] = {
     'no checking': 0, 
@@ -66,6 +70,7 @@ encoding['employment'] = {
     '>=7': 4
 }
 
+# Encoding 
 for col in categorical_cols: 
     df = df.with_columns(pl.col(col).replace_strict(encoding[col]).alias(col))
 

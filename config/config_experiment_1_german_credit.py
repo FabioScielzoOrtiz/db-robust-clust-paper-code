@@ -16,7 +16,7 @@ def get_config():
         'd3': 'hamming',
         'robust_method': 'trimmed',
         'alpha': 0.05,
-        'epsilon': 0.05,
+        'epsilon': 0.072,
         'n_iters': 20,
         'VG_sample_size': 1000,
         'VG_n_samples': 5

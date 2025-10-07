@@ -51,6 +51,7 @@ def make_experiment_1(X, y, frac_sample_sizes, n_clusters, method, init, max_ite
         
         start_time = time.time()
         fast_kmedoids.fit(X=X) 
+        print('len y_pred:', len(np.unique(fast_kmedoids.labels_)))
         end_time = time.time()
         results['time'][frac_sample_size] = end_time - start_time
         results['adj_accuracy'][frac_sample_size], adj_labels = adjusted_score(y_pred=fast_kmedoids.labels_, y_true=y, metric=metric)
@@ -191,7 +192,7 @@ def make_experiment_4(X, y, models, metric=accuracy_score):
         print(model_name)
 
         start_time = time.time()
-        if model_name == 'SubKmeans':
+        if model_name in ['SubKmeans', 'DipInit']:
             model.fit(X_np)
         else:
             model.fit(X)
@@ -200,10 +201,11 @@ def make_experiment_4(X, y, models, metric=accuracy_score):
         results['time'][model_name] = end_time - start_time
         if model_name == 'GaussianMixture':
             results['labels'][model_name] = model.predict(X)
-        elif 'Spectral' in model_name:
+        elif 'Spectral' in model_name and model_name != 'SpectralClustering':
             results['labels'][model_name] = model.row_labels_
         else:
             results['labels'][model_name] = model.labels_
+        print('len y_pred:', len(np.unique(results['labels'][model_name])))
         results['adj_accuracy'][model_name], results['adj_labels'][model_name] = adjusted_score(y_pred=results['labels'][model_name] , y_true=y, metric=metric)
         results['ARI'][model_name] = adjusted_rand_score(labels_pred=results['adj_labels'][model_name], labels_true=y)
 

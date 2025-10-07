@@ -3,7 +3,7 @@ import numpy as np
 def get_config():
     
     config = {
-        'n_splits': np.array([3, 5, 7, 10, 15]),
+        'n_splits': np.array([5, 7, 10, 15]),
         'frac_sample_sizes': np.array([0.2, 0.4, 0.6, 0.8]), 
         'n_clusters': None,
         'method': 'pam',
@@ -16,7 +16,7 @@ def get_config():
         'd2': 'jaccard',
         'd3': 'hamming',
         'robust_method': 'trimmed',
-        'alpha': 0.05,
+        'alpha': 0.072,
         'epsilon': 0.05,
         'n_iters': 20,
         'VG_sample_size': 1000,
