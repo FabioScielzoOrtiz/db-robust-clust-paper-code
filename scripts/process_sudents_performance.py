@@ -90,6 +90,10 @@ p3 = len(multiclass_predictors)
 
 ################################################################################################
 
+n_clusters = len(y.unique())
+
+################################################################################################
+
 # Save outputs
 
 output = {
@@ -98,6 +102,7 @@ output = {
     'p1': p1, 
     'p2': p2, 
     'p3': p3,
+    'n_clusters': n_clusters,
     'encoding': encoding,
     'quant_predictors': quant_predictors,
     'binary_predictors': binary_predictors,

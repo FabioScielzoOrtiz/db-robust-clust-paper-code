@@ -2,9 +2,9 @@ def get_config():
     
     config = {
         'random_state': 123,
-        'n_splits': 5, 
+        'n_splits': 10, 
         'frac_sample_size_fast_kmedoids': 1,
-        'frac_sample_size_fold_fast_kmedoids': 0.8,
+        'frac_sample_size_fold_fast_kmedoids': 1,
         'n_clusters': None,
         'method': 'pam',
         'init': 'heuristic',
