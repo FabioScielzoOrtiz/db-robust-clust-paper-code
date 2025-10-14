@@ -5,9 +5,9 @@ def get_config():
     
     config = {
         'random_state': 123,
-        'n_splits': 5,
-        'frac_sample_size_fast_kmedoids': 0.05,
-        'frac_sample_size_fold_fast_kmedoids': 0.005,
+        'n_splits': 20,
+        'frac_sample_size_fast_kmedoids': 0.005,
+        'frac_sample_size_fold_fast_kmedoids': 0.05,
         'n_clusters': 3,
         'method': 'pam',
         'init': 'heuristic',
