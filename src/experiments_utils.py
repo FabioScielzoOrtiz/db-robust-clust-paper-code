@@ -26,39 +26,39 @@ def make_experiment_1(X, y, frac_sample_sizes, n_clusters, method, init, max_ite
     for frac_sample_size in frac_sample_sizes:
         print('frac_sample_size:', frac_sample_size)
         
-        #try:
+        try:
 
-        fast_kmedoids = FastKmedoidsGGower(
-            n_clusters=n_clusters, 
-            method=method, 
-            init=init, 
-            max_iter=max_iter, 
-            random_state=random_state,
-            frac_sample_size=frac_sample_size, 
-            p1=p1, 
-            p2=p2, 
-            p3=p3, 
-            d1=d1, 
-            d2=d2, 
-            d3=d3, 
-            robust_method=robust_method, 
-            alpha=alpha, 
-            epsilon=epsilon, 
-            n_iters=n_iters, 
-            VG_sample_size=VG_sample_size, 
-            VG_n_samples=VG_n_samples
-        )
-        
-        start_time = time.time()
-        fast_kmedoids.fit(X=X) 
-        print('len y_pred:', len(np.unique(fast_kmedoids.labels_)))
-        end_time = time.time()
-        results['time'][frac_sample_size] = end_time - start_time
-        results['adj_accuracy'][frac_sample_size], adj_labels = adjusted_score(y_pred=fast_kmedoids.labels_, y_true=y, metric=metric)
-        results['ARI'][frac_sample_size] = adjusted_rand_score(labels_pred=adj_labels, labels_true=y)
+            fast_kmedoids = FastKmedoidsGGower(
+                n_clusters=n_clusters, 
+                method=method, 
+                init=init, 
+                max_iter=max_iter, 
+                random_state=random_state,
+                frac_sample_size=frac_sample_size, 
+                p1=p1, 
+                p2=p2, 
+                p3=p3, 
+                d1=d1, 
+                d2=d2, 
+                d3=d3, 
+                robust_method=robust_method, 
+                alpha=alpha, 
+                epsilon=epsilon, 
+                n_iters=n_iters, 
+                VG_sample_size=VG_sample_size, 
+                VG_n_samples=VG_n_samples
+            )
+            
+            start_time = time.time()
+            fast_kmedoids.fit(X=X) 
+            print('len y_pred:', len(np.unique(fast_kmedoids.labels_)))
+            end_time = time.time()
+            results['time'][frac_sample_size] = end_time - start_time
+            results['adj_accuracy'][frac_sample_size], adj_labels = adjusted_score(y_pred=fast_kmedoids.labels_, y_true=y, metric=metric)
+            results['ARI'][frac_sample_size] = adjusted_rand_score(labels_pred=adj_labels, labels_true=y)
 
-        #except Exception as e:
-        #    print(f'Exception: {e}')
+        except Exception as e:
+            print(f'Exception: {e}')
 
     return results
 
