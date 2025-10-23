@@ -21,7 +21,7 @@ def get_config():
         'VG_n_samples': 5,
         'shuffle': True, 
         'kfold_random_state': 111,
-        'n_samples_list': [5000, 10000, 20000, 30000]
+        'n_samples_list': [5000, 10000, 20000, 30000, 45000]
     }
 
     return config
