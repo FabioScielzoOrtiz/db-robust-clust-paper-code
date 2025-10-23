@@ -4,7 +4,7 @@ def get_config():
         'random_state': 123,
         'n_splits': 10, 
         'frac_sample_size_fast_kmedoids': 0.005,
-        'frac_sample_size_fold_fast_kmedoids': 0.6,
+        'frac_sample_size_fold_fast_kmedoids': 0.5,
         'n_clusters': None,
         'method': 'pam',
         'init': 'heuristic',
