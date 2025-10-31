@@ -3,8 +3,8 @@
 import time
 import numpy as np
 import pandas as pd
-from FastKmedoids.models import FastKmedoidsGGower, FoldFastKmedoidsGGower
-from FastKmedoids.metrics import adjusted_score
+from db_robust_clust.models import FastKmedoidsGGower, FoldFastKmedoidsGGower
+from db_robust_clust.metrics import adjusted_score
 from sklearn.metrics import accuracy_score, adjusted_rand_score
 from simulations_utils import get_simulation_1
 from collections import defaultdict
