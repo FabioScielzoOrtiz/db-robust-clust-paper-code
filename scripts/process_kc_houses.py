@@ -28,16 +28,21 @@ cat_variables = ['view', 'grade']
 
 ################################################################################################
 
+q10 = df[response].quantile(0.10)
+q15 = df[response].quantile(0.15)
 q25 = df[response].quantile(0.25)
 q75 = df[response].quantile(0.75)
+q85 = df[response].quantile(0.85)
+q90 = df[response].quantile(0.90)
 q50 = df[response].quantile(0.50)
 mean = df[response].mean()
 
 df = df.with_columns(pl.col(response).cut(
-    breaks=[mean],
+    breaks=[q10, q90],
     labels=[
         'c1',
         'c2',
+        'c3'
     ],
     left_closed=True
 ).alias(response))
@@ -57,7 +62,8 @@ for col in cat_variables:
 
 encoding[response] = {
     'c1': 0,
-    'c2': 1
+    'c2': 1,
+    'c3': 2
 }
 
 encoding['floors'] = { # 1, 2, 3

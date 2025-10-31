@@ -6,7 +6,7 @@ import polars as pl
 ################################################################################################
 
 # Paths
-current_path = os.getcwd()#os.path.dirname(os.path.abspath(__file__))
+current_path = os.path.dirname(os.path.abspath(__file__))
 data_path = os.path.join(current_path, '..', 'data')
 data_filename = 'dubai_houses.csv'
 data_file_path = os.path.join(data_path, data_filename)
@@ -72,10 +72,15 @@ output = {
 
 
 output_file_name = "dubai_houses_processed.pkl"
+df_file_name = "dubai_houses_processed.csv"
 output_file_path = os.path.join(data_path, output_file_name)
+df_file_path = os.path.join(data_path, df_file_name)
 
 with open(output_file_path, "wb") as f:
     pickle.dump(output, f)
+
+df = pl.concat([pl.DataFrame({response: y}), X], how='horizontal')
+df.write_csv(df_file_path)
 
 print(f'Outputs saved at {output_file_path}')
 
