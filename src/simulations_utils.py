@@ -27,6 +27,26 @@ def process_simulated_data(X):
 
 ########################################################################################################################################################################
 
+def get_simulation_testing(random_state=123, n_samples=5000, return_outlier_idx=False):
+        
+    # Data simulation
+    X, y = make_blobs(n_samples=n_samples, centers=4, cluster_std=[2,2,2,3], n_features=8, random_state=random_state)
+
+    # Process simulated data
+    X = process_simulated_data(X)
+
+    # Outlier contamination
+    X, outliers_idx_X1 = outlier_contamination(X, col_name='X1', prop_above=0.05, sigma=2, random_state=random_state)
+    X, outliers_idx_X2 = outlier_contamination(X, col_name='X2', prop_below=0.05, sigma=2, random_state=random_state)
+
+    if return_outlier_idx:
+        outliers_idx = outliers_idx_X1.copy() if np.array_equal(outliers_idx_X1, outliers_idx_X2) else np.unique(np.concatenate([outliers_idx_X1, outliers_idx_X2]))
+        return X, y, outliers_idx
+    else:
+        return X, y
+
+########################################################################################################################################################################
+
 def get_simulation_1(random_state=123, n_samples=35000, return_outlier_idx=False):
         
     # Data simulation
@@ -47,7 +67,7 @@ def get_simulation_1(random_state=123, n_samples=35000, return_outlier_idx=False
 
 ########################################################################################################################################################################
 
-def get_simulation_3(random_state=123, n_samples=100000, return_outlier_idx=False):
+def get_simulation_2(random_state=123, n_samples=100000, return_outlier_idx=False):
         
     # Data simulation
     X, y = make_blobs(n_samples=n_samples, centers=4, cluster_std=[2,2,2,3], n_features=8, random_state=random_state)
@@ -67,7 +87,7 @@ def get_simulation_3(random_state=123, n_samples=100000, return_outlier_idx=Fals
 
 ########################################################################################################################################################################
 
-def get_simulation_4(random_state=123, n_samples=300000, return_outlier_idx=False):
+def get_simulation_3(random_state=123, n_samples=300000, return_outlier_idx=False):
         
     # Data simulation
     X, y = make_blobs(n_samples=n_samples, centers=3, cluster_std=[2,2,3], n_features=8, random_state=random_state)
@@ -87,7 +107,7 @@ def get_simulation_4(random_state=123, n_samples=300000, return_outlier_idx=Fals
     
 ########################################################################################################################################################################
 
-def get_simulation_5(random_state=123, n_samples=1000000, return_outlier_idx=False):
+def get_simulation_4(random_state=123, n_samples=1000000, return_outlier_idx=False):
         
     # Data simulation
     X, y = make_blobs(n_samples=n_samples, centers=3, cluster_std=[2,2,3], n_features=8, random_state=random_state)
@@ -107,7 +127,7 @@ def get_simulation_5(random_state=123, n_samples=1000000, return_outlier_idx=Fal
 
 ########################################################################################################################################################################
 
-def get_simulation_6(random_state=123, n_samples=300000, return_outlier_idx=False):
+def get_simulation_5(random_state=123, n_samples=300000, return_outlier_idx=False):
         
     # Data simulation
     X, y = make_blobs(n_samples=n_samples, centers=3, cluster_std=[2,2,3], n_features=8, random_state=random_state)
@@ -128,7 +148,7 @@ def get_simulation_6(random_state=123, n_samples=300000, return_outlier_idx=Fals
     
 ########################################################################################################################################################################
 
-def get_simulation_7(random_state=123, n_samples=300000):
+def get_simulation_6(random_state=123, n_samples=300000):
         
     # Data simulation
     X, y = make_blobs(n_samples=n_samples, centers=3, cluster_std=[2,2,3], n_features=8, random_state=random_state)
@@ -140,10 +160,8 @@ def get_simulation_7(random_state=123, n_samples=300000):
     
 ########################################################################################################################################################################
 
-def get_simulation_8(random_state=123, n_samples=[60000, 90000, 150000], return_outlier_idx=False):
-        
-    # Data simulation
-    
+def get_simulation_7(random_state=123, n_samples=[60000, 90000, 150000], return_outlier_idx=False):
+           
     centers = 3 
 
     X, y = make_blobs(n_samples=450000, centers=centers, cluster_std=[2,2,3], n_features=8, random_state=random_state)
