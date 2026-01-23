@@ -1,21 +1,24 @@
 ########################################################################################################################################################################
 
 import time
+import logging
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
 from db_robust_clust.models import FastKmedoidsGGower, FoldFastKmedoidsGGower
 from db_robust_clust.metrics import adjusted_score
 from sklearn.metrics import accuracy_score, adjusted_rand_score
-from simulations_utils import get_simulation_1
 from collections import defaultdict
-def nested_dict():
-    return defaultdict(nested_dict)
 
 ########################################################################################################################################################################
 
 def make_experiment_1(X, y, frac_sample_sizes, n_clusters, method, init, max_iter, random_state, 
                       p1, p2, p3, d1, d2, d3, robust_method, alpha, epsilon, n_iters, 
-                      VG_sample_size, VG_n_samples, metric=accuracy_score):
+                      VG_sample_size, VG_n_samples, metric): 
+
+    # Logger local para tener contexto
+    logger = logging.getLogger(__name__)
 
     results = {
         'time': {}, 
@@ -23,11 +26,16 @@ def make_experiment_1(X, y, frac_sample_sizes, n_clusters, method, init, max_ite
         'ARI': {}, 
     }
     
+    # Log inicial informativo
+    logger.info(f"🚀 Starting Experiment 1 | Seed: {random_state} | N_Sample_Sizes: {len(frac_sample_sizes)}")
+
     for frac_sample_size in frac_sample_sizes:
-        print('frac_sample_size:', frac_sample_size)
+        
+        # 1. Configuración del modelo
+        # Usamos debug para configuración detallada, info para progreso
+        logger.info(f"  >> Processing frac_sample_size: {frac_sample_size:.2f}")
         
         try:
-
             fast_kmedoids = FastKmedoidsGGower(
                 n_clusters=n_clusters, 
                 method=method, 
@@ -35,12 +43,8 @@ def make_experiment_1(X, y, frac_sample_sizes, n_clusters, method, init, max_ite
                 max_iter=max_iter, 
                 random_state=random_state,
                 frac_sample_size=frac_sample_size, 
-                p1=p1, 
-                p2=p2, 
-                p3=p3, 
-                d1=d1, 
-                d2=d2, 
-                d3=d3, 
+                p1=p1, p2=p2, p3=p3, 
+                d1=d1, d2=d2, d3=d3, 
                 robust_method=robust_method, 
                 alpha=alpha, 
                 epsilon=epsilon, 
@@ -49,16 +53,36 @@ def make_experiment_1(X, y, frac_sample_sizes, n_clusters, method, init, max_ite
                 VG_n_samples=VG_n_samples
             )
             
+            # 2. Medición de Tiempo y Ajuste
             start_time = time.time()
             fast_kmedoids.fit(X=X) 
-            print('len y_pred:', len(np.unique(fast_kmedoids.labels_)))
             end_time = time.time()
-            results['time'][frac_sample_size] = end_time - start_time
-            results['adj_accuracy'][frac_sample_size], adj_labels = adjusted_score(y_pred=fast_kmedoids.labels_, y_true=y, metric=metric)
-            results['ARI'][frac_sample_size] = adjusted_rand_score(labels_pred=adj_labels, labels_true=y)
+            
+            elapsed_time = end_time - start_time
+            results['time'][frac_sample_size] = elapsed_time
+
+            # 3. Validación de Clusters (Sanity Check)
+            unique_labels = np.unique(fast_kmedoids.labels_)
+            n_found_clusters = len(unique_labels)
+            
+            if n_found_clusters != n_clusters:
+                logger.warning(f"     ⚠️ Cluster Mismatch: Expected {n_clusters}, found {n_found_clusters} unique labels.")
+
+            # 4. Cálculo de Métricas
+            acc, adj_labels = adjusted_score(y_pred=fast_kmedoids.labels_, y_true=y, metric=metric)
+            ari = adjusted_rand_score(labels_pred=adj_labels, labels_true=y)
+
+            results['adj_accuracy'][frac_sample_size] = acc
+            results['ARI'][frac_sample_size] = ari
+
+            # 5. Log de Resultados Inmediato (Feedback instantáneo)
+            logger.info(f"     ✅ Finished in {elapsed_time:.2f}s | ARI: {ari:.2f} | Acc: {acc:.2f}")
 
         except Exception as e:
-            print(f'Exception: {e}')
+            logger.error(f"     ❌ Error fitting model for frac {frac_sample_size}: {e}")
+            results['time'][frac_sample_size] = np.nan
+            results['adj_accuracy'][frac_sample_size] = np.nan
+            results['ARI'][frac_sample_size] = np.nan
 
     return results
 
@@ -93,34 +117,7 @@ def get_avg_results(results, pivoted_results, iterable):
 
 ########################################################################################################################################################################
 
-def make_experiment_2(n_samples_list, models, random_state, metric=accuracy_score):
-    
-    results = {
-        'time': {k: {} for k in n_samples_list}, 
-        'adj_accuracy': {k: {} for k in n_samples_list}, 
-        'ARI': {k: {} for k in n_samples_list}, 
-    }
-
-    for model_name, model in models.items():
-        print(model_name)
-
-        for n_samples in n_samples_list:
-            print(n_samples)
-            
-            X, y = get_simulation_1(n_samples=n_samples, random_state=random_state)
-
-            start_time = time.time()
-            model.fit(X)
-            end_time = time.time()
-            results['time'][n_samples][model_name] = end_time - start_time
-            results['adj_accuracy'][n_samples][model_name], adj_labels = adjusted_score(y_pred=model.labels_, y_true=y, metric=metric)
-            results['ARI'][n_samples][model_name] = adjusted_rand_score(labels_pred=adj_labels, labels_true=y)
-
-    return results
-
-########################################################################################################################################################################
-
-def make_experiment_3(X, y, n_splits, frac_sample_sizes, n_clusters, method, init, max_iter, random_state, 
+def make_experiment_2(X, y, n_splits, frac_sample_sizes, n_clusters, method, init, max_iter, random_state, 
                       p1, p2, p3, d1, d2, d3, robust_method, alpha, epsilon, n_iters, shuffle, kfold_random_state,
                       VG_sample_size, VG_n_samples, metric=accuracy_score):
 
@@ -171,6 +168,35 @@ def make_experiment_3(X, y, n_splits, frac_sample_sizes, n_clusters, method, ini
                 print('Exception:', e)
 
     return results
+
+########################################################################################################################################################################
+
+'''
+def make_experiment_3(n_samples_list, models, random_state, metric=accuracy_score):
+    
+    results = {
+        'time': {k: {} for k in n_samples_list}, 
+        'adj_accuracy': {k: {} for k in n_samples_list}, 
+        'ARI': {k: {} for k in n_samples_list}, 
+    }
+
+    for model_name, model in models.items():
+        print(model_name)
+
+        for n_samples in n_samples_list:
+            print(n_samples)
+            
+            X, y = get_simulation_1(n_samples=n_samples, random_state=random_state)
+
+            start_time = time.time()
+            model.fit(X)
+            end_time = time.time()
+            results['time'][n_samples][model_name] = end_time - start_time
+            results['adj_accuracy'][n_samples][model_name], adj_labels = adjusted_score(y_pred=model.labels_, y_true=y, metric=metric)
+            results['ARI'][n_samples][model_name] = adjusted_rand_score(labels_pred=adj_labels, labels_true=y)
+
+    return results
+'''
 
 ########################################################################################################################################################################
 
@@ -313,5 +339,73 @@ def get_GGower_distances_names(quant_distances_names, binary_distances_names, mu
 
 def split_list_in_chunks(list, chunk_size):
     return [list[i : i + chunk_size] for i in range(0, len(list), chunk_size)]
+
+########################################################################################################################################################################
+
+def plot_experiment_1_results(
+        best_frac, best_acc, best_ari, best_time, 
+        x_data_pct, y_acc, y_ari, y_time,
+        data_name, num_realizations, save_path
+    ):
+
+    fig, axes = plt.subplots(1, 3, figsize=(17, 5))
+    axes = axes.flatten()
+
+    # --- SUBPLOT 1: Adjusted Accuracy ---
+    sns.lineplot(
+        x=[best_frac * 100], y=[best_acc], 
+        color='red', marker='o', markersize=10, ax=axes[0], label='Best Acc.'
+    )
+    sns.lineplot(
+        x=x_data_pct, y=y_acc, 
+        color='blue', marker='o', markersize=5, ax=axes[0]
+    )
+    axes[0].set_title('Adj. Accuracy vs. Sample Size', size=12, weight='bold')
+    axes[0].set_ylabel('Adj. Accuracy', size=11)
+    axes[0].legend() # Opcional: para mostrar la label del punto rojo
+
+    # --- SUBPLOT 2: ARI ---
+    sns.lineplot(
+        x=[best_frac * 100], y=[best_ari], 
+        color='red', marker='o', markersize=10, ax=axes[1]
+    )
+    sns.lineplot(
+        x=x_data_pct, y=y_ari, 
+        color='blue', marker='o', markersize=5, ax=axes[1]
+    )
+    axes[1].set_title('ARI vs. Sample Size', size=12, weight='bold')
+    axes[1].set_ylabel('ARI', size=11)
+
+    # --- SUBPLOT 3: Time ---
+    sns.lineplot(
+        x=[best_frac * 100], y=[best_time], 
+        color='red', marker='o', markersize=10, ax=axes[2]
+    )
+    sns.lineplot(
+        x=x_data_pct, y=y_time, 
+        color='blue', marker='o', markersize=5, ax=axes[2]
+    )
+    axes[2].set_title('Time vs. Sample Size', size=12, weight='bold')
+    axes[2].set_ylabel('Time (secs)', size=11)
+
+    # --- CONFIGURACIÓN COMÚN Y GUARDADO ---
+
+    for ax in axes:
+        ax.set_xlabel('Sample Size Parameter (%)', size=11)
+        # Grid opcional para mejor legibilidad
+        ax.grid(True, linestyle='--', alpha=0.5)
+
+    plt.subplots_adjust(top=0.83, hspace=0.5, wspace=0.23)
+
+    # Título global dinámico (usando variables si las tienes)
+    plt.suptitle(
+        f'Accuracy, ARI and Time vs. Sample Size Parameter\n{data_name.replace('_', ' ').capitalize()} - Realizations: {num_realizations}', 
+        fontsize=13, y=1.02, weight='bold', color='black', alpha=1
+    )
+
+    # Guardado
+    fig.savefig(save_path, format='png', dpi=300, bbox_inches="tight", pad_inches=0.2)
+
+    plt.show()
 
 ########################################################################################################################################################################

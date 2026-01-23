@@ -6,10 +6,11 @@ import polars as pl
 ################################################################################################
 
 # Paths
-current_path = os.path.dirname(os.path.abspath(__file__))
-data_path = os.path.join(current_path, '..', 'data')
+script_path = os.path.dirname(os.path.abspath(__file__))
+project_path = os.path.join(script_path, '..', '..')
+processed_data_dir = os.path.join(project_path, 'data', 'processed_data')
 data_filename = 'kc_houses.xlsx'
-data_file_path = os.path.join(data_path, data_filename)
+data_file_path = os.path.join(processed_data_dir, data_filename)
 
 ################################################################################################
 
@@ -98,12 +99,12 @@ output = {
 }
 
 output_file_name = "kc_houses_processed.pkl"
-output_file_path = os.path.join(data_path, output_file_name)
+output_file_path = os.path.join(processed_data_dir, output_file_name)
 
 with open(output_file_path, "wb") as f:
     pickle.dump(output, f)
 
-print(f'Outputs saved at {output_file_path}')
+print(f'✅ Output saved successfully at {output_file_path}')
 
 
 ################################################################################################

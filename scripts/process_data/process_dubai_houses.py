@@ -6,10 +6,12 @@ import polars as pl
 ################################################################################################
 
 # Paths
-current_path = os.path.dirname(os.path.abspath(__file__))
-data_path = os.path.join(current_path, '..', 'data')
+script_path = os.path.dirname(os.path.abspath(__file__))
+project_path = os.path.join(script_path, '..', '..')
+raw_data_dir = os.path.join(project_path, 'data', 'raw_data')
+processed_data_dir = os.path.join(project_path, 'data', 'processed_data')
 data_filename = 'dubai_houses.csv'
-data_file_path = os.path.join(data_path, data_filename)
+data_file_path = os.path.join(raw_data_dir, data_filename)
 
 ################################################################################################
 
@@ -72,16 +74,12 @@ output = {
 
 
 output_file_name = "dubai_houses_processed.pkl"
-df_file_name = "dubai_houses_processed.csv"
-output_file_path = os.path.join(data_path, output_file_name)
-df_file_path = os.path.join(data_path, df_file_name)
+output_file_path = os.path.join(processed_data_dir, output_file_name)
 
 with open(output_file_path, "wb") as f:
     pickle.dump(output, f)
 
-df = pl.concat([pl.DataFrame({response: y}), X], how='horizontal')
-df.write_csv(df_file_path)
-
-print(f'Outputs saved at {output_file_path}')
+print(output)
+print(f'✅ Output saved successfully at {output_file_path}')
 
 ################################################################################################
