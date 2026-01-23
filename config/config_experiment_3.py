@@ -1,8 +1,8 @@
 from sklearn.metrics import accuracy_score, balanced_accuracy_score
 
 EXPERIMENT_RANDOM_STATE = 123 
-N_REALIZATIONS = 10 #TODO: 100 en produccion
-CHUNK_SIZE = 5
+N_REALIZATIONS = 5 #TODO: 100 en produccion
+CHUNK_SIZE = 3
 
 BASE_CONFIG = {
     'method': 'pam',
@@ -20,9 +20,12 @@ BASE_CONFIG = {
     'n_iters': 20,
     'VG_sample_size': 1000,
     'VG_n_samples': 5,
+    'shuffle': True, 
+    'kfold_random_state': 111,
     # Valores por defecto para variables que cambian a veces
     'n_clusters': 3, 
-    'frac_sample_sizes': [0.0005, 0.005, 0.01, 0.05, 0.1, 0.20],
+    'frac_sample_sizes': [0.005, 0.05, 0.1, 0.15],
+    'n_splits': [5, 10, 20, 40],
     'metric': accuracy_score
 }
 
@@ -36,12 +39,13 @@ CONFIG_EXPERIMENT = {
 
     'simulation_1': {
         **BASE_CONFIG, 
-        'frac_sample_sizes': [0.0005, 0.005, 0.01, 0.05, 0.1, 0.2, 0.35],
+        'frac_sample_sizes': [0.005, 0.05, 0.1, 0.25],
         'n_clusters': 4
     },
 
     'simulation_2': {
         **BASE_CONFIG,
+        'frac_sample_sizes': [0.005, 0.05, 0.1, 0.25],
         'n_clusters': 4
     },
 
@@ -51,7 +55,7 @@ CONFIG_EXPERIMENT = {
 
     'simulation_4': {
         **BASE_CONFIG,
-        'frac_sample_sizes': [0.0005, 0.005, 0.01, 0.05, 0.08]
+        'frac_sample_sizes': [0.0005, 0.005, 0.01]
     },
 
     'simulation_5': {
@@ -70,6 +74,7 @@ CONFIG_EXPERIMENT = {
     'dubai_houses': {
         **BASE_CONFIG,
         'frac_sample_sizes': [0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9],
+        'n_splits': [5, 10, 15],
         'n_clusters': None,
         'p1': None,
         'p2': None,
@@ -80,6 +85,7 @@ CONFIG_EXPERIMENT = {
     'heart_disease': {
         **BASE_CONFIG,
         'frac_sample_sizes': [0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9],
+        'n_splits': [3, 5, 7, 10],
         'n_clusters': None,
         'p1': None,
         'p2': None,
@@ -88,7 +94,8 @@ CONFIG_EXPERIMENT = {
 
     'kc_houses': {
         **BASE_CONFIG,
-        'frac_sample_sizes': [0.005, 0.01, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5],
+        'frac_sample_sizes': [0.2, 0.35, 0.5, 0.6],
+        'n_splits': [5, 10, 15],
         'n_clusters': None,
         'p1': None,
         'p2': None,

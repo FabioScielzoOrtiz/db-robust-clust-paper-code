@@ -10,6 +10,7 @@ import pickle
 import logging
 import argparse
 import polars as pl
+from tqdm import tqdm
 
 ###########################################################################################
 
@@ -21,7 +22,7 @@ logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 ###########################################################################################
 
 # --- ARGUMENT PARSING ---
-parser = argparse.ArgumentParser(description="Run Experiment 2 Simulations")
+parser = argparse.ArgumentParser(description="Run Experiment 3 Simulations")
 parser.add_argument('--data_id', type=str, required=True, help="ID of the simulation data configuration (e.g., 'simulation_1')")
 args = parser.parse_args()
 
@@ -34,8 +35,7 @@ DATA_ID = args.data_id
 script_path = os.path.dirname(os.path.abspath(__file__))
 project_path = os.path.join(script_path, '..', '..')
 processed_data_dir = os.path.join(project_path, 'data', 'processed_data')
-results_dir = os.path.join(project_path, 'results', 'experiment_2', DATA_ID)
-
+results_dir = os.path.join(project_path, 'results', 'experiment_3', DATA_ID)
 sys.path.append(project_path)
 
 ###########################################################################################
@@ -44,11 +44,11 @@ sys.path.append(project_path)
 
 from src.experiments_utils import (
     split_list_in_chunks,
-    make_experiment_2
+    make_experiment_3
 )
 from src.simulations_utils import generate_simulation
 
-from config.config_experiment_2 import (
+from config.config_experiment_3 import (
     CONFIG_EXPERIMENT, 
     EXPERIMENT_RANDOM_STATE,
     N_REALIZATIONS, 
@@ -63,9 +63,9 @@ from config.config_simulations import SIMULATION_CONFIGS
 
 def main():
     """
-    Main execution flow of the Experiment 2 pipeline with Resume Capability.
+    Main execution flow of the Experiment 1 pipeline with Resume Capability.
     """
-    logging.info(f"▶️ STARTING EXPERIMENT 2 FOR DATA_ID: {DATA_ID}")
+    logging.info(f"▶️ STARTING EXPERIMENT 3 FOR DATA_ID: {DATA_ID}")
 
     # 0. Validate Configuration
     if DATA_ID not in CONFIG_EXPERIMENT:
@@ -93,7 +93,7 @@ def main():
     # Filtramos: ¿Qué chunks faltan realmente?
     chunks_to_process = []
     for chunk_id, chunk_seeds in enumerate(all_chunks):
-        chunk_filename = f'results_exp_2_{DATA_ID}_chunk_{chunk_id}.pkl'
+        chunk_filename = f'results_exp_3_{DATA_ID}_chunk_{chunk_id}.pkl'
         chunk_path = os.path.join(results_dir, chunk_filename)
         
         if not os.path.exists(chunk_path):
@@ -155,11 +155,11 @@ def main():
         logging.info("STEP 4: Running experiments loop for missing chunks...")
         
         # Iteramos solo sobre la lista filtrada 'chunks_to_process'
-        for chunk_id, random_state_chunk in chunks_to_process:
+        for chunk_id, random_state_chunk in tqdm(chunks_to_process, desc='Processing Chunks'):
             results = {}
             for random_state in random_state_chunk:
                 try:
-                    results[random_state] = make_experiment_2(
+                    results[random_state] = make_experiment_3(
                         **experiment_config,
                         X=X, 
                         y=y,
@@ -175,7 +175,7 @@ def main():
             # Verificamos si tenemos TODOS los resultados esperados.
             # Si hubo un break o error, len(results) será menor que len(random_state_chunk)
             if len(results) == len(random_state_chunk):
-                results_filename = f'results_exp_2_{DATA_ID}_chunk_{chunk_id}.pkl'
+                results_filename = f'results_exp_3_{DATA_ID}_chunk_{chunk_id}.pkl'
                 results_save_path = os.path.join(results_dir, results_filename)
                 try:
                     with open(results_save_path, 'wb') as f:
@@ -191,7 +191,7 @@ def main():
     logging.info("STEP 5: Consolidating and merging results...")
 
     # Definimos la ruta final AHORA para verificar si ya existe
-    final_filename = f'results_exp_2_{DATA_ID}.pkl'
+    final_filename = f'results_exp_3_{DATA_ID}.pkl'
     final_save_path = os.path.join(results_dir, final_filename)
 
     # --- CONDICIÓN DE SALIDA TEMPRANA ---
@@ -212,7 +212,7 @@ def main():
     # Iteramos sobre range(n_total) para asegurar que unimos todo (viejo + nuevo)
     for chunk_id in range(n_total):
         
-        chunk_filename = f'results_exp_2_{DATA_ID}_chunk_{chunk_id}.pkl'
+        chunk_filename = f'results_exp_3_{DATA_ID}_chunk_{chunk_id}.pkl'
         chunk_path = os.path.join(results_dir, chunk_filename)
         
         if not os.path.exists(chunk_path):
