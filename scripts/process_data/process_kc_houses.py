@@ -1,6 +1,6 @@
 ################################################################################################
 
-import os, pickle
+import os, json
 import polars as pl
 
 ################################################################################################
@@ -8,9 +8,11 @@ import polars as pl
 # Paths
 script_path = os.path.dirname(os.path.abspath(__file__))
 project_path = os.path.join(script_path, '..', '..')
+raw_dat_dir = os.path.join(project_path, 'data', 'raw_data')
 processed_data_dir = os.path.join(project_path, 'data', 'processed_data')
+os.makedirs(processed_data_dir, exist_ok=True)
 data_filename = 'kc_houses.xlsx'
-data_file_path = os.path.join(processed_data_dir, data_filename)
+data_file_path = os.path.join(raw_dat_dir, data_filename)
 
 ################################################################################################
 
@@ -95,36 +97,34 @@ p3 = len(multiclass_predictors)
 
 ################################################################################################
 
-X = df[quant_predictors + binary_predictors + multiclass_predictors]
-y = df[response]
+n_clusters = len(df[response].unique())
 
 ################################################################################################
 
-n_clusters = len(y.unique())
-
-################################################################################################
-
-output = {
-    'df': df, 
-    'X': X, 
-    'y': y, 
+metadata = {
     'p1': p1, 
     'p2': p2, 
     'p3': p3,
     'n_clusters': n_clusters,
     'encoding': encoding,
+    'response': response,
     'quant_predictors': quant_predictors,
     'binary_predictors': binary_predictors,
     'multiclass_predictors': multiclass_predictors
 }
 
-output_file_name = "kc_houses_processed.pkl"
-output_file_path = os.path.join(processed_data_dir, output_file_name)
+################################################################################################
 
-with open(output_file_path, "wb") as f:
-    pickle.dump(output, f)
+metadata_file_name = "metadata_kc_houses.json"
+processed_data_file_name = "kc_houses_processed.parquet"
+metadata_file_path = os.path.join(processed_data_dir, metadata_file_name)
+processed_data_file_path = os.path.join(processed_data_dir, processed_data_file_name)
 
-print(f'✅ Output saved successfully at {output_file_path}')
+with open(metadata_file_path, 'w', encoding='utf-8') as f:
+    json.dump(metadata, f, indent=4, ensure_ascii=False)
 
+df.write_parquet(processed_data_file_path)
+
+print(f'✅ Outputs saved successfully at {processed_data_dir}')
 
 ################################################################################################

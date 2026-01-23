@@ -1,6 +1,6 @@
 ################################################################################################
 
-import os, pickle
+import os, json
 from ucimlrepo import fetch_ucirepo 
 import polars as pl
 
@@ -10,6 +10,7 @@ import polars as pl
 script_path = os.path.dirname(os.path.abspath(__file__))
 project_path = os.path.join(script_path, '..', '..')
 processed_data_dir = os.path.join(project_path, 'data', 'processed_data')
+os.makedirs(processed_data_dir, exist_ok=True)
 
 ################################################################################################
 
@@ -79,31 +80,34 @@ p3 = len(multiclass_predictors)
 
 ################################################################################################
 
-n_clusters = len(y.unique())
+n_clusters = len(df[response].unique())
 
 ################################################################################################
 
-# Save outputs
-
-output = {
-    'X': X, 
-    'y': y, 
+metadata = {
     'p1': p1, 
     'p2': p2, 
     'p3': p3,
     'n_clusters': n_clusters,
     'encoding': encoding,
+    'response': response,
     'quant_predictors': quant_predictors,
     'binary_predictors': binary_predictors,
     'multiclass_predictors': multiclass_predictors
 }
 
-output_file_name = "students_performance_processed.pkl"
-output_file_path = os.path.join(processed_data_dir, output_file_name)
+################################################################################################
 
-with open(output_file_path, "wb") as f:
-    pickle.dump(output, f)
+metadata_file_name = "metadata_students_performance.json"
+processed_data_file_name = "students_performance_processed.parquet"
+metadata_file_path = os.path.join(processed_data_dir, metadata_file_name)
+processed_data_file_path = os.path.join(processed_data_dir, processed_data_file_name)
 
-print(f'✅ Output saved successfully at {output_file_path}')
+with open(metadata_file_path, 'w', encoding='utf-8') as f:
+    json.dump(metadata, f, indent=4, ensure_ascii=False)
+
+df.write_parquet(processed_data_file_path)
+
+print(f'✅ Outputs saved successfully at {processed_data_dir}')
 
 ################################################################################################

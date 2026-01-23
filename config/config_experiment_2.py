@@ -1,5 +1,5 @@
 EXPERIMENT_RANDOM_STATE = 123 
-N_REALIZATIONS = 20 #TODO: 100 en produccion
+N_REALIZATIONS = 10 #TODO: 100 en produccion
 CHUNK_SIZE = 5
 
 BASE_CONFIG = {
@@ -23,7 +23,7 @@ BASE_CONFIG = {
     'frac_sample_sizes': [0.0005, 0.005, 0.01, 0.05, 0.1, 0.20]
 }
 
-CONFIG_EXPERIMENT_1 = {
+CONFIG_EXPERIMENT = {
 
     'simulation_testing': {
         **BASE_CONFIG, 

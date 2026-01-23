@@ -13,7 +13,44 @@ from collections import defaultdict
 
 ########################################################################################################################################################################
 
-def make_experiment_1(X, y, frac_sample_sizes, n_clusters, method, init, max_iter, random_state, 
+'''
+# TODO
+def make_experiment_1():
+
+    sample_sizes = [10000, 20000, 30000, 40000, 50000, 60000, 75000]
+
+    times = {}
+
+    for n in sample_sizes:
+        print(n)
+
+        X, Y = make_blobs(n_samples=n, centers=3, cluster_std=[2,2,3], n_features=8, random_state=123)
+        X = pd.DataFrame(X)      
+        X.columns = [f"X{i}" for i in range(1, X.shape[1]+1)]
+
+        # Se convierten dos variables cuantitativas a binarias, y otras dos a multiclase, discretizandolas.
+        X['X5'] = pd.cut(X['X5'], bins=[X['X5'].min()-1, X['X5'].mean(), X['X5'].max()+1], labels=False)
+        X['X6'] = pd.cut(X['X6'], bins=[X['X6'].min()-1, X['X6'].mean(), X['X6'].max()+1], labels=False)
+        X['X7'] = pd.cut(X['X7'], bins=[X['X7'].min()-1, X['X7'].quantile(0.25), X['X7'].quantile(0.50), X['X7'].quantile(0.75), X['X7'].max()+1], labels=False)
+        X['X8'] = pd.cut(X['X8'], bins=[X['X8'].min()-1, X['X8'].quantile(0.25), X['X8'].quantile(0.50), X['X8'].quantile(0.75), X['X8'].max()+1], labels=False)   
+
+        try:
+            start_time = time.time()
+            D_euclidean = Euclidean_dist_matrix(X)
+            kmedoids = KMedoids(n_clusters=3, metric='precomputed', method='pam', init='heuristic', max_iter=150, random_state=123)
+            kmedoids.fit(D_euclidean)
+            end_time = time.time()
+            times[n] = end_time - start_time
+        except:
+            times[n] = 'not feasible'
+
+    with open(r'../../results/kmedoids_slow/kmedoids_slow_times.pkl', 'wb') as file:
+        pickle.dump(times, file)   
+'''
+
+########################################################################################################################################################################
+
+def make_experiment_2(X, y, frac_sample_sizes, n_clusters, method, init, max_iter, random_state, 
                       p1, p2, p3, d1, d2, d3, robust_method, alpha, epsilon, n_iters, 
                       VG_sample_size, VG_n_samples, metric): 
 
@@ -117,7 +154,7 @@ def get_avg_results(results, pivoted_results, iterable):
 
 ########################################################################################################################################################################
 
-def make_experiment_2(X, y, n_splits, frac_sample_sizes, n_clusters, method, init, max_iter, random_state, 
+def make_experiment_3(X, y, n_splits, frac_sample_sizes, n_clusters, method, init, max_iter, random_state, 
                       p1, p2, p3, d1, d2, d3, robust_method, alpha, epsilon, n_iters, shuffle, kfold_random_state,
                       VG_sample_size, VG_n_samples, metric=accuracy_score):
 
@@ -169,34 +206,6 @@ def make_experiment_2(X, y, n_splits, frac_sample_sizes, n_clusters, method, ini
 
     return results
 
-########################################################################################################################################################################
-
-'''
-def make_experiment_3(n_samples_list, models, random_state, metric=accuracy_score):
-    
-    results = {
-        'time': {k: {} for k in n_samples_list}, 
-        'adj_accuracy': {k: {} for k in n_samples_list}, 
-        'ARI': {k: {} for k in n_samples_list}, 
-    }
-
-    for model_name, model in models.items():
-        print(model_name)
-
-        for n_samples in n_samples_list:
-            print(n_samples)
-            
-            X, y = get_simulation_1(n_samples=n_samples, random_state=random_state)
-
-            start_time = time.time()
-            model.fit(X)
-            end_time = time.time()
-            results['time'][n_samples][model_name] = end_time - start_time
-            results['adj_accuracy'][n_samples][model_name], adj_labels = adjusted_score(y_pred=model.labels_, y_true=y, metric=metric)
-            results['ARI'][n_samples][model_name] = adjusted_rand_score(labels_pred=adj_labels, labels_true=y)
-
-    return results
-'''
 
 ########################################################################################################################################################################
 
@@ -342,7 +351,31 @@ def split_list_in_chunks(list, chunk_size):
 
 ########################################################################################################################################################################
 
-def plot_experiment_1_results(
+'''
+# TODO
+def plot_experiment_2_results():
+    
+    times_values = np.array(list(times.values()))
+    times_values = times_values / 60 # to minutes
+    fig, ax = plt.subplots(figsize=(7,4))
+    ax = sns.lineplot(x=sample_sizes, y=times_values, color='blue', marker='o', markersize=6)
+    ax.set_ylabel('Time (min)', size=11)
+    ax.set_xlabel('Data Size', size=11)
+    plt.xticks(fontsize=10, rotation=0)
+    plt.yticks(fontsize=10)
+    ax.set_xticks(sample_sizes)
+    ax.set_yticks(np.round(np.linspace(np.min(times_values), np.max(times_values), 9), 0))
+    plt.title("Euclidean $k$-Medoids - Time vs Data Size - Simulated Data", fontsize=12.5, weight='bold')
+    plt.tight_layout()
+    plt.show()
+
+    file_name = '../../results/kmedoids_slow/kmedoids_slow_times'
+    fig.savefig(file_name + '.jpg', format='jpg', dpi=500)
+'''
+
+########################################################################################################################################################################
+
+def plot_experiment_2_results(
         best_frac, best_acc, best_ari, best_time, 
         x_data_pct, y_acc, y_ari, y_time,
         data_name, num_realizations, save_path
@@ -354,7 +387,8 @@ def plot_experiment_1_results(
     # --- SUBPLOT 1: Adjusted Accuracy ---
     sns.lineplot(
         x=[best_frac * 100], y=[best_acc], 
-        color='red', marker='o', markersize=10, ax=axes[0], label='Best Acc.'
+        color='red', marker='o', markersize=10, ax=axes[0], 
+        #label='Best Acc.'
     )
     sns.lineplot(
         x=x_data_pct, y=y_acc, 
@@ -362,7 +396,7 @@ def plot_experiment_1_results(
     )
     axes[0].set_title('Adj. Accuracy vs. Sample Size', size=12, weight='bold')
     axes[0].set_ylabel('Adj. Accuracy', size=11)
-    axes[0].legend() # Opcional: para mostrar la label del punto rojo
+    #axes[0].legend(fontsize=9) # Opcional: para mostrar la label del punto rojo
 
     # --- SUBPLOT 2: ARI ---
     sns.lineplot(

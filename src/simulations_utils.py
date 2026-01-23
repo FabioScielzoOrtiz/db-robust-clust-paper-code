@@ -67,6 +67,7 @@ def generate_simulation(
 
 ########################################################################################################################################################################
 
+'''
 def get_simulation_testing(random_state=123, n_samples=5000, return_outlier_idx=False):
         
     # Data simulation
@@ -228,18 +229,8 @@ def get_simulation_7(random_state, return_outlier_idx=False):
         return X, y, outliers_idx
     else:
         return X, y
-    
-########################################################################################################################################################################
 
-GET_SIMULATION_FUNCTIONS = {
-    'simulation_1': get_simulation_1,
-    'simulation_2': get_simulation_2,
-    'simulation_3': get_simulation_3,
-    'simulation_4': get_simulation_4,
-    'simulation_5': get_simulation_5,
-    'simulation_6': get_simulation_6,
-    'simulation_7': get_simulation_7
-    }
+'''
 
 ########################################################################################################################################################################    
 
