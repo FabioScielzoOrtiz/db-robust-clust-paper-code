@@ -68,8 +68,7 @@ for col in cat_predictors + [response]:
 
 ################################################################################################
 
-X = df[quant_predictors + binary_predictors + multiclass_predictors]
-y = df[response]
+df = df[quant_predictors + binary_predictors + multiclass_predictors + [response]]
 
 ################################################################################################
 

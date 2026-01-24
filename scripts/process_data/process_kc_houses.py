@@ -50,7 +50,6 @@ df = df.with_columns(pl.col(response).cut(
     left_closed=True
 ).alias(response))
 
-
 ################################################################################################
 
 encoding = {}
@@ -94,6 +93,10 @@ multiclass_predictors = [col for col in cat_predictors if col not in binary_pred
 p1 = len(quant_predictors)
 p2 = len(binary_predictors)
 p3 = len(multiclass_predictors)
+
+################################################################################################
+
+df = df[quant_predictors + binary_predictors + multiclass_predictors + [response]]
 
 ################################################################################################
 

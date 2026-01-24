@@ -26,7 +26,6 @@ y = pl.from_pandas(heart_disease.data.targets)
 # Remove missing values
 df = pl.concat([X,y], how='horizontal').drop_nulls()
 X = df[:, :(df.shape[1]-1)]
-y = pl.DataFrame(df[:, df.shape[1]-1])
 
 ################################################################################################
 
@@ -34,7 +33,7 @@ y = pl.DataFrame(df[:, df.shape[1]-1])
 
 response = 'num'
 encoding = {response: {2: 1, 3: 1, 4: 1}}
-y = y.with_columns(pl.col(response).replace(encoding[response]).alias(response))
+df = df.with_columns(pl.col(response).replace(encoding[response]).alias(response))
 
 ################################################################################################
 
@@ -48,7 +47,9 @@ cat_predictors = [col for col in X.columns if col not in quant_predictors]
 binary_predictors = [col for col in cat_predictors if len_unique_values[col] == 2]
 multiclass_predictors = [col for col in cat_predictors if col not in binary_predictors]
 
-X = X[quant_predictors + binary_predictors + multiclass_predictors]
+################################################################################################
+
+df = df[quant_predictors + binary_predictors + multiclass_predictors + [response]]
 
 ################################################################################################
 

@@ -2,6 +2,7 @@
 
 import time
 import logging
+import polars as pl
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -375,11 +376,20 @@ def plot_experiment_2_results():
 
 ########################################################################################################################################################################
 
-def plot_experiment_2_results(
-        best_frac, best_acc, best_ari, best_time, 
-        x_data_pct, y_acc, y_ari, y_time,
-        data_name, num_realizations, save_path
-    ):
+def plot_experiment_2_results(df, data_name, num_realizations, save_path):
+
+    best_row = df.sort("adj_accuracy", descending=True).row(0, named=True)
+
+    best_frac = best_row["frac_sample_size"]
+    best_acc = best_row["adj_accuracy"]
+    best_ari = best_row["ARI"]
+    best_time = best_row["time"]
+
+    # Preparamos los datos para ejes X (convertidos a porcentaje) e Y
+    x_data_pct = df["frac_sample_size"] * 100
+    y_acc = df["adj_accuracy"]
+    y_ari = df["ARI"]
+    y_time = df["time"]
 
     fig, axes = plt.subplots(1, 3, figsize=(17, 5))
     axes = axes.flatten()
@@ -442,4 +452,92 @@ def plot_experiment_2_results(
 
     plt.show()
 
+########################################################################################################################################################################
+
+def plot_experiment_3_results(df, data_name, num_realizations, save_path):
+    """
+    Genera gráficos usando solo Polars.
+    El punto rojo en TODOS los gráficos corresponde a la configuración 
+    que obtuvo la mejor 'adj_accuracy'.
+    """
+
+    # 1. Obtener la MEJOR combinación basada SOLO en Accuracy
+    # Ordenamos descendente por accuracy y tomamos la primera fila
+    best_row = df.sort("adj_accuracy", descending=True).row(0, named=True)
+
+    # Extraemos los valores de esa fila ganadora
+    best_frac_pct = best_row['frac_sample_size'] * 100
+    
+    # Estos son los valores Y del punto rojo para cada gráfica
+    best_values = {
+        'adj_accuracy': best_row['adj_accuracy'],
+        'ARI': best_row['ARI'],
+        'time': best_row['time']
+    }
+
+    # 2. Configuración de Ejes y Métricas
+    fig, axes = plt.subplots(1, 3, figsize=(14, 5.5), sharex=True)
+    
+    metrics_config = [
+        (0, 'adj_accuracy', 'Adj. Accuracy'),
+        (1, 'ARI', 'ARI'),
+        (2, 'time', 'Time (secs)')
+    ]
+
+    # 3. Obtener lista de folds únicos (usando sintaxis Polars)
+    # unique() devuelve una Serie, sort() la ordena
+    folds = df["n_splits"].unique().sort()
+
+    # --- BUCLE DE PLOTEO ---
+    for ax_idx, col_name, title_prefix in metrics_config:
+        ax = axes[ax_idx]
+        
+        # A. Iterar sobre cada Fold para pintar las líneas azules
+        for k in folds:
+            # Filtrado estilo Polars
+            subset = df.filter(pl.col("n_splits") == k)
+            
+            # Es importante ordenar por X para que la línea se dibuje bien
+            subset = subset.sort("frac_sample_size")
+            
+            # Plotting: Polars requiere .to_list() para pasar los datos a matplotlib
+            ax.plot(
+                (subset['frac_sample_size'] * 100).to_list(), 
+                subset[col_name].to_list(), 
+                marker='o', markersize=5, 
+                label=f"{k}-Fold"
+            )
+
+        # B. Pintar el PUNTO ROJO (Basado en la mejor Accuracy)
+        # Usamos el valor correspondiente de 'best_values' para el eje Y actual
+        ax.plot(
+            [best_frac_pct],           # X: El porcentaje de la mejor fila
+            [best_values[col_name]],   # Y: El valor de la métrica actual de la mejor fila
+            marker='o', markersize=7, color='red', 
+            zorder=10, label='Best Acc.' if ax_idx == 0 else ""
+        )
+
+        # C. Estética
+        ax.set_title(f"{title_prefix} vs\nNumber of Folds and Sample Size", fontsize=11, fontweight='bold')
+        ax.set_xlabel("Sample Size Parameter (%)", size=11)
+        ax.set_ylabel(title_prefix, size=11)
+        ax.grid(True, linestyle='--', alpha=0.5)
+
+    # --- FINALIZACIÓN ---
+    fig.suptitle(
+        f"Results (Highlighted: Best Accuracy Configuration)\n{data_name.replace('_', ' ').capitalize()} - Realizations: {num_realizations}", 
+        fontsize=13, fontweight='bold', y=0.98
+    )
+
+    # Leyenda (tomada del primer gráfico)
+    handles, labels = axes[0].get_legend_handles_labels()
+    # Filtramos duplicados en la leyenda por si acaso
+    by_label = dict(zip(labels, handles))
+    fig.legend(by_label.values(), by_label.keys(), loc='lower center', ncol=len(folds)+1, fontsize=10, bbox_to_anchor=(0.5, 0.0))
+
+    plt.tight_layout(rect=[0, 0.08, 1, 0.93])
+
+    fig.savefig(save_path, format='png', dpi=300, bbox_inches="tight", pad_inches=0.2)
+    plt.show()
+    
 ########################################################################################################################################################################

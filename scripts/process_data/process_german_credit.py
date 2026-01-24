@@ -89,6 +89,9 @@ p1 = len(quant_predictors)
 p2 = len(binary_predictors)
 p3 = len(multiclass_predictors)
 
+################################################################################################
+
+df = df[quant_predictors + binary_predictors + multiclass_predictors + [response]]
 
 ################################################################################################
 
