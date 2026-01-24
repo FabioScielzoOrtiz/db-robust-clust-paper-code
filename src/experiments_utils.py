@@ -9,8 +9,16 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from db_robust_clust.models import FastKmedoidsGGower, FoldFastKmedoidsGGower
 from db_robust_clust.metrics import adjusted_score
-from sklearn.metrics import accuracy_score, adjusted_rand_score
+from sklearn.metrics import adjusted_rand_score
 from collections import defaultdict
+from db_robust_clust.models import FastKmedoidsGGower, FoldFastKmedoidsGGower
+from sklearn_extra.cluster import KMedoids, CLARA
+from sklearn.cluster import (KMeans, AgglomerativeClustering,
+                             SpectralClustering, SpectralBiclustering, SpectralCoclustering, Birch, 
+                             BisectingKMeans, MiniBatchKMeans)
+from sklearn.mixture import GaussianMixture
+from clustpy.partition import SubKmeans, LDAKmeans
+from clustpy.hierarchical import Diana
 
 ########################################################################################################################################################################
 
@@ -53,7 +61,7 @@ def make_experiment_1():
 
 def make_experiment_2(X, y, frac_sample_sizes, n_clusters, method, init, max_iter, random_state, 
                       p1, p2, p3, d1, d2, d3, robust_method, alpha, epsilon, n_iters, 
-                      VG_sample_size, VG_n_samples, metric): 
+                      VG_sample_size, VG_n_samples, score_metric): 
 
     # Logger local para tener contexto
     logger = logging.getLogger(__name__)
@@ -107,7 +115,7 @@ def make_experiment_2(X, y, frac_sample_sizes, n_clusters, method, init, max_ite
                 logger.warning(f"     ⚠️ Cluster Mismatch: Expected {n_clusters}, found {n_found_clusters} unique labels.")
 
             # 4. Cálculo de Métricas
-            acc, adj_labels = adjusted_score(y_pred=fast_kmedoids.labels_, y_true=y, metric=metric)
+            acc, adj_labels = adjusted_score(y_pred=fast_kmedoids.labels_, y_true=y, metric=score_metric)
             ari = adjusted_rand_score(labels_pred=adj_labels, labels_true=y)
 
             results['adj_accuracy'][frac_sample_size] = acc
@@ -157,7 +165,7 @@ def get_avg_results(results, pivoted_results, iterable):
 
 def make_experiment_3(X, y, n_splits, frac_sample_sizes, n_clusters, method, init, max_iter, random_state, 
                       p1, p2, p3, d1, d2, d3, robust_method, alpha, epsilon, n_iters, shuffle, kfold_random_state,
-                      VG_sample_size, VG_n_samples, metric=accuracy_score):
+                      VG_sample_size, VG_n_samples, score_metric):
 
     results = {
         'time': {k: {} for k in n_splits},
@@ -200,7 +208,7 @@ def make_experiment_3(X, y, n_splits, frac_sample_sizes, n_clusters, method, ini
                 fold_fast_kmedoids.fit(X=X) 
                 end_time = time.time()
                 results['time'][split][frac_sample_size] = end_time - start_time
-                results['adj_accuracy'][split][frac_sample_size], adj_labels = adjusted_score(y_pred=fold_fast_kmedoids.labels_, y_true=y, metric=metric)
+                results['adj_accuracy'][split][frac_sample_size], adj_labels = adjusted_score(y_pred=fold_fast_kmedoids.labels_, y_true=y, metric=score_metric)
                 results['ARI'][split][frac_sample_size] = adjusted_rand_score(labels_pred=adj_labels, labels_true=y)           
             except Exception as e:
                 print('Exception:', e)
@@ -210,7 +218,7 @@ def make_experiment_3(X, y, n_splits, frac_sample_sizes, n_clusters, method, ini
 
 ########################################################################################################################################################################
 
-def make_experiment_4(X, y, models, metric=accuracy_score):
+def make_experiment_4(X, y, models, score_metric):
     
     model_names = list(models.keys())
 
@@ -225,7 +233,7 @@ def make_experiment_4(X, y, models, metric=accuracy_score):
     X_np = X.to_numpy()
 
     for model_name, model in models.items():
-        print(model_name)
+        print(f'Running model: {model_name}')
 
         start_time = time.time()
         if model_name in ['SubKmeans', 'DipInit']:
@@ -241,8 +249,7 @@ def make_experiment_4(X, y, models, metric=accuracy_score):
             results['labels'][model_name] = model.row_labels_
         else:
             results['labels'][model_name] = model.labels_
-        print('len y_pred:', len(np.unique(results['labels'][model_name])))
-        results['adj_accuracy'][model_name], results['adj_labels'][model_name] = adjusted_score(y_pred=results['labels'][model_name] , y_true=y, metric=metric)
+        results['adj_accuracy'][model_name], results['adj_labels'][model_name] = adjusted_score(y_pred=results['labels'][model_name] , y_true=y, metric=score_metric)
         results['ARI'][model_name] = adjusted_rand_score(labels_pred=results['adj_labels'][model_name], labels_true=y)
 
 
@@ -331,7 +338,7 @@ def avg_results_to_dfs(avg_results, column_1, column_2):
 
 ########################################################################################################################################################################
 
-def get_GGower_distances_names(quant_distances_names, binary_distances_names, multiclass_distances_names, robust_method):
+def get_ggower_distances_names(quant_distances_names, binary_distances_names, multiclass_distances_names, robust_method):
 
     combinations_names = []
     for d1 in quant_distances_names:
@@ -373,6 +380,149 @@ def plot_experiment_2_results():
     file_name = '../../results/kmedoids_slow/kmedoids_slow_times'
     fig.savefig(file_name + '.jpg', format='jpg', dpi=500)
 '''
+
+########################################################################################################################################################################
+
+def get_clustering_models(experiment_config, random_state, ggower_distances_names):
+
+        models= {
+
+            'KMeans': KMeans(
+                n_clusters=experiment_config['n_clusters'],
+                max_iter=experiment_config['max_iter'],
+                init='k-means++', 
+                n_init='auto',
+                random_state = random_state,
+                ),
+
+            'CLARA': CLARA(
+                n_clusters=experiment_config['n_clusters'], 
+                metric='euclidean',
+                #random_state = random_state # has not random_state parameter
+                ),
+
+            'Diana': Diana(
+                n_clusters=experiment_config['n_clusters'],
+                #random_state = random_state # has not random_state parameter
+                ),
+
+            'LDAKmeans': LDAKmeans(
+                n_clusters=experiment_config['n_clusters'], 
+                #random_state = random_state # has not random_state parameter
+                ),
+
+            'SubKmeans': SubKmeans(
+                n_clusters=experiment_config['n_clusters'],
+                #random_state = random_state # has not random_state parameter
+                ),
+
+            'GaussianMixture': GaussianMixture(
+                n_components=experiment_config['n_clusters'],
+                random_state = random_state
+                ),
+
+            'AgglomerativeClustering': AgglomerativeClustering(
+                n_clusters=experiment_config['n_clusters'],
+                #random_state = random_state # has not random_state parameter
+                ),
+
+            'SpectralBiclustering': SpectralBiclustering(
+                n_clusters=experiment_config['n_clusters'],
+                random_state = random_state
+                ),
+
+            'SpectralCoclustering': SpectralCoclustering(
+                n_clusters=experiment_config['n_clusters'],
+                random_state = random_state
+                ),
+
+            'Birch': Birch(
+                n_clusters=experiment_config['n_clusters'],
+                #random_state = random_state # has not random_state parameter
+                ),
+
+            'BisectingKMeans': BisectingKMeans(
+                n_clusters=experiment_config['n_clusters'],
+                max_iter=experiment_config['max_iter'],
+                random_state = random_state
+                ),
+
+            'MiniBatchKMeans': MiniBatchKMeans(
+                n_clusters=experiment_config['n_clusters'],
+                max_iter=experiment_config['max_iter'],
+                random_state = random_state
+                ),
+            
+            'KMedoids-euclidean': KMedoids(
+                n_clusters=experiment_config['n_clusters'], 
+                method=experiment_config['method'], 
+                init=experiment_config['init'], 
+                max_iter=experiment_config['max_iter'], 
+                metric='euclidean',
+                random_state = random_state
+                ),
+            
+        }
+
+        for d in ggower_distances_names:
+
+            d1, d2, d3 = d.split('-')
+
+            if 'robust' in d1:
+                r = d1.split('_')[-1]
+                d1 = '_'.join(d1.split('_')[:2])
+                
+            models[f'FastKmedoidsGGower-{d1}_{r}-{d2}-{d3}'] = FastKmedoidsGGower(
+                    n_clusters=experiment_config['n_clusters'], 
+                    method=experiment_config['method'], 
+                    init=experiment_config['init'], 
+                    max_iter=experiment_config['max_iter'], 
+                    frac_sample_size=experiment_config['frac_sample_size'], 
+                    p1=experiment_config['p1'], 
+                    p2=experiment_config['p2'], 
+                    p3=experiment_config['p3'], 
+                    d1=d1, 
+                    d2=d2, 
+                    d3=d3, 
+                    robust_method=r, 
+                    alpha=experiment_config['alpha'], 
+                    epsilon=experiment_config['epsilon'], 
+                    n_iters=experiment_config['n_iters'],
+                    VG_sample_size=experiment_config['VG_sample_size'], 
+                    VG_n_samples=experiment_config['VG_n_samples'],
+                    random_state = random_state
+                ) 
+
+            models[f'FoldFastKmedoidsGGower-{d1}_{r}-{d2}-{d3}'] = FoldFastKmedoidsGGower(
+                    n_clusters=experiment_config['n_clusters'], 
+                    method=experiment_config['method'], 
+                    init=experiment_config['init'], 
+                    max_iter=experiment_config['max_iter'], 
+                    frac_sample_size=experiment_config['frac_sample_size'], 
+                    p1=experiment_config['p1'], 
+                    p2=experiment_config['p2'], 
+                    p3=experiment_config['p3'], 
+                    d1=d1, 
+                    d2=d2, 
+                    d3=d3, 
+                    robust_method=r, 
+                    alpha=experiment_config['alpha'], 
+                    epsilon=experiment_config['epsilon'], 
+                    n_iters=experiment_config['n_iters'],
+                    VG_sample_size=experiment_config['VG_sample_size'], 
+                    VG_n_samples=experiment_config['VG_n_samples'],
+                    n_splits=experiment_config['n_splits'], 
+                    shuffle=experiment_config['shuffle'], 
+                    kfold_random_state=experiment_config['kfold_random_state'],
+                    random_state = random_state
+                ) 
+            
+        return models
+
+########################################################################################################################################################################
+
+def plot_experiment_1_results():
+    pass
 
 ########################################################################################################################################################################
 
@@ -540,4 +690,9 @@ def plot_experiment_3_results(df, data_name, num_realizations, save_path):
     fig.savefig(save_path, format='png', dpi=300, bbox_inches="tight", pad_inches=0.2)
     plt.show()
     
+########################################################################################################################################################################
+
+def plot_experiment_4_results():
+    pass
+
 ########################################################################################################################################################################

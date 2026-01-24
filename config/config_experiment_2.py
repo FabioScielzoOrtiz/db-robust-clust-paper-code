@@ -23,7 +23,7 @@ BASE_CONFIG = {
     # Valores por defecto para variables que cambian a veces
     'n_clusters': 3, 
     'frac_sample_sizes': [0.0005, 0.005, 0.01, 0.05, 0.1, 0.20],
-    'metric': accuracy_score
+    'score_metric': accuracy_score
 }
 
 CONFIG_EXPERIMENT = {
@@ -74,7 +74,7 @@ CONFIG_EXPERIMENT = {
         'p1': None,
         'p2': None,
         'p3': None,
-        'metric': balanced_accuracy_score
+        'score_metric': balanced_accuracy_score
     },
 
     'heart_disease': {
@@ -93,7 +93,7 @@ CONFIG_EXPERIMENT = {
         'p1': None,
         'p2': None,
         'p3': None,
-        'metric': balanced_accuracy_score
+        'score_metric': balanced_accuracy_score
     },
 
 }

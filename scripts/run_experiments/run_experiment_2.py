@@ -73,6 +73,8 @@ def main():
         sys.exit(1)
     
     experiment_config = CONFIG_EXPERIMENT[DATA_ID]
+
+    ###########################################################################################
  
     # 1. Setup Environment
     logging.info("STEP 1: Setting up environment and directories...")
@@ -81,6 +83,8 @@ def main():
         os.makedirs(results_dir, exist_ok=True)
     else:
         logging.info(f" -> Output directory already exists: {results_dir}")
+
+    ###########################################################################################
 
     # 2. Prepare Random States & Identify Missing Chunks (ANTES DE GENERAR DATOS)
     logging.info("STEP 2: Checking existing work...")
@@ -107,6 +111,8 @@ def main():
     logging.info(f" -> Already generated: {n_existing}")
     logging.info(f" -> Remaining to process: {n_missing}")
 
+    ###########################################################################################
+
     # 3. Data Generation (Solo si hace falta procesar algo)
     # Si todo está generado, nos saltamos la generación de datos para ahorrar tiempo/RAM
     X, y = None, None
@@ -114,15 +120,20 @@ def main():
     if n_missing > 0:
         logging.info(f"STEP 3: Fetching Data...")
         try:
-            is_simulation = DATA_ID in SIMULATION_CONFIGS
+            simulation_names = list(SIMULATION_CONFIGS.keys())
+            is_simulation = DATA_ID in simulation_names
+
             if is_simulation:
+                
                 simulation_config = SIMULATION_CONFIGS[DATA_ID]
                 X, y = generate_simulation(
                     **simulation_config,
                     random_state=EXPERIMENT_RANDOM_STATE,
                     return_outlier_idx=False
                 )
-            else: # real data
+                logging.info(f" -> Data fetched successfully. Shape: {X.shape}")
+
+            else:  
                
                 metadata_file_name = f"metadata_{DATA_ID}.json"
                 processed_data_file_name = f"{DATA_ID}_processed.parquet"
@@ -143,12 +154,15 @@ def main():
                     'n_clusters': metadata['n_clusters']
                 })
                 
-            logging.info(f" -> Data fetched successfully. Shape: {X.shape}")
+                logging.info(f" -> Data fetched successfully. Shape: {X.shape}")
+                            
         except Exception as e:
             logging.error(f"Failed to fetch data: {e}")
             sys.exit(1)
     else:
         logging.info("STEP 3: Skipping data generation (All chunks exist).")
+
+    ###########################################################################################
 
     # 4. Run Experiments Loop (Solo sobre los faltantes)
     if n_missing > 0:
@@ -186,6 +200,8 @@ def main():
                 logging.warning(f"   ⚠️  Skipping save for Chunk {chunk_id}: Incomplete results ({len(results)}/{len(random_state_chunk)}) due to errors.")
     else:
         logging.info("STEP 4: Nothing to process. Proceeding to merge.")
+
+    ###########################################################################################
 
     # 5. Consolidacion inteligente
     logging.info("STEP 5: Consolidating and merging results...")
@@ -236,6 +252,8 @@ def main():
     if total_loaded == 0:
         logging.error("No results were loaded. Exiting before saving.")
         sys.exit(1)
+
+    ###########################################################################################
 
     # 6. Save Final Merged Results
     logging.info("STEP 6: Saving final consolidated file...")

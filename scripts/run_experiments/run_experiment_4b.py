@@ -22,7 +22,7 @@ logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 ###########################################################################################
 
 # --- ARGUMENT PARSING ---
-parser = argparse.ArgumentParser(description="Run Experiment 3 Simulations")
+parser = argparse.ArgumentParser(description="Run Experiment 4b Simulations")
 parser.add_argument('--data_id', type=str, required=True, help="ID of the simulation data configuration (e.g., 'simulation_1')")
 args = parser.parse_args()
 
@@ -35,7 +35,7 @@ DATA_ID = args.data_id
 script_path = os.path.dirname(os.path.abspath(__file__))
 project_path = os.path.join(script_path, '..', '..')
 processed_data_dir = os.path.join(project_path, 'data', 'processed_data')
-results_dir = os.path.join(project_path, 'results', 'experiment_3', DATA_ID)
+results_dir = os.path.join(project_path, 'results', 'experiment_4b', DATA_ID)
 sys.path.append(project_path)
 
 ###########################################################################################
@@ -44,11 +44,13 @@ sys.path.append(project_path)
 
 from src.experiments_utils import (
     split_list_in_chunks,
-    make_experiment_3
+    get_clustering_models,
+    get_ggower_distances_names,
+    make_experiment_4
 )
 from src.simulations_utils import generate_simulation
 
-from config.config_experiment_3 import (
+from config.config_experiment_4b import (
     CONFIG_EXPERIMENT, 
     EXPERIMENT_RANDOM_STATE,
     N_REALIZATIONS, 
@@ -56,16 +58,15 @@ from config.config_experiment_3 import (
 )
 from config.config_simulations import SIMULATION_CONFIGS
 
-
 ###########################################################################################
 
 # --- MAIN EXECUTION ---
 
 def main():
     """
-    Main execution flow of the Experiment 1 pipeline with Resume Capability.
+    Main execution flow of the Experiment 4b pipeline with Resume Capability.
     """
-    logging.info(f"▶️ STARTING EXPERIMENT 3 FOR DATA_ID: {DATA_ID}")
+    logging.info(f"▶️ STARTING EXPERIMENT 4b FOR DATA_ID: {DATA_ID}")
 
     # 0. Validate Configuration
     if DATA_ID not in CONFIG_EXPERIMENT:
@@ -73,9 +74,7 @@ def main():
         sys.exit(1)
     
     experiment_config = CONFIG_EXPERIMENT[DATA_ID]
-    
-    ###########################################################################################
-    
+ 
     # 1. Setup Environment
     logging.info("STEP 1: Setting up environment and directories...")
     if not os.path.exists(results_dir):
@@ -83,8 +82,6 @@ def main():
         os.makedirs(results_dir, exist_ok=True)
     else:
         logging.info(f" -> Output directory already exists: {results_dir}")
-
-    ###########################################################################################
 
     # 2. Prepare Random States & Identify Missing Chunks (ANTES DE GENERAR DATOS)
     logging.info("STEP 2: Checking existing work...")
@@ -113,6 +110,22 @@ def main():
 
     ###########################################################################################
 
+    # 2. GGower distances definition
+    
+    quant_distances_names = ['robust_mahalanobis']
+    binary_distances_names = ['jaccard', 'sokal']
+    multiclass_distances_names = ['hamming']
+    robust_method = ['MAD', 'trimmed', 'winsorized']
+
+    ggower_distances_names = get_ggower_distances_names(
+        quant_distances_names, 
+        binary_distances_names, 
+        multiclass_distances_names, 
+        robust_method
+        )
+
+    #################################################################################################
+
     # 3. Data Generation (Solo si hace falta procesar algo)
     # Si todo está generado, nos saltamos la generación de datos para ahorrar tiempo/RAM
     X, y = None, None
@@ -122,17 +135,8 @@ def main():
         try:
             simulation_names = list(SIMULATION_CONFIGS.keys())
             is_simulation = DATA_ID in simulation_names
-
-            if is_simulation:
-                simulation_config = SIMULATION_CONFIGS[DATA_ID]
-                X, y = generate_simulation(
-                    **simulation_config,
-                    random_state=EXPERIMENT_RANDOM_STATE,
-                    return_outlier_idx=False
-                )
-                logging.info(f" -> Data fetched successfully. Shape: {X.shape}")
-           
-            else:  
+            
+            if not is_simulation: # real data 
                
                 metadata_file_name = f"metadata_{DATA_ID}.json"
                 processed_data_file_name = f"{DATA_ID}_processed.parquet"
@@ -152,8 +156,8 @@ def main():
                     'p3': metadata['p3'],
                     'n_clusters': metadata['n_clusters']
                 })
-                
-                logging.info(f" -> Data fetched successfully. Shape: {X.shape}")
+
+                logging.info(f" -> Data fetched successfully. Shape {X.shape}")
         
         except Exception as e:
             logging.error(f"Failed to fetch data: {e}")
@@ -172,12 +176,37 @@ def main():
             results = {}
             for random_state in random_state_chunk:
                 try:
-                    results[random_state] = make_experiment_3(
-                        **experiment_config,
+                    
+                    if is_simulation: # simulation
+                        
+                        models_random_state = experiment_config['random_state']
+                        simulation_config = SIMULATION_CONFIGS[DATA_ID]
+
+                        X, y = generate_simulation(
+                            **simulation_config,
+                            random_state=random_state,
+                            return_outlier_idx=False
+                        )
+
+                        logging.info(f" -> Data fetched successfully. Shape {X.shape}")
+
+                    else: # real data
+
+                        models_random_state = random_state
+
+                    models = get_clustering_models(
+                        random_state=models_random_state,
+                        experiment_config=experiment_config,
+                        ggower_distances_names=ggower_distances_names
+                    )
+
+                    results[random_state] = make_experiment_4(
                         X=X, 
                         y=y,
-                        random_state=random_state
+                        models=models,
+                        score_metric=experiment_config['score_metric']
                     )
+                    
                 except Exception as e:
                     logging.error(f"Error in chunk {chunk_id}, random_state {random_state}: {e}")
                     # Si falla uno, rompemos el bucle inmediatamente para no perder tiempo.
@@ -266,6 +295,12 @@ def main():
         sys.exit(1)
 
     logging.info("✅ EXPERIMENT PIPELINE FINISHED SUCCESSFULLY")
+
+###########################################################################################
+
+# TODO's
+
+# Implementar logica dentro de make_experiment_4 para identificar modelos que no sean factibles computacionalmente o que den errores de ejecucion y reportarlo en sus resultados. 
 
 ###########################################################################################
 

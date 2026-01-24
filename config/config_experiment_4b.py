@@ -1,3 +1,4 @@
+from sklearn.metrics import accuracy_score, balanced_accuracy_score
 EXPERIMENT_RANDOM_STATE = 123 
 N_REALIZATIONS = 10 #TODO: 100 en produccion
 CHUNK_SIZE = 5
@@ -23,6 +24,7 @@ BASE_CONFIG = {
     'kfold_random_state': 111,
     # Valores por defecto para variables que cambian a veces
     'n_clusters': 3, 
+    'score_metric': accuracy_score
 }
 
 CONFIG_EXPERIMENT = {
@@ -87,7 +89,8 @@ CONFIG_EXPERIMENT = {
         'n_clusters': None,
         'p1': None,
         'p2': None,
-        'p3': None
+        'p3': None,
+        'score_metric': balanced_accuracy_score
     },
 
     'heart_disease': {
@@ -109,7 +112,8 @@ CONFIG_EXPERIMENT = {
         'n_clusters': None,
         'p1': None,
         'p2': None,
-        'p3': None
+        'p3': None,
+        'score_metric': balanced_accuracy_score
     },
 
 }
