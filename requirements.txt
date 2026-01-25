@@ -16,3 +16,4 @@ aif360
 ucimlrepo
 pyarrow
 fastexcel
+func-timeout

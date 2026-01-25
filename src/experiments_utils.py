@@ -6,6 +6,7 @@ import polars as pl
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib.lines as mlines 
 import seaborn as sns
 from db_robust_clust.models import FastKmedoidsGGower, FoldFastKmedoidsGGower
 from db_robust_clust.metrics import adjusted_score
@@ -17,8 +18,9 @@ from sklearn.cluster import (KMeans, AgglomerativeClustering,
                              SpectralClustering, SpectralBiclustering, SpectralCoclustering, Birch, 
                              BisectingKMeans, MiniBatchKMeans)
 from sklearn.mixture import GaussianMixture
-from clustpy.partition import SubKmeans, LDAKmeans
+from clustpy.partition import SubKmeans, LDAKmeans, DipInit
 from clustpy.hierarchical import Diana
+from func_timeout import func_timeout, FunctionTimedOut 
 
 ########################################################################################################################################################################
 
@@ -126,9 +128,9 @@ def make_experiment_2(X, y, frac_sample_sizes, n_clusters, method, init, max_ite
 
         except Exception as e:
             logger.error(f"     ❌ Error fitting model for frac {frac_sample_size}: {e}")
-            results['time'][frac_sample_size] = np.nan
-            results['adj_accuracy'][frac_sample_size] = np.nan
-            results['ARI'][frac_sample_size] = np.nan
+            for k in results.keys():
+                results[k][frac_sample_size] = None
+            results['status'][frac_sample_size] = f"Error: {str(e)}"
 
     return results
 
@@ -210,15 +212,24 @@ def make_experiment_3(X, y, n_splits, frac_sample_sizes, n_clusters, method, ini
                 results['time'][split][frac_sample_size] = end_time - start_time
                 results['adj_accuracy'][split][frac_sample_size], adj_labels = adjusted_score(y_pred=fold_fast_kmedoids.labels_, y_true=y, metric=score_metric)
                 results['ARI'][split][frac_sample_size] = adjusted_rand_score(labels_pred=adj_labels, labels_true=y)           
+            
             except Exception as e:
-                print('Exception:', e)
+                logger.error(f"     ❌ Error fitting model for split {split} and frac {frac_sample_size}: {e}")
+                for k in results.keys():
+                    results[k][split][frac_sample_size] = None
+                results['status'][split][frac_sample_size] = f"Error: {str(e)}"
 
     return results
 
 
 ########################################################################################################################################################################
 
-def make_experiment_4(X, y, models, score_metric):
+import time
+import numpy as np
+
+def make_experiment_4(X, y, models, score_metric, 
+                      max_duration_mins=10 
+                      ):  
     
     model_names = list(models.keys())
 
@@ -227,31 +238,59 @@ def make_experiment_4(X, y, models, score_metric):
         'adj_accuracy': {k: {} for k in model_names}, 
         'ARI': {k: {} for k in model_names},
         'labels': {k: {} for k in model_names},
-        'adj_labels': {k: {} for k in model_names}
+        'adj_labels': {k: {} for k in model_names},
+        'status': {k: {} for k in model_names}
     }
-
-    X_np = X.to_numpy()
+    
+    if not isinstance(X, np.ndarray):
+        X = X.to_numpy()
 
     for model_name, model in models.items():
         print(f'Running model: {model_name}')
-
-        start_time = time.time()
-        if model_name in ['SubKmeans', 'DipInit']:
-            model.fit(X_np)
-        else:
-            model.fit(X)
-        end_time = time.time()
         
-        results['time'][model_name] = end_time - start_time
-        if model_name == 'GaussianMixture':
-            results['labels'][model_name] = model.predict(X)
-        elif 'Spectral' in model_name and model_name != 'SpectralClustering':
-            results['labels'][model_name] = model.row_labels_
-        else:
-            results['labels'][model_name] = model.labels_
-        results['adj_accuracy'][model_name], results['adj_labels'][model_name] = adjusted_score(y_pred=results['labels'][model_name] , y_true=y, metric=score_metric)
-        results['ARI'][model_name] = adjusted_rand_score(labels_pred=results['adj_labels'][model_name], labels_true=y)
+        try:
+            start_time = time.time()
+            
+            # --- CAMBIO PRINCIPAL ---
+            # Ejecutamos fit con un límite de tiempo.
+            # Si tarda más de 'max_duration', lanza una excepción 'FunctionTimedOut'
+            max_duration_secs = max_duration_mins * 60
+            func_timeout(max_duration_secs, model.fit, args=(X,))
+            # ------------------------
 
+            end_time = time.time()
+
+            results['time'][model_name] = end_time - start_time
+            
+            # Lógica de asignación de labels
+            if model_name == 'GaussianMixture':
+                results['labels'][model_name] = model.predict(X)
+            elif 'Spectral' in model_name and model_name != 'SpectralClustering':
+                results['labels'][model_name] = model.row_labels_
+            else:
+                results['labels'][model_name] = model.labels_
+            
+            results['adj_accuracy'][model_name], results['adj_labels'][model_name] = adjusted_score(y_pred=results['labels'][model_name] , y_true=y, metric=score_metric)
+            results['ARI'][model_name] = adjusted_rand_score(labels_pred=results['adj_labels'][model_name], labels_true=y)
+
+            results['status'][model_name] = 'OK'
+            
+        except FunctionTimedOut:
+            # Capturamos específicamente el Timeout para imprimir un mensaje claro
+            print(f"   ⏳ [TIMEOUT] {model_name} excedió el límite de {max_duration_mins} minutos.")
+            # Forzamos que se ejecute la lógica de rellenar con None
+            for k in results.keys():
+                results[k][model_name] = None
+          
+            results['status'][model_name] = f"Error: Timeout {round(max_duration_mins, 2)} mins"
+        
+        except Exception as e:
+            # Captura cualquier otro error (memoria, convergencia, etc.)
+            print(f"   ❌ [ERROR] {model_name}: {e}")
+            for k in results.keys():
+                results[k][model_name] = None
+           
+            results['status'][model_name] = f"Error: {str(e)}"
 
     return results
 
@@ -416,6 +455,11 @@ def get_clustering_models(experiment_config, random_state, ggower_distances_name
                 #random_state = random_state # has not random_state parameter
                 ),
 
+            'DipInit': DipInit(
+                n_clusters=experiment_config['n_clusters'],
+                random_state = random_state
+                ),
+
             'GaussianMixture': GaussianMixture(
                 n_components=experiment_config['n_clusters'],
                 random_state = random_state
@@ -424,6 +468,11 @@ def get_clustering_models(experiment_config, random_state, ggower_distances_name
             'AgglomerativeClustering': AgglomerativeClustering(
                 n_clusters=experiment_config['n_clusters'],
                 #random_state = random_state # has not random_state parameter
+                ),
+
+            'SpectralClustering': SpectralClustering(
+                n_clusters=experiment_config['n_clusters'],
+                random_state = random_state
                 ),
 
             'SpectralBiclustering': SpectralBiclustering(
@@ -443,13 +492,11 @@ def get_clustering_models(experiment_config, random_state, ggower_distances_name
 
             'BisectingKMeans': BisectingKMeans(
                 n_clusters=experiment_config['n_clusters'],
-                max_iter=experiment_config['max_iter'],
                 random_state = random_state
                 ),
 
             'MiniBatchKMeans': MiniBatchKMeans(
                 n_clusters=experiment_config['n_clusters'],
-                max_iter=experiment_config['max_iter'],
                 random_state = random_state
                 ),
             
@@ -692,7 +739,128 @@ def plot_experiment_3_results(df, data_name, num_realizations, save_path):
     
 ########################################################################################################################################################################
 
-def plot_experiment_4_results():
-    pass
+def plot_experiment_4_results(df, data_name, num_realizations, save_path, 
+                              our_methods_1=None, our_methods_2=None, 
+                              other_methods=None, not_feasible_methods=None):
+    """
+    Genera gráficos de barras comparando modelos (Accuracy, ARI, Time).
+    Requiere un DataFrame de Polars con columnas: 'model', 'adj_accuracy', 'ARI', 'time'.
+    Calcula internamente medias y desviaciones estándar.
+    """
+    
+    # Inicializar listas vacías si no se pasan
+    our_methods_1 = our_methods_1 or []
+    our_methods_2 = our_methods_2 or []
+    other_methods = other_methods or []
+    not_feasible_methods = not_feasible_methods or []
+
+    # 2. Extraer vectores para plotear (convertir a numpy/list)
+    model_names = df["model_name"].to_numpy()
+    
+    # Medias
+    avg_adj_accuracy = df["mean_adj_accuracy"].fill_null(0).to_numpy()
+    avg_ari = df["mean_ari"].fill_null(0).to_numpy()
+    avg_time = df["mean_time"].fill_null(0).to_numpy()
+    
+    # Desviaciones 
+    std_adj_acc = df["std_adj_accuracy"].fill_null(0).to_numpy()
+    std_ari = df["std_ari"].fill_null(0).to_numpy()
+    std_time = df["std_time"].fill_null(0).to_numpy()
+
+    # Posiciones en el eje y acorde a las posiciones dadas en df
+    y_pos = np.arange(len(model_names))
+
+    # 3. Configuración de Subplots
+    fig, axes = plt.subplots(1, 3, figsize=(15, 11))
+    axes = axes.flatten()
+
+    # Definir métricas para iterar
+    metrics = [
+        (0, avg_adj_accuracy, std_adj_acc, 'Adj. Accuracy'),
+        (1, avg_ari, std_ari, 'Adj. Rand Index'),
+        (2, avg_time, std_time, 'Time (secs)')
+    ]
+
+    # --- BUCLE DE PLOTEO ---
+    for ax_idx, means, stds, xlabel in metrics:
+        ax = axes[ax_idx]
+        
+        # A. Barras principales (Azules)
+        sns.barplot(x=means, y=model_names, color='blue', width=0.5, alpha=0.9, ax=ax)
+        
+        # B. Resaltar la mejor barra (Roja - Índice 0)
+        # Nota: Como el DF ya está ordenado por Acc, el primero siempre es el mejor en Acc.
+        # Si quieres que en Time el rojo sea el más rápido, habría que cambiar la lógica, 
+        # pero sigo tu código original donde el rojo es el mismo modelo (el mejor en Acc).
+        sns.barplot(x=[means[0]], y=[model_names[0]], color='red', width=0.5, alpha=0.9, ax=ax)
+
+        # C. Barras de error
+        ax.errorbar(
+            x=means,
+            y=y_pos,
+            xerr=stds,
+            fmt='none',
+            ecolor='black',
+            elinewidth=1,
+            capsize=3.5,
+            alpha=1
+        )
+        
+        # D. Etiquetas y Títulos
+        ax.set_xlabel(xlabel, size=14)
+        ax.tick_params(axis='x', labelsize=12)
+        
+        if ax_idx == 0:
+            ax.set_ylabel('Clustering Methods', size=14)
+            ax.set_title(f'Clustering Methods vs.\n{xlabel}', size=13, weight='bold')
+            ax.tick_params(axis='y', labelsize=12)
+        else:
+            ax.set_title(f'Clustering Methods vs.\nARI' if ax_idx==1 else 'Clustering Methods vs.\nTime', size=13, weight='bold')
+            ax.set_yticklabels([]) # Ocultar nombres en gráficas 2 y 3 para limpieza
+
+    # 4. Colorear etiquetas del Eje Y (Solo en el primer gráfico)
+    # Recorremos las labels generadas y cambiamos color según el grupo
+    for label in axes[0].get_yticklabels():
+        label.set_weight('bold')
+        txt = label.get_text()
+        if txt in our_methods_1:
+            label.set_color('darkviolet') 
+        elif txt in our_methods_2:
+            label.set_color('green') 
+        elif txt in other_methods:
+            label.set_color('black') 
+        elif txt in not_feasible_methods:
+            label.set_color('red') 
+
+    # 5. Crear Leyenda Personalizada
+    legend_elements = [
+        mlines.Line2D([0], [0], color='darkviolet', lw=6, label='Fast $k$-Medoids'),
+        mlines.Line2D([0], [0], color='green', lw=6, label='$q$-Fold Fast $k$-Medoids'),
+        mlines.Line2D([0], [0], color='black', lw=6, label='Other clustering methods'),
+        mlines.Line2D([0], [0], color='red', lw=6, label='Not feasible clustering methods')
+    ]
+
+    # Añadir leyenda al primer gráfico (movida hacia la derecha para centrar globalmente abajo)
+    # Ajuste del bbox_to_anchor para que quede centrada respecto a la figura global
+    axes[0].legend(
+        handles=legend_elements, 
+        loc='upper center', 
+        bbox_to_anchor=(1.7, -0.12), # Ajusta esto si se descuadra
+        ncol=len(legend_elements), 
+        fontsize=12,
+        frameon=False
+    )
+
+    # 6. Título Global y Guardado
+    plt.suptitle(
+        f"Clustering Model Comparison \n{data_name.replace('_', ' ').capitalize()} - Realizations: {num_realizations}", 
+        fontsize=16, fontweight='bold', y=0.98
+    )
+
+    # Ajuste final
+    # plt.tight_layout() # A veces pelea con suptitle y legends externos, cuidado.
+    
+    fig.savefig(save_path, format='png', dpi=300, bbox_inches="tight", pad_inches=0.2)
+    plt.show()
 
 ########################################################################################################################################################################

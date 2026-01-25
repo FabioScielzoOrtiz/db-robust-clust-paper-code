@@ -3,6 +3,7 @@ from sklearn.metrics import accuracy_score, balanced_accuracy_score
 EXPERIMENT_RANDOM_STATE = 123 
 N_REALIZATIONS = 10 #TODO: 100 en produccion
 CHUNK_SIZE = 5
+PROP_ERRORS_THRESHOLD = 0.30
 
 BASE_CONFIG = {
     'method': 'pam',

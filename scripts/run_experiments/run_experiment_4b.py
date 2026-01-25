@@ -94,7 +94,7 @@ def main():
     # Filtramos: ¿Qué chunks faltan realmente?
     chunks_to_process = []
     for chunk_id, chunk_seeds in enumerate(all_chunks):
-        chunk_filename = f'results_exp_3_{DATA_ID}_chunk_{chunk_id}.pkl'
+        chunk_filename = f'results_exp_4b_{DATA_ID}_chunk_{chunk_id}.pkl'
         chunk_path = os.path.join(results_dir, chunk_filename)
         
         if not os.path.exists(chunk_path):
@@ -217,7 +217,7 @@ def main():
             # Verificamos si tenemos TODOS los resultados esperados.
             # Si hubo un break o error, len(results) será menor que len(random_state_chunk)
             if len(results) == len(random_state_chunk):
-                results_filename = f'results_exp_3_{DATA_ID}_chunk_{chunk_id}.pkl'
+                results_filename = f'results_exp_4b_{DATA_ID}_chunk_{chunk_id}.pkl'
                 results_save_path = os.path.join(results_dir, results_filename)
                 try:
                     with open(results_save_path, 'wb') as f:
@@ -235,7 +235,7 @@ def main():
     logging.info("STEP 5: Consolidating and merging results...")
 
     # Definimos la ruta final AHORA para verificar si ya existe
-    final_filename = f'results_exp_3_{DATA_ID}.pkl'
+    final_filename = f'results_exp_4b_{DATA_ID}.pkl'
     final_save_path = os.path.join(results_dir, final_filename)
 
     # --- CONDICIÓN DE SALIDA TEMPRANA ---
@@ -256,7 +256,7 @@ def main():
     # Iteramos sobre range(n_total) para asegurar que unimos todo (viejo + nuevo)
     for chunk_id in range(n_total):
         
-        chunk_filename = f'results_exp_3_{DATA_ID}_chunk_{chunk_id}.pkl'
+        chunk_filename = f'results_exp_4b_{DATA_ID}_chunk_{chunk_id}.pkl'
         chunk_path = os.path.join(results_dir, chunk_filename)
         
         if not os.path.exists(chunk_path):
