@@ -224,9 +224,6 @@ def make_experiment_3(X, y, n_splits, frac_sample_sizes, n_clusters, method, ini
 
 ########################################################################################################################################################################
 
-import time
-import numpy as np
-
 def make_experiment_4(X, y, models, score_metric, 
                       max_duration_mins=10 
                       ):  
@@ -296,6 +293,7 @@ def make_experiment_4(X, y, models, score_metric,
 
 ########################################################################################################################################################################
 
+'''
 def get_pivoted_results_two_iterables(results, iterable1, iterable2):
     """
     Reorganiza los resultados experimentales en un diccionario anidado para dos variables independientes.
@@ -374,6 +372,7 @@ def avg_results_to_dfs(avg_results, column_1, column_2):
         rows = [(k1, k2, v) for k1, inner in subdict.items() for k2, v in inner.items()]
         dfs[key] = pd.DataFrame(rows, columns=[column_1, column_2, key])
     return dfs
+'''
 
 ########################################################################################################################################################################
 
@@ -424,7 +423,7 @@ def plot_experiment_2_results():
 
 def get_clustering_models(experiment_config, random_state, ggower_distances_names):
 
-        models= {
+        models = {
 
             'KMeans': KMeans(
                 n_clusters=experiment_config['n_clusters'],
@@ -470,10 +469,10 @@ def get_clustering_models(experiment_config, random_state, ggower_distances_name
                 #random_state = random_state # has not random_state parameter
                 ),
 
-            'SpectralClustering': SpectralClustering(
-                n_clusters=experiment_config['n_clusters'],
-                random_state = random_state
-                ),
+            #'SpectralClustering': SpectralClustering(
+            #    n_clusters=experiment_config['n_clusters'],
+            #    random_state = random_state
+            #    ),
 
             'SpectralBiclustering': SpectralBiclustering(
                 n_clusters=experiment_config['n_clusters'],
