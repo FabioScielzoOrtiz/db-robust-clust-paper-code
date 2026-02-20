@@ -3,10 +3,9 @@
 import time
 import logging
 import numpy as np
-from db_robust_clust.models import FastKmedoidsGGower, FoldFastKmedoidsGGower
+from db_robust_clust.models import SampleDistClustering, FoldSampleDistClustering
 from db_robust_clust.metrics import adjusted_score
 from sklearn.metrics import adjusted_rand_score
-from db_robust_clust.models import FastKmedoidsGGower, FoldFastKmedoidsGGower
 from sklearn_extra.cluster import KMedoids, CLARA
 from sklearn.cluster import (KMeans, AgglomerativeClustering,
                              SpectralClustering, SpectralBiclustering, SpectralCoclustering, Birch, 
@@ -64,8 +63,7 @@ def make_experiment_1(data_sizes, random_state, centers, cluster_std, n_features
 ########################################################################################################################################################################
 
 def make_experiment_2(X, y, frac_sample_sizes, n_clusters, method, init, max_iter, random_state, 
-                      p1, p2, p3, d1, d2, d3, robust_method, alpha, epsilon, n_iters, 
-                      VG_sample_size, VG_n_samples, score_metric): 
+                      p1, p2, p3, d1, d2, d3, robust_method, alpha, score_metric): 
 
     # Logger local para tener contexto
     logger = logging.getLogger(__name__)
@@ -79,6 +77,15 @@ def make_experiment_2(X, y, frac_sample_sizes, n_clusters, method, init, max_ite
     # Log inicial informativo
     logger.info(f"🚀 Starting Experiment 1 | Seed: {random_state} | N_Sample_Sizes: {len(frac_sample_sizes)}")
 
+    clustering_base_method = KMedoids(
+                n_clusters=n_clusters, 
+                metric='precomputed', 
+                method=method, 
+                init=init, 
+                max_iter=max_iter, 
+                random_state=random_state
+    )
+    
     for frac_sample_size in frac_sample_sizes:
         
         # 1. Configuración del modelo
@@ -86,26 +93,22 @@ def make_experiment_2(X, y, frac_sample_sizes, n_clusters, method, init, max_ite
         logger.info(f"  >> Processing frac_sample_size: {frac_sample_size:.2f}")
         
         try:
-            fast_kmedoids = FastKmedoidsGGower(
-                n_clusters=n_clusters, 
-                method=method, 
-                init=init, 
-                max_iter=max_iter, 
+            
+            sample_dist_clust = SampleDistClustering(
+                clustering_method = clustering_base_method,
+                metric = 'ggower',
+                frac_sample_size=frac_sample_size,
                 random_state=random_state,
-                frac_sample_size=frac_sample_size, 
-                p1=p1, p2=p2, p3=p3, 
+                stratify=False,
+                p1=p1, p2=p2, p3=p3,
                 d1=d1, d2=d2, d3=d3, 
                 robust_method=robust_method, 
-                alpha=alpha, 
-                epsilon=epsilon, 
-                n_iters=n_iters, 
-                VG_sample_size=VG_sample_size, 
-                VG_n_samples=VG_n_samples
+                alpha=alpha
             )
             
             # 2. Medición de Tiempo y Ajuste
             start_time = time.time()
-            fast_kmedoids.fit(X=X) 
+            sample_dist_clust.fit(X=X) 
             end_time = time.time()
             
             elapsed_time = end_time - start_time
@@ -155,7 +158,7 @@ def make_experiment_3(X, y, n_splits, frac_sample_sizes, n_clusters, method, ini
 
             try:
             
-                fold_fast_kmedoids = FoldFastKmedoidsGGower(                                            
+                fold_fast_kmedoids = FoldSampleDistClustering(                                            
                     n_clusters=n_clusters, 
                     method=method, 
                     init=init, 
@@ -328,210 +331,208 @@ def split_list_in_chunks(list, chunk_size):
 ########################################################################################################################################################################
 
 def get_clustering_models_experiment_4(experiment_config, random_state):
-
-        models = {
-
-            'KMedoids-euclidean': KMedoids(
+        
+    clustering_base_method = KMedoids(
                 n_clusters=experiment_config['n_clusters'], 
+                metric='precomputed', 
                 method=experiment_config['method'], 
-                init=experiment_config['init'], 
-                max_iter=experiment_config['max_iter'], 
-                metric='euclidean',
-                random_state = random_state
-                ),
+                init=experiment_config['init'],
+                max_iter=experiment_config['max_iter'],
+                random_state=experiment_config['random_state'],
+    )
 
-            'FastKmedoidsGGower-robust_mahalanobis_winsorized-sokal-hamming': FastKmedoidsGGower(
-                    n_clusters=experiment_config['n_clusters'], 
-                    method=experiment_config['method'], 
-                    init=experiment_config['init'], 
-                    max_iter=experiment_config['max_iter'], 
-                    frac_sample_size=experiment_config['frac_sample_size'], 
-                    p1=experiment_config['p1'], 
-                    p2=experiment_config['p2'], 
-                    p3=experiment_config['p3'], 
-                    d1=experiment_config['d1'], 
-                    d2=experiment_config['d2'], 
-                    d3=experiment_config['d3'], 
-                    robust_method=experiment_config['robust_method'], 
-                    alpha=experiment_config['alpha'], 
-                    epsilon=experiment_config['epsilon'], 
-                    n_iters=experiment_config['n_iters'],
-                    VG_sample_size=experiment_config['VG_sample_size'], 
-                    VG_n_samples=experiment_config['VG_n_samples'],
-                    random_state = random_state
-                ),
+    models = {
 
-            'FoldFastKmedoidsGGower-robust_mahalanobis_winsorized-sokal-hamming': FoldFastKmedoidsGGower(
-                    n_clusters=experiment_config['n_clusters'], 
-                    method=experiment_config['method'], 
-                    init=experiment_config['init'], 
-                    max_iter=experiment_config['max_iter'], 
-                    frac_sample_size=experiment_config['frac_sample_size'], 
-                    p1=experiment_config['p1'], 
-                    p2=experiment_config['p2'], 
-                    p3=experiment_config['p3'], 
-                    d1=experiment_config['d1'], 
-                    d2=experiment_config['d2'], 
-                    d3=experiment_config['d3'], 
-                    robust_method=experiment_config['robust_method'], 
-                    alpha=experiment_config['alpha'], 
-                    epsilon=experiment_config['epsilon'], 
-                    n_iters=experiment_config['n_iters'],
-                    VG_sample_size=experiment_config['VG_sample_size'], 
-                    VG_n_samples=experiment_config['VG_n_samples'],
-                    n_splits=experiment_config['n_splits'], 
-                    shuffle=experiment_config['shuffle'], 
-                    kfold_random_state=experiment_config['kfold_random_state'],
-                    random_state = random_state
-                ) 
-        }
-            
-        return models
+        'KMedoids-euclidean': KMedoids(
+            n_clusters=experiment_config['n_clusters'], 
+            method=experiment_config['method'], 
+            init=experiment_config['init'], 
+            max_iter=experiment_config['max_iter'], 
+            metric='euclidean',
+            random_state = random_state
+            ),
+
+        'FastKmedoidsGGower-robust_mahalanobis_winsorized-sokal-hamming': SampleDistClustering(
+                clustering_method = clustering_base_method,
+                metric = 'ggower',
+                frac_sample_size=experiment_config['frac_sample_size'],
+                random_state=random_state,
+                stratify=False,
+                p1=experiment_config['p1'], 
+                p2=experiment_config['p2'], 
+                p3=experiment_config['p3'], 
+                d1=experiment_config['d1'], 
+                d2=experiment_config['d2'], 
+                d3=experiment_config['d3'], 
+                robust_method=experiment_config['robust_method'], 
+                alpha=experiment_config['alpha'], 
+            ),
+
+        'FoldFastKmedoidsGGower-robust_mahalanobis_winsorized-sokal-hamming': FoldSampleDistClustering(
+                clustering_method = clustering_base_method,
+                metric = 'ggower',
+                n_splits=experiment_config['n_splits'],
+                shuffle=experiment_config['shuffle'],
+                frac_sample_size=experiment_config['frac_sample_size'],
+                meta_frac_sample_size=experiment_config['meta_frac_sample_size'],
+                random_state=random_state,
+                stratify=False,
+                p1=experiment_config['p1'], 
+                p2=experiment_config['p2'], 
+                p3=experiment_config['p3'], 
+                d1=experiment_config['d1'], 
+                d2=experiment_config['d2'], 
+                d3=experiment_config['d3'], 
+                robust_method=experiment_config['robust_method'], 
+                alpha=experiment_config['alpha'], 
+            ) 
+    }
+        
+    return models
 
 ########################################################################################################################################################################
 
-def get_clustering_models_experiment_5(experiment_config, random_state, ggower_distances_names):
+def get_clustering_models_experiment_5(experiment_config, random_state, mixed_distances_names):
 
-        models = {
-
-            'KMeans': KMeans(
-                n_clusters=experiment_config['n_clusters'],
-                max_iter=experiment_config['max_iter'],
-                init='k-means++', 
-                n_init='auto',
-                random_state = random_state,
-                ),
-
-            'CLARA': CLARA(
+    clustering_base_method = KMedoids(
                 n_clusters=experiment_config['n_clusters'], 
-                metric='euclidean',
-                #random_state = random_state # has not random_state parameter
-                ),
-
-            'Diana': Diana(
-                n_clusters=experiment_config['n_clusters'],
-                #random_state = random_state # has not random_state parameter
-                ),
-
-            'LDAKmeans': LDAKmeans(
-                n_clusters=experiment_config['n_clusters'], 
-                #random_state = random_state # has not random_state parameter
-                ),
-
-            'SubKmeans': SubKmeans(
-                n_clusters=experiment_config['n_clusters'],
-                #random_state = random_state # has not random_state parameter
-                ),
-
-            'DipInit': DipInit(
-                n_clusters=experiment_config['n_clusters'],
-                random_state = random_state
-                ),
-
-            'GaussianMixture': GaussianMixture(
-                n_components=experiment_config['n_clusters'],
-                random_state = random_state
-                ),
-
-            'AgglomerativeClustering': AgglomerativeClustering(
-                n_clusters=experiment_config['n_clusters'],
-                #random_state = random_state # has not random_state parameter
-                ),
-
-            #'SpectralClustering': SpectralClustering(
-            #    n_clusters=experiment_config['n_clusters'],
-            #    random_state = random_state
-            #    ),
-
-            'SpectralBiclustering': SpectralBiclustering(
-                n_clusters=experiment_config['n_clusters'],
-                random_state = random_state
-                ),
-
-            'SpectralCoclustering': SpectralCoclustering(
-                n_clusters=experiment_config['n_clusters'],
-                random_state = random_state
-                ),
-
-            'Birch': Birch(
-                n_clusters=experiment_config['n_clusters'],
-                #random_state = random_state # has not random_state parameter
-                ),
-
-            'BisectingKMeans': BisectingKMeans(
-                n_clusters=experiment_config['n_clusters'],
-                random_state = random_state
-                ),
-
-            'MiniBatchKMeans': MiniBatchKMeans(
-                n_clusters=experiment_config['n_clusters'],
-                random_state = random_state
-                ),
-            
-            'KMedoids-euclidean': KMedoids(
-                n_clusters=experiment_config['n_clusters'], 
+                metric='precomputed', 
                 method=experiment_config['method'], 
-                init=experiment_config['init'], 
-                max_iter=experiment_config['max_iter'], 
-                metric='euclidean',
-                random_state = random_state
-                ),
+                init=experiment_config['init'],
+                max_iter=experiment_config['max_iter'],
+                random_state=experiment_config['random_state'],
+    )
+
+    models = {
+
+        'KMeans': KMeans(
+            n_clusters=experiment_config['n_clusters'],
+            max_iter=experiment_config['max_iter'],
+            init='k-means++', 
+            n_init='auto',
+            random_state = random_state,
+            ),
+
+        'CLARA': CLARA(
+            n_clusters=experiment_config['n_clusters'], 
+            metric='euclidean',
+            #random_state = random_state # has not random_state parameter
+            ),
+
+        'Diana': Diana(
+            n_clusters=experiment_config['n_clusters'],
+            #random_state = random_state # has not random_state parameter
+            ),
+
+        'LDAKmeans': LDAKmeans(
+            n_clusters=experiment_config['n_clusters'], 
+            #random_state = random_state # has not random_state parameter
+            ),
+
+        'SubKmeans': SubKmeans(
+            n_clusters=experiment_config['n_clusters'],
+            #random_state = random_state # has not random_state parameter
+            ),
+
+        'DipInit': DipInit(
+            n_clusters=experiment_config['n_clusters'],
+            random_state = random_state
+            ),
+
+        'GaussianMixture': GaussianMixture(
+            n_components=experiment_config['n_clusters'],
+            random_state = random_state
+            ),
+
+        'AgglomerativeClustering': AgglomerativeClustering(
+            n_clusters=experiment_config['n_clusters'],
+            #random_state = random_state # has not random_state parameter
+            ),
+
+        #'SpectralClustering': SpectralClustering(
+        #    n_clusters=experiment_config['n_clusters'],
+        #    random_state = random_state
+        #    ),
+
+        'SpectralBiclustering': SpectralBiclustering(
+            n_clusters=experiment_config['n_clusters'],
+            random_state = random_state
+            ),
+
+        'SpectralCoclustering': SpectralCoclustering(
+            n_clusters=experiment_config['n_clusters'],
+            random_state = random_state
+            ),
+
+        'Birch': Birch(
+            n_clusters=experiment_config['n_clusters'],
+            #random_state = random_state # has not random_state parameter
+            ),
+
+        'BisectingKMeans': BisectingKMeans(
+            n_clusters=experiment_config['n_clusters'],
+            random_state = random_state
+            ),
+
+        'MiniBatchKMeans': MiniBatchKMeans(
+            n_clusters=experiment_config['n_clusters'],
+            random_state = random_state
+            ),
+        
+        'KMedoids-euclidean': KMedoids(
+            n_clusters=experiment_config['n_clusters'], 
+            method=experiment_config['method'], 
+            init=experiment_config['init'], 
+            max_iter=experiment_config['max_iter'], 
+            metric='euclidean',
+            random_state = random_state
+            ),
+        
+    }
+
+    for d in mixed_distances_names:
+
+        d1, d2, d3 = d.split('-')
+
+        if 'robust' in d1:
+            r = d1.split('_')[-1]
+            d1 = '_'.join(d1.split('_')[:2])
             
-        }
+        models[f'FastKmedoidsGGower-{d1}_{r}-{d2}-{d3}'] = SampleDistClustering(
+                clustering_method = clustering_base_method,
+                metric = 'ggower',
+                frac_sample_size=experiment_config['frac_sample_size'],
+                random_state=random_state,
+                stratify=False,
+                p1=experiment_config['p1'], 
+                p2=experiment_config['p2'], 
+                p3=experiment_config['p3'], 
+                d1=experiment_config['d1'], 
+                d2=experiment_config['d2'], 
+                d3=experiment_config['d3'], 
+                robust_method=experiment_config['robust_method'], 
+                alpha=experiment_config['alpha'], 
+            )
 
-        for d in ggower_distances_names:
-
-            d1, d2, d3 = d.split('-')
-
-            if 'robust' in d1:
-                r = d1.split('_')[-1]
-                d1 = '_'.join(d1.split('_')[:2])
-                
-            models[f'FastKmedoidsGGower-{d1}_{r}-{d2}-{d3}'] = FastKmedoidsGGower(
-                    n_clusters=experiment_config['n_clusters'], 
-                    method=experiment_config['method'], 
-                    init=experiment_config['init'], 
-                    max_iter=experiment_config['max_iter'], 
-                    frac_sample_size=experiment_config['frac_sample_size'], 
-                    p1=experiment_config['p1'], 
-                    p2=experiment_config['p2'], 
-                    p3=experiment_config['p3'], 
-                    d1=d1, 
-                    d2=d2, 
-                    d3=d3, 
-                    robust_method=r, 
-                    alpha=experiment_config['alpha'], 
-                    epsilon=experiment_config['epsilon'], 
-                    n_iters=experiment_config['n_iters'],
-                    VG_sample_size=experiment_config['VG_sample_size'], 
-                    VG_n_samples=experiment_config['VG_n_samples'],
-                    random_state = random_state
-                ) 
-
-            models[f'FoldFastKmedoidsGGower-{d1}_{r}-{d2}-{d3}'] = FoldFastKmedoidsGGower(
-                    n_clusters=experiment_config['n_clusters'], 
-                    method=experiment_config['method'], 
-                    init=experiment_config['init'], 
-                    max_iter=experiment_config['max_iter'], 
-                    frac_sample_size=experiment_config['frac_sample_size'], 
-                    p1=experiment_config['p1'], 
-                    p2=experiment_config['p2'], 
-                    p3=experiment_config['p3'], 
-                    d1=d1, 
-                    d2=d2, 
-                    d3=d3, 
-                    robust_method=r, 
-                    alpha=experiment_config['alpha'], 
-                    epsilon=experiment_config['epsilon'], 
-                    n_iters=experiment_config['n_iters'],
-                    VG_sample_size=experiment_config['VG_sample_size'], 
-                    VG_n_samples=experiment_config['VG_n_samples'],
-                    n_splits=experiment_config['n_splits'], 
-                    shuffle=experiment_config['shuffle'], 
-                    kfold_random_state=experiment_config['kfold_random_state'],
-                    random_state = random_state
-                ) 
-            
-        return models
+        models[f'FoldFastKmedoidsGGower-{d1}_{r}-{d2}-{d3}'] = FoldSampleDistClustering(
+                clustering_method = clustering_base_method,
+                metric = 'ggower',
+                n_splits=experiment_config['n_splits'],
+                shuffle=experiment_config['shuffle'],
+                frac_sample_size=experiment_config['frac_sample_size'],
+                meta_frac_sample_size=experiment_config['meta_frac_sample_size'],
+                random_state=random_state,
+                stratify=False,
+                p1=experiment_config['p1'], 
+                p2=experiment_config['p2'], 
+                p3=experiment_config['p3'], 
+                d1=experiment_config['d1'], 
+                d2=experiment_config['d2'], 
+                d3=experiment_config['d3'], 
+                robust_method=experiment_config['robust_method'], 
+                alpha=experiment_config['alpha'], 
+            ) 
+        
+    return models
 
 ########################################################################################################################################################################

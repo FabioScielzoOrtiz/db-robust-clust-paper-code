@@ -90,7 +90,7 @@ def main():
     dummy_models = get_clustering_models_experiment_5(
         random_state=42,
         experiment_config=experiment_config,
-        ggower_distances_names=mixed_distances_names
+        mixed_distances_names=mixed_distances_names
     )
     all_model_names = set(dummy_models.keys())
     logging.info(f" -> Total defined models available: {len(all_model_names)}")

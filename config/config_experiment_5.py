@@ -1,14 +1,14 @@
 from sklearn.metrics import accuracy_score, balanced_accuracy_score
 
 EXPERIMENT_RANDOM_STATE = 123 
-N_REALIZATIONS = 10 #TODO: 100 en produccion
+N_REALIZATIONS = 100
 CHUNK_SIZE = 5
 PROP_ERRORS_THRESHOLD = 0.30
 
 BASE_CONFIG = {
     'random_state': 123,
     'method': 'pam',
-    'init': 'heuristic',
+    'init': 'build',
     'max_iter': 100,
     'p1': 4,
     'p2': 2,
@@ -18,12 +18,8 @@ BASE_CONFIG = {
     'd3': 'hamming',
     'robust_method': 'trimmed',
     'alpha': 0.05,
-    'epsilon': 0.05,
-    'n_iters': 20,
-    'VG_sample_size': 1000,
-    'VG_n_samples': 5,
+    'meta_frac_sample_size': 1,
     'shuffle': True, 
-    'kfold_random_state': 111,
     # Valores por defecto para variables que cambian a veces
     'n_clusters': 3, 
     'score_metric': accuracy_score

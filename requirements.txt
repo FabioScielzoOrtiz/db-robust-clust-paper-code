@@ -7,7 +7,7 @@ scikit-learn==1.7.0
 scikit-learn-extra==0.3.0
 BigEDA==0.0.61
 robust_mixed_dist==0.1.20
-db_robust_clust==0.1.6
+db_robust_clust==0.1.8
 PyMachineLearning==0.0.23
 clustpy
 setuptools

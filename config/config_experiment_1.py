@@ -4,6 +4,6 @@ CONFIG_EXPERIMENT = {
     'n_clusters': 4,
     'metric': 'euclidean',
     'method': 'pam',
-    'init': 'heuristic',
+    'init': 'build',
     'max_iter': 100,
 }

@@ -7,7 +7,7 @@ PROP_ERRORS_THRESHOLD = 0.30
 
 BASE_CONFIG = {
     'method': 'pam',
-    'init': 'heuristic',
+    'init': 'build',
     'max_iter': 100,
     'p1': 4,
     'p2': 2,

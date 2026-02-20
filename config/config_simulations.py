@@ -1,7 +1,7 @@
 SIMULATION_CONFIGS = {
 
     'simulation_testing': {
-        'n_samples': 5000,
+        'n_samples': 9000,
         'centers': 4,
         'cluster_std': [2, 2, 2, 3],
         'n_features': 8,
