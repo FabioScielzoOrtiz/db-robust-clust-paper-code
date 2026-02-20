@@ -7,7 +7,7 @@ import polars as pl
 
 # Paths
 script_path = os.path.dirname(os.path.abspath(__file__))
-project_path = os.path.join(script_path, '..', '..')
+project_path = os.path.join(script_path, '..', '..', '..')
 raw_data_dir = os.path.join(project_path, 'data', 'raw_data')
 processed_data_dir = os.path.join(project_path, 'data', 'processed_data')
 os.makedirs(processed_data_dir, exist_ok=True)

@@ -17,7 +17,7 @@ logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 
 ###########################################################################################
 # --- ARGUMENT PARSING ---
-parser = argparse.ArgumentParser(description="Run Experiment 4b Simulations")
+parser = argparse.ArgumentParser(description="Run Experiment 5 Simulations")
 parser.add_argument('--data_id', type=str, required=True, help="ID of the simulation data configuration (e.g., 'simulation_1')")
 parser.add_argument('--force', action='store_true', help="Force execution for all models, ignoring existing results.")
 args = parser.parse_args()
@@ -28,22 +28,22 @@ FORCE_EXECUTION = args.force
 ###########################################################################################
 # --- PATH CONFIGURATION ---
 script_path = os.path.dirname(os.path.abspath(__file__))
-project_path = os.path.join(script_path, '..', '..')
+project_path = os.path.join(script_path, '..', '..', '..')
 processed_data_dir = os.path.join(project_path, 'data', 'processed_data')
-results_dir = os.path.join(project_path, 'results', 'experiment_4b', DATA_ID)
+results_dir = os.path.join(project_path, 'results', 'experiment_5', DATA_ID)
 sys.path.append(project_path)
 
 ###########################################################################################
 # --- CUSTOM IMPORTS ---
-from src.experiments_utils import (
+from src.utils.experiments_utils import (
     split_list_in_chunks,
-    get_clustering_models,
-    get_ggower_distances_names,
-    make_experiment_4
+    get_clustering_models_experiment_5,
+    get_mixed_distances_names,
+    make_experiment_5
 )
-from src.simulations_utils import generate_simulation
+from src.utils.simulations_utils import generate_simulation
 
-from config.config_experiment_4b import (
+from config.config_experiment_5 import (
     CONFIG_EXPERIMENT, 
     EXPERIMENT_RANDOM_STATE,
     N_REALIZATIONS, 
@@ -56,10 +56,10 @@ from config.config_simulations import SIMULATION_CONFIGS
 
 def main():
     """
-    Main execution flow of the Experiment 4b pipeline with Incremental Model Update Capability.
+    Main execution flow of the Experiment 5 pipeline with Incremental Model Update Capability.
     Handles missing chunk files by reconstructing history from the merged file.
     """
-    logging.info(f"▶️ STARTING EXPERIMENT 4b FOR DATA_ID: {DATA_ID}")
+    logging.info(f"▶️ STARTING EXPERIMENT 5 FOR DATA_ID: {DATA_ID}")
     logging.info(f"▶️ FORCE EXECUTION: {FORCE_EXECUTION}")
 
     # 0. Validate Configuration
@@ -79,7 +79,7 @@ def main():
     multiclass_distances_names = ['hamming']
     robust_method = ['MAD', 'trimmed', 'winsorized']
 
-    ggower_distances_names = get_ggower_distances_names(
+    mixed_distances_names = get_mixed_distances_names(
         quant_distances_names, 
         binary_distances_names, 
         multiclass_distances_names, 
@@ -87,10 +87,10 @@ def main():
     )
     
     # Instanciamos dummy para obtener nombres
-    dummy_models = get_clustering_models(
+    dummy_models = get_clustering_models_experiment_5(
         random_state=42,
         experiment_config=experiment_config,
-        ggower_distances_names=ggower_distances_names
+        ggower_distances_names=mixed_distances_names
     )
     all_model_names = set(dummy_models.keys())
     logging.info(f" -> Total defined models available: {len(all_model_names)}")
@@ -98,7 +98,7 @@ def main():
     # =========================================================================
     # 3. Load Global Merged History (To handle missing chunks)
     # =========================================================================
-    final_filename = f'results_exp_4b_{DATA_ID}.pkl'
+    final_filename = f'results_exp_5_{DATA_ID}.pkl'
     final_save_path = os.path.join(results_dir, final_filename)
     
     GLOBAL_MERGED_DATA = {} # Store full history here
@@ -158,7 +158,7 @@ def main():
 
     for chunk_id, chunk_seeds in enumerate(tqdm(all_chunks, desc='Processing Chunks')):
         
-        chunk_filename = f'results_exp_4b_{DATA_ID}_chunk_{chunk_id}.pkl'
+        chunk_filename = f'results_exp_5_{DATA_ID}_chunk_{chunk_id}.pkl'
         chunk_path = os.path.join(results_dir, chunk_filename)
         
         chunk_results = {}
@@ -217,16 +217,16 @@ def main():
                         random_state=random_state,
                         return_outlier_idx=False
                     )
-                    models_random_state_val = experiment_config['random_state']
+                    models_random_state = experiment_config['random_state']
                 else:
                     X, y = X_real, y_real
-                    models_random_state_val = random_state
+                    models_random_state = random_state
 
                 # 3. Instanciar modelos necesarios
-                all_models_instances = get_clustering_models(
-                    random_state=models_random_state_val,
+                all_models_instances = get_clustering_models_experiment_5(
+                    random_state=models_random_state,
                     experiment_config=experiment_config,
-                    ggower_distances_names=ggower_distances_names
+                    mixed_distances_names=mixed_distances_names
                 )
                 
                 models_subset = {name: model for name, model in all_models_instances.items() if name in models_to_run_names}
@@ -235,7 +235,7 @@ def main():
                     continue
 
                 # 4. Ejecutar nuevos modelos
-                new_results = make_experiment_4(
+                new_results = make_experiment_5(
                     X=X, y=y, models=models_subset,
                     score_metric=experiment_config['score_metric']
                 )
@@ -279,7 +279,7 @@ def main():
     n_total = len(all_chunks)
     
     for chunk_id in range(n_total):
-        chunk_filename = f'results_exp_4b_{DATA_ID}_chunk_{chunk_id}.pkl'
+        chunk_filename = f'results_exp_5_{DATA_ID}_chunk_{chunk_id}.pkl'
         chunk_path = os.path.join(results_dir, chunk_filename)
         
         if not os.path.exists(chunk_path):

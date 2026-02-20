@@ -2,89 +2,94 @@
 
 import os, json
 import polars as pl
-import pandas as pd
-from aif360.sklearn.datasets import fetch_german
 
 ################################################################################################
 
 # Paths
 script_path = os.path.dirname(os.path.abspath(__file__))
-project_path = os.path.join(script_path, '..', '..')
+project_path = os.path.join(script_path, '..', '..', '..')
+raw_dat_dir = os.path.join(project_path, 'data', 'raw_data')
 processed_data_dir = os.path.join(project_path, 'data', 'processed_data')
 os.makedirs(processed_data_dir, exist_ok=True)
+data_filename = 'kc_houses.xlsx'
+data_file_path = os.path.join(raw_dat_dir, data_filename)
 
 ################################################################################################
 
-# Fetch German Credit Data
-X, y = fetch_german()
-X = X.reset_index(drop=True)
-y = pd.DataFrame(y.reset_index(drop=True))
-df_raw = pd.concat([y, X], axis=1)
-df = pl.from_pandas(df_raw)
+df = pl.read_excel(data_file_path)
 
 ################################################################################################
 
-# Sort variables according to data type
-ordinal_cols = ['checking_status', 'savings_status', 'employment']
-quant_cols = [col for col, dtype in zip(df.columns, df.dtypes) if dtype != pl.Categorical] + ordinal_cols
-cat_cols = [col for col in df.columns if col not in quant_cols]
-binary_cols = [col for col in cat_cols if len(df[col].unique()) == 2]
-multiclass_cols = [col for col in cat_cols if col not in binary_cols]
-df = df[quant_cols + binary_cols + multiclass_cols]
+response = 'price'
+excluded_variables = ['id', 'date', 'zipcode', 
+                      'yr_renovated', # full of zeros
+                      #'sqft_lot', 'sqft_lot15', 
+                      'waterfront' # almost a constant variable
+                    ]
+predictors = [col for col in df.columns if col not in excluded_variables + [response]]
+cat_variables = ['view', 'grade']
 
 ################################################################################################
 
-# Encode categorical variables
+q10 = df[response].quantile(0.10)
+q15 = df[response].quantile(0.15)
+q25 = df[response].quantile(0.25)
+q75 = df[response].quantile(0.75)
+q85 = df[response].quantile(0.85)
+q90 = df[response].quantile(0.90)
+q50 = df[response].quantile(0.50)
+mean = df[response].mean()
+
+df = df.with_columns(pl.col(response).cut(
+    breaks=[q10, q90],
+    labels=[
+        'c1',
+        'c2',
+        'c3'
+    ],
+    left_closed=True
+).alias(response))
+
+################################################################################################
 
 encoding = {}
-categorical_cols = [col for col in df.columns if df[col].dtype == pl.Categorical]
-nominal_cols = [x for x in categorical_cols if x not in ordinal_cols]
 
-# Encoding for nominal cols
-
-for col in nominal_cols:        
+for col in cat_variables:  
     unique_values_sorted = sorted(df[col].unique().to_list())
     new_values = list(range(0, len(unique_values_sorted)))
     encoding[col] = dict(zip(unique_values_sorted, new_values))
 
-# Encoding for ordinal cols
+################################################################################################
 
-encoding['checking_status'] = {
-    'no checking': 0, 
-    '<0': 1,
-    '0<=X<200': 2,
-    '>=200': 3
+encoding[response] = {
+    'c1': 0,
+    'c2': 1,
+    'c3': 2
 }
 
-encoding['savings_status'] = {
-    'no known savings': 0,
-    '<100': 1,
-    '100<=X<500': 2,
-    '500<=X<1000': 3,
-    '>=1000': 4
+encoding['floors'] = { # 1, 2, 3
+    1.5: 1,
+    2.5: 2,
+    3.5: 3
 }
 
-encoding['employment'] = {
-    'unemployed': 0,
-    '<1': 1,
-    '1<=X<4': 2,
-    '4<=X<7': 3,
-    '>=7': 4
-}
 
-# Encoding 
-for col in categorical_cols: 
-    df = df.with_columns(pl.col(col).replace_strict(encoding[col]).alias(col))
+for col in encoding.keys(): 
+    try:
+        df = df.with_columns(pl.col(col).replace_strict(encoding[col]).alias(col))
+    except:
+        df = df.with_columns(pl.col(col).replace(encoding[col]).cast(pl.Int64).alias(col))
 
 ################################################################################################
 
-# Compute p1, p2, p3
-response = 'credit-risk'
-predictors = [col for col in df.columns if col != response]
+quant_to_cat = ['floors']
+cat_predictors = [col for col in cat_variables if col != response] + quant_to_cat
+quant_predictors = [col for col in predictors if col not in cat_predictors]
+binary_predictors = [col for col in cat_predictors if len(df[col].unique()) == 2]
+multiclass_predictors = [col for col in cat_predictors if col not in binary_predictors]
 
-quant_predictors = [col for col in predictors if col in quant_cols]
-binary_predictors = [col for col in predictors if col in binary_cols]
-multiclass_predictors = [col for col in predictors if col in multiclass_cols]
+################################################################################################
+
 p1 = len(quant_predictors)
 p2 = len(binary_predictors)
 p3 = len(multiclass_predictors)
@@ -113,8 +118,8 @@ metadata = {
 
 ################################################################################################
 
-metadata_file_name = "metadata_german_credit.json"
-processed_data_file_name = "german_credit_processed.parquet"
+metadata_file_name = "metadata_kc_houses.json"
+processed_data_file_name = "kc_houses_processed.parquet"
 metadata_file_path = os.path.join(processed_data_dir, metadata_file_name)
 processed_data_file_path = os.path.join(processed_data_dir, processed_data_file_name)
 

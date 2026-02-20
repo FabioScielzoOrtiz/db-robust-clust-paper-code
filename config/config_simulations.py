@@ -4,6 +4,7 @@ SIMULATION_CONFIGS = {
         'n_samples': 5000,
         'centers': 4,
         'cluster_std': [2, 2, 2, 3],
+        'n_features': 8,
         'outlier_configs': [
             {'col_name': 'X1', 'prop_above': 0.05, 'sigma': 2},
             {'col_name': 'X2', 'prop_below': 0.05, 'sigma': 2}
@@ -14,6 +15,7 @@ SIMULATION_CONFIGS = {
         'n_samples': 35000,
         'centers': 4,
         'cluster_std': [2, 2, 2, 3],
+        'n_features': 8,
         'outlier_configs': [
             {'col_name': 'X1', 'prop_above': 0.05, 'sigma': 2},
             {'col_name': 'X2', 'prop_below': 0.05, 'sigma': 2}
@@ -24,6 +26,7 @@ SIMULATION_CONFIGS = {
         'n_samples': 100000,
         'centers': 4,
         'cluster_std': [2, 2, 2, 3],
+        'n_features': 8,
         'outlier_configs': [
             {'col_name': 'X1', 'prop_above': 0.05, 'sigma': 2},
             {'col_name': 'X2', 'prop_below': 0.05, 'sigma': 2}
@@ -34,6 +37,7 @@ SIMULATION_CONFIGS = {
         'n_samples': 300000,
         'centers': 3,
         'cluster_std': [2, 2, 3],
+        'n_features': 8,
         'outlier_configs': [
             {'col_name': 'X1', 'prop_above': 0.05, 'sigma': 2},
             {'col_name': 'X2', 'prop_below': 0.05, 'sigma': 2}
@@ -44,6 +48,7 @@ SIMULATION_CONFIGS = {
         'n_samples': 1000000,
         'centers': 3,
         'cluster_std': [2, 2, 3],
+        'n_features': 8,
         'outlier_configs': [
             {'col_name': 'X1', 'prop_above': 0.05, 'sigma': 2},
             {'col_name': 'X2', 'prop_below': 0.05, 'sigma': 2}
@@ -54,6 +59,7 @@ SIMULATION_CONFIGS = {
         'n_samples': 300000,
         'centers': 3,
         'cluster_std': [2, 2, 3],
+        'n_features': 8,
         'outlier_configs': [
             {'col_name': 'X1', 'prop_above': 0.085, 'sigma': 2},
             {'col_name': 'X2', 'prop_below': 0.10, 'sigma': 2},
@@ -65,12 +71,14 @@ SIMULATION_CONFIGS = {
         'n_samples': 300000,
         'centers': 3,
         'cluster_std': [2, 2, 3],
+        'n_features': 8,
         'outlier_configs': None
     },
     
     'simulation_7': {
         'centers': 3,
         'cluster_std': [2, 2, 3],
+        'n_features': 8,
         'custom_sampling': [60000, 90000, 150000],
         'outlier_configs': [
             {'col_name': 'X1', 'prop_above': 0.05, 'sigma': 2},

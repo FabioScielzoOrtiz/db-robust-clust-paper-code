@@ -1,5 +1,7 @@
+from sklearn.metrics import accuracy_score
+
 EXPERIMENT_RANDOM_STATE = 123 
-N_REALIZATIONS = 10 #TODO: 100 en produccion
+N_REALIZATIONS = 100
 CHUNK_SIZE = 5
 PROP_ERRORS_THRESHOLD = 0.30
 
@@ -14,9 +16,9 @@ CONFIG_EXPERIMENT = {
     'p2': 2,
     'p3': 2,
     'd1': 'robust_mahalanobis',
-    'd2': 'jaccard',
+    'd2': 'sokal',
     'd3': 'hamming',
-    'robust_method': 'trimmed',
+    'robust_method': 'winsorized',
     'alpha': 0.05,
     'epsilon': 0.05,
     'n_iters': 20,
@@ -25,5 +27,6 @@ CONFIG_EXPERIMENT = {
     'shuffle': True, 
     'kfold_random_state': 111,
     'n_clusters': 4, 
-    'n_samples_list': [5000, 10000, 20000, 35000]
+    'score_metric': accuracy_score,
+    'data_sizes': [1000, 3000] # [5000, 10000, 20000, 35000]
 }
