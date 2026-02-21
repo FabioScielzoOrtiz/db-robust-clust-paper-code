@@ -1,7 +1,7 @@
 from sklearn.metrics import accuracy_score, balanced_accuracy_score
 
 EXPERIMENT_RANDOM_STATE = 123 
-N_REALIZATIONS = 10 #TODO: 100 en produccion
+N_REALIZATIONS = 100
 CHUNK_SIZE = 5
 PROP_ERRORS_THRESHOLD = 0.30
 
@@ -17,10 +17,6 @@ BASE_CONFIG = {
     'd3': 'hamming',
     'robust_method': 'trimmed',
     'alpha': 0.05,
-    'epsilon': 0.05,
-    'n_iters': 20,
-    'VG_sample_size': 1000,
-    'VG_n_samples': 5,
     # Valores por defecto para variables que cambian a veces
     'n_clusters': 3, 
     'frac_sample_sizes': [0.0005, 0.005, 0.01, 0.05, 0.1, 0.20],

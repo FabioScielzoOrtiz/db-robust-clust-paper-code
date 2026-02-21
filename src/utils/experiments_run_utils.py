@@ -68,15 +68,15 @@ def make_experiment_2(X, y, frac_sample_sizes, n_clusters, method, init, max_ite
     # Logger local para tener contexto
     logger = logging.getLogger(__name__)
 
+    # Log inicial informativo
+    logger.info(f"🚀 Starting Experiment 2 | random_state: {random_state} | frac_sample_sizes: {frac_sample_sizes}")
+
     results = {
         'time': {}, 
         'adj_accuracy': {}, 
         'ARI': {}, 
     }
     
-    # Log inicial informativo
-    logger.info(f"🚀 Starting Experiment 1 | Seed: {random_state} | N_Sample_Sizes: {len(frac_sample_sizes)}")
-
     clustering_base_method = KMedoids(
                 n_clusters=n_clusters, 
                 metric='precomputed', 
@@ -90,11 +90,11 @@ def make_experiment_2(X, y, frac_sample_sizes, n_clusters, method, init, max_ite
         
         # 1. Configuración del modelo
         # Usamos debug para configuración detallada, info para progreso
-        logger.info(f"  >> Processing frac_sample_size: {frac_sample_size:.2f}")
+        logger.info(f"  ⚙️ Processing frac_sample_size: {frac_sample_size:.2f}")
         
         try:
             
-            sample_dist_clust = SampleDistClustering(
+            fast_kmedoids = SampleDistClustering(
                 clustering_method = clustering_base_method,
                 metric = 'ggower',
                 frac_sample_size=frac_sample_size,
@@ -108,7 +108,7 @@ def make_experiment_2(X, y, frac_sample_sizes, n_clusters, method, init, max_ite
             
             # 2. Medición de Tiempo y Ajuste
             start_time = time.time()
-            sample_dist_clust.fit(X=X) 
+            fast_kmedoids.fit(X=X) 
             end_time = time.time()
             
             elapsed_time = end_time - start_time
@@ -122,14 +122,14 @@ def make_experiment_2(X, y, frac_sample_sizes, n_clusters, method, init, max_ite
                 logger.warning(f"     ⚠️ Cluster Mismatch: Expected {n_clusters}, found {n_found_clusters} unique labels.")
 
             # 4. Cálculo de Métricas
-            acc, adj_labels = adjusted_score(y_pred=fast_kmedoids.labels_, y_true=y, metric=score_metric)
+            adj_acc, adj_labels = adjusted_score(y_pred=fast_kmedoids.labels_, y_true=y, metric=score_metric)
             ari = adjusted_rand_score(labels_pred=adj_labels, labels_true=y)
 
-            results['adj_accuracy'][frac_sample_size] = acc
+            results['adj_accuracy'][frac_sample_size] = adj_acc
             results['ARI'][frac_sample_size] = ari
 
             # 5. Log de Resultados Inmediato (Feedback instantáneo)
-            logger.info(f"     ✅ Finished in {elapsed_time:.2f}s | ARI: {ari:.2f} | Acc: {acc:.2f}")
+            logger.info(f"     ✅ Finished in {elapsed_time:.2f}s | ARI: {ari:.2f} | Acc: {adj_acc:.2f}")
 
         except Exception as e:
             logger.error(f"     ❌ Error fitting model for frac {frac_sample_size}: {e}")
@@ -141,9 +141,22 @@ def make_experiment_2(X, y, frac_sample_sizes, n_clusters, method, init, max_ite
 
 ########################################################################################################################################################################
 
-def make_experiment_3(X, y, n_splits, frac_sample_sizes, n_clusters, method, init, max_iter, random_state, 
-                      p1, p2, p3, d1, d2, d3, robust_method, alpha, epsilon, n_iters, shuffle, kfold_random_state,
-                      VG_sample_size, VG_n_samples, score_metric):
+def make_experiment_3(X, y, n_splits, shuffle, frac_sample_sizes, meta_frac_sample_size, 
+                      n_clusters, method, init, max_iter, random_state, 
+                      p1, p2, p3, d1, d2, d3, robust_method, alpha, score_metric):
+
+    logger = logging.getLogger(__name__)
+
+    logger.info(f"🚀 Starting Experiment 3 | Random State: {random_state} | n_splits: {n_splits} | frac_sample_sizes: {frac_sample_sizes}")
+
+    clustering_base_method = KMedoids(
+                n_clusters=n_clusters, 
+                metric='precomputed', 
+                method=method, 
+                init=init, 
+                max_iter=max_iter, 
+                random_state=random_state
+    )
 
     results = {
         'time': {k: {} for k in n_splits},
@@ -152,42 +165,40 @@ def make_experiment_3(X, y, n_splits, frac_sample_sizes, n_clusters, method, ini
     }
            
     for split in n_splits:
-        print('n_splits:', split)
         for frac_sample_size in frac_sample_sizes:
-            print('frac_sample_size:', frac_sample_size)
+            
+            logger.info(f"  ⚙️ Processing  n_splits: {split:.2f} | frac_sample_size: {frac_sample_size:.2f}")
 
             try:
             
-                fold_fast_kmedoids = FoldSampleDistClustering(                                            
-                    n_clusters=n_clusters, 
-                    method=method, 
-                    init=init, 
-                    max_iter=max_iter, 
+                fold_fast_kmedoids = FoldSampleDistClustering(  
+                    clustering_method = clustering_base_method, 
+                    metric = 'ggower',
                     random_state=random_state,
-                    frac_sample_size=frac_sample_size, 
-                    p1=p1, 
-                    p2=p2, 
-                    p3=p3, 
-                    d1=d1, 
-                    d2=d2, 
-                    d3=d3, 
+                    shuffle=shuffle,
+                    n_splits=split,
+                    frac_sample_size=frac_sample_size,
+                    meta_frac_sample_size=meta_frac_sample_size,
+                    stratify=False,
+                    p1=p1, p2=p2, p3=p3,
+                    d1=d1, d2=d2, d3=d3, 
                     robust_method=robust_method, 
-                    alpha=alpha, 
-                    epsilon=epsilon, 
-                    n_iters=n_iters, 
-                    VG_sample_size=VG_sample_size, 
-                    VG_n_samples=VG_n_samples,
-                    n_splits=split, 
-                    shuffle=shuffle, 
-                    kfold_random_state=kfold_random_state,
+                    alpha=alpha                    
                 )
                 
                 start_time = time.time()
                 fold_fast_kmedoids.fit(X=X) 
                 end_time = time.time()
-                results['time'][split][frac_sample_size] = end_time - start_time
-                results['adj_accuracy'][split][frac_sample_size], adj_labels = adjusted_score(y_pred=fold_fast_kmedoids.labels_, y_true=y, metric=score_metric)
-                results['ARI'][split][frac_sample_size] = adjusted_rand_score(labels_pred=adj_labels, labels_true=y)           
+                
+                elapsed_time = end_time - start_time
+                adj_acc, adj_labels = adjusted_score(y_pred=fold_fast_kmedoids.labels_, y_true=y, metric=score_metric)
+                ari = adjusted_rand_score(labels_pred=adj_labels, labels_true=y) 
+                
+                results['time'][split][frac_sample_size] = elapsed_time
+                results['adj_accuracy'][split][frac_sample_size] = adj_acc
+                results['ARI'][split][frac_sample_size] = ari
+
+                logger.info(f"     ✅ Finished in {elapsed_time:.2f}s | ARI: {ari:.2f} | Acc: {adj_acc:.2f}")         
             
             except Exception as e:
                 logger.error(f"     ❌ Error fitting model for split {split} and frac {frac_sample_size}: {e}")
@@ -371,11 +382,11 @@ def get_clustering_models_experiment_4(experiment_config, random_state):
         'FoldFastKmedoidsGGower-robust_mahalanobis_winsorized-sokal-hamming': FoldSampleDistClustering(
                 clustering_method = clustering_base_method,
                 metric = 'ggower',
-                n_splits=experiment_config['n_splits'],
+                random_state=random_state,
                 shuffle=experiment_config['shuffle'],
+                n_splits=experiment_config['n_splits'],
                 frac_sample_size=experiment_config['frac_sample_size'],
                 meta_frac_sample_size=experiment_config['meta_frac_sample_size'],
-                random_state=random_state,
                 stratify=False,
                 p1=experiment_config['p1'], 
                 p2=experiment_config['p2'], 
@@ -517,11 +528,11 @@ def get_clustering_models_experiment_5(experiment_config, random_state, mixed_di
         models[f'FoldFastKmedoidsGGower-{d1}_{r}-{d2}-{d3}'] = FoldSampleDistClustering(
                 clustering_method = clustering_base_method,
                 metric = 'ggower',
-                n_splits=experiment_config['n_splits'],
+                random_state=random_state,
                 shuffle=experiment_config['shuffle'],
+                n_splits=experiment_config['n_splits'],
                 frac_sample_size=experiment_config['frac_sample_size'],
                 meta_frac_sample_size=experiment_config['meta_frac_sample_size'],
-                random_state=random_state,
                 stratify=False,
                 p1=experiment_config['p1'], 
                 p2=experiment_config['p2'], 

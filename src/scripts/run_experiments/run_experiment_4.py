@@ -31,7 +31,7 @@ sys.path.append(project_path)
 
 ###########################################################################################
 # --- CUSTOM IMPORTS ---
-from src.utils.experiments_utils import (
+from utils.experiments_run_utils import (
     split_list_in_chunks,
     get_clustering_models_experiment_4,
     make_experiment_4

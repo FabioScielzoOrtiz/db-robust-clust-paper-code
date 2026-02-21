@@ -17,12 +17,8 @@ BASE_CONFIG = {
     'd3': 'hamming',
     'robust_method': 'trimmed',
     'alpha': 0.05,
-    'epsilon': 0.05,
-    'n_iters': 20,
-    'VG_sample_size': 1000,
-    'VG_n_samples': 5,
     'shuffle': True, 
-    'kfold_random_state': 111,
+    'meta_frac_sample_size': 1, 
     # Valores por defecto para variables que cambian a veces
     'n_clusters': 3, 
     'frac_sample_sizes': [0.005, 0.05, 0.1, 0.15],

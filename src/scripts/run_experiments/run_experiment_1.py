@@ -31,7 +31,7 @@ sys.path.append(project_path)
 
 # --- CUSTOM IMPORTS ---
 
-from src.utils.experiments_utils import make_experiment_1
+from utils.experiments_run_utils import make_experiment_1
 
 from config.config_experiment_1 import CONFIG_EXPERIMENT
 from config.config_simulations import SIMULATION_CONFIGS  

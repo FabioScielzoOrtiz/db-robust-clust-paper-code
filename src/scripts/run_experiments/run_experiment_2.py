@@ -42,11 +42,11 @@ sys.path.append(project_path)
 
 # --- CUSTOM IMPORTS ---
 
-from src.experiments_utils import (
+from utils.experiments_run_utils import (
     split_list_in_chunks,
     make_experiment_2
 )
-from src.simulations_utils import generate_simulation
+from src.utils.simulations_utils import generate_simulation
 
 from config.config_experiment_2 import (
     CONFIG_EXPERIMENT, 
