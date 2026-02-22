@@ -510,7 +510,7 @@ def get_clustering_models_experiment_5(experiment_config, random_state, mixed_di
             r = d1.split('_')[-1]
             d1 = '_'.join(d1.split('_')[:2])
             
-        models[f'FastKmedoidsGGower-{d1}_{r}-{d2}-{d3}'] = SampleDistClustering(
+        models[f'FastKmedoids-GGower-{d1}_{r}-{d2}-{d3}'] = SampleDistClustering(
                 clustering_method = clustering_base_method,
                 metric = 'ggower',
                 frac_sample_size=experiment_config['frac_sample_size'],
@@ -526,7 +526,7 @@ def get_clustering_models_experiment_5(experiment_config, random_state, mixed_di
                 alpha=experiment_config['alpha'], 
             )
 
-        models[f'FoldFastKmedoidsGGower-{d1}_{r}-{d2}-{d3}'] = FoldSampleDistClustering(
+        models[f'FoldFastKmedoids-GGower-{d1}_{r}-{d2}-{d3}'] = FoldSampleDistClustering(
                 clustering_method = clustering_base_method,
                 metric = 'ggower',
                 random_state=random_state,

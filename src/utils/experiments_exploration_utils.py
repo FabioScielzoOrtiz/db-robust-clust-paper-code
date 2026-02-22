@@ -186,9 +186,7 @@ def process_experiment_5_results(results_path, not_feasible_methods_to_add, prop
 
     rows = []
     for seed, metrics in results.items():   
-        
         model_names_arr = metrics['ARI'].keys() 
-
         for model_name in model_names_arr:        
             row = {
                 'random_state': seed,
@@ -200,9 +198,9 @@ def process_experiment_5_results(results_path, not_feasible_methods_to_add, prop
             }
             rows.append(row)
 
-        df = pl.DataFrame(rows)
+    df = pl.DataFrame(rows)
 
-        df = df.with_columns(
+    df = df.with_columns(
         pl.when(
             pl.col('status').str.contains('Error')
         ).then(
@@ -210,9 +208,9 @@ def process_experiment_5_results(results_path, not_feasible_methods_to_add, prop
         ).otherwise(
             False
         ).alias('status_error')
-        )
+    )
 
-        df_avg = (
+    df_avg = (
         df.group_by(['model_name'])
         .agg(
             [pl.mean(c).alias(f'mean_{c}'.lower()) for c in ['ARI', 'adj_accuracy', 'time']] +
@@ -220,10 +218,14 @@ def process_experiment_5_results(results_path, not_feasible_methods_to_add, prop
             [pl.mean('status_error').alias('prop_status_error')]
         )
         .sort(['mean_adj_accuracy'], descending=True, nulls_last=True)
-        )
+    )
+    
+    not_feasible_methods = []
+    
+    if not_feasible_methods_to_add:
 
         not_feasible_methods = df_avg.filter(pl.col('prop_status_error') >= prop_errors_threshold)['model_name'].unique().to_list() + not_feasible_methods_to_add
-             
+    
         rows_to_add = []
         for m in not_feasible_methods: 
             if m not in df_avg['model_name'].unique():
@@ -234,11 +236,11 @@ def process_experiment_5_results(results_path, not_feasible_methods_to_add, prop
 
 ########################################################################################################################################################################
 
-def fast_mds(sample_size, X, d1, d2, d3, robust_method, random_state, config_experiment):
+def fast_mds(sample_size, X, d1, d2, d3, robust_method, random_state_mds, random_state_sample, config_experiment):
 
     X = check_array(X)
 
-    np.random.seed(random_state)
+    np.random.seed(random_state_sample)
     sample_idx = np.random.choice(range(X.shape[0]), sample_size)
 
     D = generalized_gower_dist_matrix(
@@ -251,7 +253,7 @@ def fast_mds(sample_size, X, d1, d2, d3, robust_method, random_state, config_exp
             alpha=config_experiment['alpha'], 
         )
     
-    mds = MDS(n_components=2, dissimilarity='precomputed', random_state=random_state) 
+    mds = MDS(n_components=2, dissimilarity='precomputed', random_state=random_state_mds) 
 
     X_mds = mds.fit_transform(D)
 
