@@ -12,9 +12,6 @@ import matplotlib.lines as mlines
 
 def process_experiment_2_results(results_path, prop_errors_threshold):
 
-    # -------------------------------------------------------------------------
-    # CARGAR RESULTADOS
-    # -------------------------------------------------------------------------
     if not os.path.exists(results_path):
         print("❌ Error: El archivo no existe. Revisa el DATA_ID o la ruta.")
     else:
@@ -23,9 +20,6 @@ def process_experiment_2_results(results_path, prop_errors_threshold):
         print(f"✅ Archivo cargado correctamente. Tipo de objeto: {type(results)}")
         print(f"📊 Número de realizaciones (seeds) capturadas: {len(results)}")
 
-    # -------------------------------------------------------------------------
-    # CONVERSIÓN A DATAFRAME  
-    # -------------------------------------------------------------------------
     rows = []
     for seed, metrics in results.items():   
         # Asumimos que todas las métricas tienen las mismas claves (frac_sample_sizes)
@@ -55,7 +49,7 @@ def process_experiment_2_results(results_path, prop_errors_threshold):
         )
 
     # 2. Preparación de datos (Polars)
-    df = df.with_columns((pl.col("frac_sample_size") * 100).cast(pl.Int64).alias("sample_size_pct"))
+    df = df.with_columns((pl.col("frac_sample_size") * 100).alias("sample_size_pct"))
     
     # Agrupamos y calculamos todo (medias y desviaciones estándar) internamente
     df_avg = df.group_by("sample_size_pct").agg([
@@ -67,6 +61,65 @@ def process_experiment_2_results(results_path, prop_errors_threshold):
         pl.col("time").std().alias("std_time"),
         pl.col('status_error').mean().alias('prop_status_error')
     ]).sort("sample_size_pct")
+
+    df_avg = df_avg.filter(pl.col('prop_status_error') < prop_errors_threshold)
+
+    return df, df_avg
+
+########################################################################################################################################################################
+
+def process_experiment_3_results(results_path, prop_errors_threshold):
+
+    if not os.path.exists(results_path):
+        print("❌ Error: El archivo no existe. Revisa el DATA_ID o la ruta.")
+    else:
+        with open(results_path, 'rb') as f:
+            results = pickle.load(f)
+        print(f"✅ Archivo cargado correctamente. Tipo de objeto: {type(results)}")
+        print(f"📊 Número de realizaciones (seeds) capturadas: {len(results)}")
+
+    rows = []
+    for seed, metrics in results.items():   
+        # Asumimos que todas las métricas tienen las mismas claves (frac_sample_sizes)
+        n_splits_arr = metrics['ARI'].keys() 
+        frac_sample_size_arr = metrics['ARI'][list(n_splits_arr)[0]].keys()
+        
+        for n_splits in n_splits_arr:
+            for frac in frac_sample_size_arr:        
+                row = {
+                    'random_state': seed,
+                    'n_splits': n_splits,
+                    'frac_sample_size': frac,
+                    'time': metrics['time'].get(n_splits).get(frac),
+                    'adj_accuracy': metrics['adj_accuracy'].get(n_splits).get(frac),
+                    'ARI': metrics['ARI'].get(n_splits).get(frac),
+                    'status': metrics['status'].get(n_splits).get(frac) if 'status' in metrics else 'OK',
+                }
+                rows.append(row)
+
+    df = pl.DataFrame(rows)
+
+    df = df.with_columns(
+            pl.when(
+                pl.col('status').str.contains('Error')
+            ).then(
+                True
+            ).otherwise(
+                False
+            ).alias('status_error')
+        )
+
+    df = df.with_columns((pl.col("frac_sample_size") * 100).alias("sample_size_pct"))
+
+    df_avg = df.group_by(["n_splits", "sample_size_pct"]).agg([
+        pl.col("adj_accuracy").mean().alias("mean_acc"),
+        pl.col("adj_accuracy").std().alias("std_acc"),
+        pl.col("ARI").mean().alias("mean_ari"),
+        pl.col("ARI").std().alias("std_ari"),
+        pl.col("time").mean().alias("mean_time"),
+        pl.col("time").std().alias("std_time"),
+        pl.col("status_error").mean().alias("prop_status_error")
+    ]).sort(["n_splits", "sample_size_pct"])
 
     df_avg = df_avg.filter(pl.col('prop_status_error') < prop_errors_threshold)
 
@@ -193,7 +246,7 @@ def plot_experiment_2_results(df, df_avg, data_name, num_realizations, save_path
 
 ########################################################################################################################################################################
 
-def plot_experiment_3_results(df, data_name, num_realizations, save_path, 
+def plot_experiment_3_results(df, df_avg, data_name, num_realizations, save_path, 
                               error_style='fill', ylim_acc=None, ylim_ari=None, ylim_time=None):
     """
     Genera los gráficos del experimento 3 alineando correctamente las líneas
@@ -205,20 +258,8 @@ def plot_experiment_3_results(df, data_name, num_realizations, save_path,
     if error_style not in valid_styles:
         raise ValueError(f"El parámetro error_style debe ser uno de: {valid_styles}")
 
-    # 2. Preparación de datos (Polars)
-    df = df.with_columns((pl.col("frac_sample_size") * 100).alias("sample_size_pct"))
-
-    df_stats = df.group_by(["n_splits", "sample_size_pct"]).agg([
-        pl.col("adj_accuracy").mean().alias("mean_acc"),
-        pl.col("adj_accuracy").std().alias("std_acc"),
-        pl.col("ARI").mean().alias("mean_ari"),
-        pl.col("ARI").std().alias("std_ari"),
-        pl.col("time").mean().alias("mean_time"),
-        pl.col("time").std().alias("std_time")
-    ]).sort(["n_splits", "sample_size_pct"])
-
     # 3. Identificamos al GANADOR global
-    best_row = df_stats.sort("mean_acc", descending=True).row(0, named=True)
+    best_row = df_avg.sort("mean_acc", descending=True).row(0, named=True)
     best_frac_pct = best_row['sample_size_pct']
     best_fold = best_row['n_splits']  # Necesitamos saber en qué fold ocurrió para el offset
 
@@ -232,7 +273,7 @@ def plot_experiment_3_results(df, data_name, num_realizations, save_path,
         'Time (secs)': {'raw_col': 'time', 'mean_col': 'mean_time', 'std_col': 'std_time', 'ylim': ylim_time}
     }
 
-    folds = df_stats["n_splits"].unique().sort().to_list()
+    folds = df_avg["n_splits"].unique().sort().to_list()
     palette = sns.color_palette("tab10", n_colors=len(folds))
     df_pd = df.to_pandas()
     unique_fracs = sorted(df["sample_size_pct"].unique().to_list())
@@ -250,7 +291,7 @@ def plot_experiment_3_results(df, data_name, num_realizations, save_path,
             dodge_width = 0.8 / n_hues  # 0.8 es el ancho que usa Seaborn por defecto
             
             for i, k in enumerate(folds):
-                subset = df_stats.filter(pl.col("n_splits") == k)
+                subset = df_avg.filter(pl.col("n_splits") == k)
                 y_mean = subset[data['mean_col']].to_list()
                 
                 # Desplazamos las X para que caigan en el centro de su caja
@@ -271,7 +312,7 @@ def plot_experiment_3_results(df, data_name, num_realizations, save_path,
         else:
             # Modos numéricos (fill, bar, None) no tienen "dodge", se dibujan sobre la X real
             for i, k in enumerate(folds):
-                subset = df_stats.filter(pl.col("n_splits") == k)
+                subset = df_avg.filter(pl.col("n_splits") == k)
                 x_vals = subset["sample_size_pct"].to_list()
                 y_mean = subset[data['mean_col']].to_list()
                 y_std = subset[data['std_col']].to_list()
@@ -308,10 +349,9 @@ def plot_experiment_3_results(df, data_name, num_realizations, save_path,
     fig.legend(handles, labels, loc='lower center', ncol=len(folds)+1, fontsize=10, bbox_to_anchor=(0.5, 0.0))
     plt.subplots_adjust(top=0.83, bottom=0.20, wspace=0.25)
 
-    style_map = {'fill': 'Mean & Std Dev', 'bar': 'Mean & Std Dev', 'boxplot': 'Raw Distributions', None: 'Mean Trend Only'}
     formatted_data_name = data_name.replace('_', ' ').capitalize()
     fig.suptitle(
-        f"Results ({style_map[error_style]} - Highlighted: Best Accuracy)\n{formatted_data_name} - Realizations: {num_realizations}", 
+        f'Accuracy, ARI and Time vs. Number of Folds and Sample Size Parameter\n{formatted_data_name} - Realizations: {num_realizations}',  
         fontsize=13, fontweight='bold', y=1.02
     )
 
