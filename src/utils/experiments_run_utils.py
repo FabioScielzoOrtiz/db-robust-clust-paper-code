@@ -424,12 +424,6 @@ def get_clustering_models_experiment_5(experiment_config, random_state, mixed_di
             random_state = random_state,
             ),
 
-        'CLARA': CLARA(
-            n_clusters=experiment_config['n_clusters'], 
-            metric='euclidean',
-            #random_state = random_state # has not random_state parameter
-            ),
-
         'Diana': Diana(
             n_clusters=experiment_config['n_clusters'],
             #random_state = random_state # has not random_state parameter
@@ -489,6 +483,12 @@ def get_clustering_models_experiment_5(experiment_config, random_state, mixed_di
             n_clusters=experiment_config['n_clusters'],
             random_state = random_state
             ),
+
+        'CLARA': CLARA(
+            n_clusters=experiment_config['n_clusters'], 
+            metric='euclidean',
+            #random_state = random_state # has not random_state parameter
+            ),
         
         'KMedoids-euclidean': KMedoids(
             n_clusters=experiment_config['n_clusters'], 
@@ -498,6 +498,7 @@ def get_clustering_models_experiment_5(experiment_config, random_state, mixed_di
             metric='euclidean',
             random_state = random_state
             ),
+        # TODO: añadir familia KMedoids de la librería KMedoids
         
     }
 

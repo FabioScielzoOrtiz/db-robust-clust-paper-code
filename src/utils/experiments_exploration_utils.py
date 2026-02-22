@@ -7,6 +7,9 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 import matplotlib.lines as mlines 
+from sklearn.manifold import MDS
+from sklearn.utils import check_array
+from robust_mixed_dist.mixed import generalized_gower_dist_matrix
 
 ########################################################################################################################################################################
 
@@ -124,6 +127,135 @@ def process_experiment_3_results(results_path, prop_errors_threshold):
     df_avg = df_avg.filter(pl.col('prop_status_error') < prop_errors_threshold)
 
     return df, df_avg
+
+########################################################################################################################################################################
+
+def process_experiment_4_results(results_path):
+
+    if not os.path.exists(results_path):
+        print("❌ Error: El archivo no existe. Revisa el DATA_ID o la ruta.")
+    else:
+        with open(results_path, 'rb') as f:
+            results = pickle.load(f)
+        print(f"✅ Archivo cargado correctamente. Tipo de objeto: {type(results)}")
+        print(f"📊 Número de realizaciones (seeds) capturadas: {len(results)}")
+
+    records = []
+    for seed, metrics_dict in results.items():
+        for metric, size_dict in metrics_dict.items():
+            for n_samples, model_dict in size_dict.items():
+                for model_name, value in model_dict.items():
+                    records.append({
+                        'seed': seed,
+                        'n_samples': n_samples,
+                        'model_name': model_name,
+                        'metric': metric,
+                        'value': value
+                    })
+
+    df_long = pl.DataFrame(records)
+
+    df = df_long.pivot(
+        index=['seed', 'n_samples', 'model_name'], 
+        on='metric', 
+        values='value'
+    )
+
+    df_avg = df.group_by(["model_name", "n_samples"]).agg([
+            pl.col("adj_accuracy").mean().alias("mean_acc"),
+            pl.col("adj_accuracy").std().alias("std_acc"),
+            pl.col("ARI").mean().alias("mean_ari"),
+            pl.col("ARI").std().alias("std_ari"),
+            pl.col("time").mean().alias("mean_time"),
+            pl.col("time").std().alias("std_time")
+        ]).sort(["model_name", "n_samples"])
+    
+    return df, df_avg
+
+########################################################################################################################################################################
+
+def process_experiment_5_results(results_path, not_feasible_methods_to_add, prop_errors_threshold):   
+
+    if not os.path.exists(results_path):
+        print("❌ Error: El archivo no existe. Revisa el DATA_ID o la ruta.")
+    else:
+        with open(results_path, 'rb') as f:
+            results = pickle.load(f)
+        print(f"✅ Archivo cargado correctamente. Tipo de objeto: {type(results)}")
+        print(f"📊 Número de realizaciones (seeds) capturadas: {len(results)}")
+
+    rows = []
+    for seed, metrics in results.items():   
+        
+        model_names_arr = metrics['ARI'].keys() 
+
+        for model_name in model_names_arr:        
+            row = {
+                'random_state': seed,
+                'model_name': model_name,
+                'time': metrics['time'].get(model_name),
+                'adj_accuracy': metrics['adj_accuracy'].get(model_name),
+                'ARI': metrics['ARI'].get(model_name),
+                'status': metrics['status'].get(model_name) if 'status' in metrics else 'OK'
+            }
+            rows.append(row)
+
+        df = pl.DataFrame(rows)
+
+        df = df.with_columns(
+        pl.when(
+            pl.col('status').str.contains('Error')
+        ).then(
+            True
+        ).otherwise(
+            False
+        ).alias('status_error')
+        )
+
+        df_avg = (
+        df.group_by(['model_name'])
+        .agg(
+            [pl.mean(c).alias(f'mean_{c}'.lower()) for c in ['ARI', 'adj_accuracy', 'time']] +
+            [pl.std(c).alias(f'std_{c}'.lower()) for c in ['ARI', 'adj_accuracy', 'time']] +
+            [pl.mean('status_error').alias('prop_status_error')]
+        )
+        .sort(['mean_adj_accuracy'], descending=True, nulls_last=True)
+        )
+
+        not_feasible_methods = df_avg.filter(pl.col('prop_status_error') >= prop_errors_threshold)['model_name'].unique().to_list() + not_feasible_methods_to_add
+             
+        rows_to_add = []
+        for m in not_feasible_methods: 
+            if m not in df_avg['model_name'].unique():
+                rows_to_add.append({k: None if k != 'model_name' else m for k in df_avg.columns})
+        df_avg = pl.concat([df_avg, pl.DataFrame(rows_to_add)], how='vertical')
+
+    return df, df_avg, not_feasible_methods, results
+
+########################################################################################################################################################################
+
+def fast_mds(sample_size, X, d1, d2, d3, robust_method, random_state, config_experiment):
+
+    X = check_array(X)
+
+    np.random.seed(random_state)
+    sample_idx = np.random.choice(range(X.shape[0]), sample_size)
+
+    D = generalized_gower_dist_matrix(
+            X=X[sample_idx,:], 
+            p1=config_experiment['p1'], 
+            p2=config_experiment['p2'], 
+            p3=config_experiment['p3'], 
+            d1=d1, d2=d2, d3=d3, 
+            robust_method=robust_method, 
+            alpha=config_experiment['alpha'], 
+        )
+    
+    mds = MDS(n_components=2, dissimilarity='precomputed', random_state=random_state) 
+
+    X_mds = mds.fit_transform(D)
+
+    return X_mds, sample_idx
 
 ########################################################################################################################################################################
 
@@ -360,82 +492,126 @@ def plot_experiment_3_results(df, df_avg, data_name, num_realizations, save_path
 
 ########################################################################################################################################################################
 
-def plot_experiment_4_results(df, num_realizations, save_path):
-        
-    # 2. Configurar metadatos de los modelos para no repetir código
+def plot_experiment_4_results(df, df_avg, num_realizations, save_path, 
+                              error_style='fill', ylim_acc=None, ylim_ari=None, ylim_time=None):
+    """
+    Genera los gráficos del experimento 4 (Data Size vs Model) 
+    permitiendo múltiples estilos de error.
+    """
+    
+    # 1. Validación de estilo
+    valid_styles = ['fill', 'bar', 'boxplot', None]
+    if error_style not in valid_styles:
+        raise ValueError(f"El parámetro error_style debe ser uno de: {valid_styles}")
+
+    # 2. Configurar metadatos de los modelos
     model_config = {
         'KMedoids-euclidean': {
             'color': 'green', 
-            'label': '$k$-medoids'
+            'label': 'Kmedoids-Euclidean'
         },
         'FastKmedoidsGGower-robust_mahalanobis_winsorized-sokal-hamming': {
             'color': 'blue', 
-            'label': 'Robust Fast $k$-medoids'
+            'label': 'FastKmedoids-RobustGGower'
         },
         'FoldFastKmedoidsGGower-robust_mahalanobis_winsorized-sokal-hamming': {
             'color': 'red', 
-            'label': 'Robust Fold Fast $k$-medoids' 
+            'label': 'FoldFastKmedoids-RobustGGower' 
         }
     }
 
-    # 3. Inicializar la figura
-    fig, axes = plt.subplots(1, 3, figsize=(17, 4))
+    # Filtramos para usar solo los modelos que realmente están en el DataFrame
+    # y mantenemos el orden del diccionario para consistencia visual
+    unique_models = [m for m in model_config.keys() if m in df["model_name"].unique().to_list()]
+    
+    # 3. Preparación de datos agregados (Polars)
+
+    # 4. Inicializar la figura y métricas
+    fig, axes = plt.subplots(1, 3, figsize=(17, 4.5))
     axes = axes.flatten()
 
-    metrics_to_plot = [
-        ('adj_accuracy', 'Adj. Accuracy vs Data size', 'Adj. Accuracy', axes[0]),
-        ('ARI', 'ARI vs Data size', 'ARI', axes[1]),
-        ('time', 'Time vs Data Size', 'Time (secs)', axes[2])
-    ]
+    metrics = {
+        'Adj. Accuracy': {'raw_col': 'adj_accuracy', 'mean_col': 'mean_acc', 'std_col': 'std_acc', 'ylim': ylim_acc, 'title': 'Adj. Accuracy vs Data Size'},
+        'ARI': {'raw_col': 'ARI', 'mean_col': 'mean_ari', 'std_col': 'std_ari', 'ylim': ylim_ari, 'title': 'ARI vs Data Size'},
+        'Time (secs)': {'raw_col': 'time', 'mean_col': 'mean_time', 'std_col': 'std_time', 'ylim': ylim_time, 'title': 'Time vs Data Size'}
+    }
 
-    unique_models = df["model_name"].unique().to_list()
+    unique_samples = sorted(df["n_samples"].unique().to_list())
+    palette = {m: model_config[m]['color'] for m in unique_models}
 
-    # 4. Generar los gráficos iterando sobre las métricas y los modelos
-    for metric_col, title, ylabel, ax in metrics_to_plot:
-        for model_name, config in model_config.items():
-            
-            # Comprobamos si el modelo está en nuestra lista de modelos únicos
-            if model_name in unique_models:
-                
-                # POLARS: Filtrado de filas usando pl.col()
-                df_subset = df.filter(pl.col('model_name') == model_name)
-                
-                sns.lineplot(
-                    data=df_subset, 
-                    x='n_samples', 
-                    y=metric_col, 
-                    color=config['color'], 
-                    marker='o', 
-                    markersize=5, 
-                    label=config['label'], 
-                    ax=ax
-                )
+    # 5. Generar los gráficos iterando sobre las métricas
+    for ax, (ylabel, data) in zip(axes, metrics.items()):
         
+        if error_style == 'boxplot':
+            # Seaborn separa las cajas por modelo (hue) automáticamente
+            sns.boxplot(data=df, x="n_samples", y=data['raw_col'], hue="model_name", 
+                        palette=palette, hue_order=unique_models, ax=ax, boxprops={'alpha': 0.6})
+            
+            # Cálculo del offset (dodge) para centrar las líneas
+            n_hues = len(unique_models)
+            dodge_width = 0.8 / n_hues
+            
+            for i, model_name in enumerate(unique_models):
+                subset = df_avg.filter(pl.col("model_name") == model_name)
+                y_mean = subset[data['mean_col']].to_list()
+                
+                offset = (i - (n_hues - 1) / 2) * dodge_width
+                x_dodged = [x + offset for x in range(len(unique_samples))]
+                
+                ax.plot(x_dodged, y_mean, marker='o', markersize=5, color=model_config[model_name]['color'], linewidth=1.5)
+            
+            if ax.get_legend() is not None: ax.get_legend().remove()
+
+        else:
+            # Modos numéricos continuos (fill, bar, None)
+            for model_name in unique_models:
+                config = model_config[model_name]
+                subset = df_avg.filter(pl.col("model_name") == model_name)
+                
+                x_vals = subset["n_samples"].to_list()
+                y_mean = subset[data['mean_col']].to_list()
+                y_std = subset[data['std_col']].to_list()
+                color = config['color']
+
+                if error_style in ['fill', None]:
+                    ax.plot(x_vals, y_mean, marker='o', markersize=5, color=color)
+                    if error_style == 'fill':
+                        y_upper = (subset.get_column(data['mean_col']) + subset.get_column(data['std_col'])).to_list()
+                        y_lower = (subset.get_column(data['mean_col']) - subset.get_column(data['std_col'])).to_list()
+                        ax.fill_between(x_vals, y_lower, y_upper, color=color, alpha=0.15)
+                        
+                elif error_style == 'bar':
+                    ax.errorbar(x_vals, y_mean, yerr=y_std, marker='o', markersize=5, color=color, capsize=4)
+
         # Detalles de cada subplot
-        ax.set_title(title, size=13, weight='bold')
-        ax.set_ylabel(ylabel, size=12)
+        ax.set_title(data['title'], size=13, weight='bold')
         ax.set_xlabel('Data Size', size=12)
-        ax.legend().set_visible(False) # Ocultamos la leyenda individual
+        ax.set_ylabel(ylabel, size=12)
+        ax.grid(True, linestyle='--', alpha=0.5)
+        
+        if data['ylim'] is not None:
+            ax.set_ylim(data['ylim'])
 
-    # 5. Ajustes globales y leyenda unificada
-    handles, labels = axes[2].get_legend_handles_labels()
-    fig.legend(handles=handles, labels=labels, loc='lower center', bbox_to_anchor=(0.5, -0.15), ncol=3, fontsize=10)
+    # 6. Ajustes globales y leyenda unificada
+    handles = [plt.Rectangle((0,0),1,1, color=model_config[m]['color'], alpha=0.8) for m in unique_models]
+    labels = [model_config[m]['label'] for m in unique_models]
+    fig.legend(handles, labels, loc='lower center', bbox_to_anchor=(0.5, -0.05), ncol=3, fontsize=11)
 
-    plt.subplots_adjust(top=0.83, hspace=0.5, wspace=0.23)
+    plt.subplots_adjust(top=0.82, bottom=0.20, wspace=0.25)
+    
     plt.suptitle(
-        '$k$-Medoids vs Fast $k$-Medoids vs Fold Fast $k$-Medoids - Accuracy, ARI and Time\n'
+        f'K-Medoids vs Fast K-Medoids vs Fold Fast K-Medoids)\n'
         f'Num. Experiment Realizations = {num_realizations}', 
-        fontsize=14, y=1.1, weight='bold', color='black', alpha=1
+        fontsize=14, weight='bold', color='black', alpha=1, y=1.02
     )
 
-    # 6. Guardar y mostrar
+    # 7. Guardar y mostrar
     fig.savefig(save_path, format='png', dpi=300, bbox_inches="tight", pad_inches=0.2)
-
     plt.show()
 
 ########################################################################################################################################################################
 
-def plot_experiment_5_results(df, data_name, num_realizations, save_path, 
+def plot_experiment_5_results(df_avg, data_name, num_realizations, save_path, 
                               our_methods_1=None, our_methods_2=None, 
                               other_methods=None, not_feasible_methods=None):
     """
@@ -451,17 +627,17 @@ def plot_experiment_5_results(df, data_name, num_realizations, save_path,
     not_feasible_methods = not_feasible_methods or []
 
     # 2. Extraer vectores para plotear (convertir a numpy/list)
-    model_names = df["model_name"].to_numpy()
+    model_names = df_avg["model_name"].to_numpy()
     
     # Medias
-    avg_adj_accuracy = df["mean_adj_accuracy"].fill_null(0).to_numpy()
-    avg_ari = df["mean_ari"].fill_null(0).to_numpy()
-    avg_time = df["mean_time"].fill_null(0).to_numpy()
+    avg_adj_accuracy = df_avg["mean_adj_accuracy"].fill_null(0).to_numpy()
+    avg_ari = df_avg["mean_ari"].fill_null(0).to_numpy()
+    avg_time = df_avg["mean_time"].fill_null(0).to_numpy()
     
     # Desviaciones 
-    std_adj_acc = df["std_adj_accuracy"].fill_null(0).to_numpy()
-    std_ari = df["std_ari"].fill_null(0).to_numpy()
-    std_time = df["std_time"].fill_null(0).to_numpy()
+    std_adj_acc = df_avg["std_adj_accuracy"].fill_null(0).to_numpy()
+    std_ari = df_avg["std_ari"].fill_null(0).to_numpy()
+    std_time = df_avg["std_time"].fill_null(0).to_numpy()
 
     # Posiciones en el eje y acorde a las posiciones dadas en df
     y_pos = np.arange(len(model_names))
@@ -497,7 +673,7 @@ def plot_experiment_5_results(df, data_name, num_realizations, save_path,
             xerr=stds,
             fmt='none',
             ecolor='black',
-            elinewidth=1,
+            elinewidth=1.2,
             capsize=3.5,
             alpha=1
         )

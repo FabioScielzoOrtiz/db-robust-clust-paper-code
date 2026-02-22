@@ -6,7 +6,6 @@ import os
 import sys
 import pickle
 import logging
-import polars as pl
 
 ###########################################################################################
 

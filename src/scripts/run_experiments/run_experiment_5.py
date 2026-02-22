@@ -8,7 +8,6 @@ import pickle
 import logging
 import argparse
 import polars as pl
-import numpy as np
 from tqdm import tqdm
 
 ###########################################################################################
@@ -35,7 +34,7 @@ sys.path.append(project_path)
 
 ###########################################################################################
 # --- CUSTOM IMPORTS ---
-from utils.experiments_run_utils import (
+from src.utils.experiments_run_utils import (
     split_list_in_chunks,
     get_clustering_models_experiment_5,
     get_mixed_distances_names,

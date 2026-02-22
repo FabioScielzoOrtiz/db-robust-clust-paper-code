@@ -1,7 +1,7 @@
 from sklearn.metrics import accuracy_score, balanced_accuracy_score
 
 EXPERIMENT_RANDOM_STATE = 123 
-N_REALIZATIONS = 100
+N_REALIZATIONS = 10
 CHUNK_SIZE = 5
 PROP_ERRORS_THRESHOLD = 0.30
 
