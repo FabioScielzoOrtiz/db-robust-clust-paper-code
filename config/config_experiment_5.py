@@ -6,7 +6,7 @@ CHUNK_SIZE = 5
 PROP_ERRORS_THRESHOLD = 0.30
 
 BASE_CONFIG = {
-    'random_state': 123,
+    'random_state': EXPERIMENT_RANDOM_STATE,
     'method': 'pam',
     'init': 'build',
     'max_iter': 100,
@@ -29,62 +29,86 @@ CONFIG_EXPERIMENT = {
 
     'simulation_testing': {
         **BASE_CONFIG, 
-        'frac_sample_size': 0.1,
+        'frac_sample_size_sample_dist_clust': 0.1,
+        'frac_sample_size_fold_sample_dist_clust': 0.1,
         'n_splits': 5,
         'n_clusters': 4
     },
 
     'simulation_1': {
         **BASE_CONFIG, 
-        'frac_sample_size': 0.1,
+        'frac_sample_size_sample_dist_clust': 0.1,
+        'frac_sample_size_fold_sample_dist_clust': 0.1,
         'n_splits': 5,
         'n_clusters': 4
     },
 
     'simulation_2': {
         **BASE_CONFIG,
-        'frac_sample_size': 0.05,
+        'frac_sample_size_sample_dist_clust': 0.05,
+        'frac_sample_size_fold_sample_dist_clust': 0.05,
         'n_splits': 10,
         'n_clusters': 4
     },
 
     'simulation_3': {
         **BASE_CONFIG,
-        'frac_sample_size': 0.005,
+        'frac_sample_size_sample_dist_clust': 0.005,
+        'frac_sample_size_fold_sample_dist_clust': 0.005,
         'n_splits': 10,
     },
 
     'simulation_4': {
         **BASE_CONFIG,
-        'frac_sample_size': 0.005,
+        'frac_sample_size_sample_dist_clust': 0.005,
+        'frac_sample_size_fold_sample_dist_clust': 0.005,
         'n_splits': 20,
     },
 
     'simulation_5': {
         **BASE_CONFIG,
-        'frac_sample_size': 0.005,
+        'frac_sample_size_sample_dist_clust': 0.005,
+        'frac_sample_size_fold_sample_dist_clust': 0.005,
         'n_splits': 10,
     },
 
     'simulation_6': {
         **BASE_CONFIG,
-        'frac_sample_size': 0.005,
+        'frac_sample_size_sample_dist_clust': 0.005,
+        'frac_sample_size_fold_sample_dist_clust': 0.005,
         'n_splits': 10,
 
     },
 
     'simulation_7': {
         **BASE_CONFIG,
-        'frac_sample_size': 0.005,
+        'frac_sample_size_sample_dist_clust': 0.005,
+        'frac_sample_size_fold_sample_dist_clust': 0.005,
         'n_splits': 20,
+    },
+
+    'simulation_8': {
+        **BASE_CONFIG, 
+        'frac_sample_size_sample_dist_clust': 0.1,
+        'frac_sample_size_fold_sample_dist_clust': 0.1,
+        'n_splits': 5,
+        'n_clusters': 4
+    },
+
+    'simulation_9': {
+        **BASE_CONFIG, 
+        'frac_sample_size_sample_dist_clust': 0.1,
+        'frac_sample_size_fold_sample_dist_clust': 0.1,
+        'n_splits': 5,
+        'n_clusters': 4
     },
 
     'dubai_houses': {
         **BASE_CONFIG,
-        'frac_sample_size_fast_kmedoids': 0.1,
-        'frac_sample_size_fold_fast_kmedoids': 0.9,
+        'frac_sample_size_sample_dist_clust': 0.1,
+        'frac_sample_size_fold_sample_dist_clust': 0.9,
         'n_splits': 10,
-        'n_clusters': None,
+        'n_clusters': 2,
         'p1': None,
         'p2': None,
         'p3': None,
@@ -93,10 +117,10 @@ CONFIG_EXPERIMENT = {
 
     'heart_disease': {
         **BASE_CONFIG,
-        'frac_sample_size_fast_kmedoids': 0.5,
-        'frac_sample_size_fold_fast_kmedoids': 0.7,
+        'frac_sample_size_sample_dist_clust': 0.5,
+        'frac_sample_size_fold_sample_dist_clust': 0.7,
         'n_splits': 5,
-        'n_clusters': None,
+        'n_clusters': 2,
         'p1': None,
         'p2': None,
         'p3': None
@@ -104,10 +128,10 @@ CONFIG_EXPERIMENT = {
 
     'kc_houses': {
         **BASE_CONFIG,
-        'frac_sample_size_fast_kmedoids': 0.01,
-        'frac_sample_size_fold_fast_kmedoids': 0.6,
+        'frac_sample_size_sample_dist_clust': 0.01,
+        'frac_sample_size_fold_sample_dist_clust': 0.6,
         'n_splits': 10,
-        'n_clusters': None,
+        'n_clusters': 3,
         'p1': None,
         'p2': None,
         'p3': None,

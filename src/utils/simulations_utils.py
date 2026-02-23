@@ -32,23 +32,37 @@ def generate_simulation(
     centers,
     cluster_std,
     n_features,
-    outlier_configs = None, # Lista de dicts para configurar outliers
-    custom_sampling = False, # Para la lógica de simulation_7
-    return_outlier_idx=False
+    outlier_configs=None, 
+    custom_sampling=False, 
+    return_outlier_idx=False,
+    separation_factor=1.0  
 ):
+    # Lógica para aplicar la separabilidad
+    # Si centers es un array de coordenadas, multiplicamos las distancias desde el origen.
+    # Si es un int (ej. 3 clústeres), escalamos la caja de generación por defecto de sklearn (-10, 10).
+    if isinstance(centers, (list, np.ndarray)):
+        adjusted_centers = np.array(centers) * separation_factor
+        c_box = (-10.0, 10.0)
+        n_clusters = len(centers)
+    else:
+        adjusted_centers = centers
+        c_box = (-10.0 * separation_factor, 10.0 * separation_factor)
+        n_clusters = centers
+
     # Lógica custom de muestreo (Simulation 7)
     if custom_sampling:
-        X, y = make_blobs(n_samples=450000, centers=centers, cluster_std=cluster_std, n_features=n_features, random_state=random_state)
+        X, y = make_blobs(n_samples=450000, centers=adjusted_centers, center_box=c_box, 
+                          cluster_std=cluster_std, n_features=n_features, random_state=random_state)
         idx = {}
-        for size, cluster in zip(custom_sampling, range(centers)):
-             # Nota: corrección de seguridad en random choice
+        for size, cluster in zip(custom_sampling, range(n_clusters)):
             available_indices = np.where(y == cluster)[0]
             idx[cluster] = np.random.choice(available_indices, size=size, replace=False)
-        X = np.concatenate([X[idx[c]] for c in range(centers)])
-        y = np.concatenate([y[idx[c]] for c in range(centers)])
+        X = np.concatenate([X[idx[c]] for c in range(n_clusters)])
+        y = np.concatenate([y[idx[c]] for c in range(n_clusters)])
     else:
         # Lógica estándar
-        X, y = make_blobs(n_samples=n_samples, centers=centers, cluster_std=cluster_std, n_features=n_features, random_state=random_state)
+        X, y = make_blobs(n_samples=n_samples, centers=adjusted_centers, center_box=c_box, 
+                          cluster_std=cluster_std, n_features=n_features, random_state=random_state)
 
     X = process_simulated_data(X)
 
@@ -56,7 +70,6 @@ def generate_simulation(
     outlier_indices = []
     if outlier_configs:
         for cfg in outlier_configs:
-            # cfg es un dict: {'col_name': 'X1', 'prop_above': 0.05, ...}
             X, idx_out = outlier_contamination(X, random_state=random_state, **cfg)
             outlier_indices.append(idx_out)
 
@@ -66,176 +79,4 @@ def generate_simulation(
     
     return X, y
 
-########################################################################################################################################################################
-
-'''
-def get_simulation_testing(random_state=123, n_samples=5000, return_outlier_idx=False):
-        
-    # Data simulation
-    X, y = make_blobs(n_samples=n_samples, centers=4, cluster_std=[2,2,2,3], n_features=8, random_state=random_state)
-
-    # Process simulated data
-    X = process_simulated_data(X)
-
-    # Outlier contamination
-    X, outliers_idx_X1 = outlier_contamination(X, col_name='X1', prop_above=0.05, sigma=2, random_state=random_state)
-    X, outliers_idx_X2 = outlier_contamination(X, col_name='X2', prop_below=0.05, sigma=2, random_state=random_state)
-
-    if return_outlier_idx:
-        outliers_idx = outliers_idx_X1.copy() if np.array_equal(outliers_idx_X1, outliers_idx_X2) else np.unique(np.concatenate([outliers_idx_X1, outliers_idx_X2]))
-        return X, y, outliers_idx
-    else:
-        return X, y
-
-########################################################################################################################################################################
-
-def get_simulation_1(random_state, return_outlier_idx=False):
-        
-    # Data simulation
-    X, y = make_blobs(n_samples=35000, centers=4, cluster_std=[2,2,2,3], n_features=8, random_state=random_state)
-
-    # Process simulated data
-    X = process_simulated_data(X)
-
-    # Outlier contamination
-    X, outliers_idx_X1 = outlier_contamination(X, col_name='X1', prop_above=0.05, sigma=2, random_state=random_state)
-    X, outliers_idx_X2 = outlier_contamination(X, col_name='X2', prop_below=0.05, sigma=2, random_state=random_state)
-
-    if return_outlier_idx:
-        outliers_idx = outliers_idx_X1.copy() if np.array_equal(outliers_idx_X1, outliers_idx_X2) else np.unique(np.concatenate([outliers_idx_X1, outliers_idx_X2]))
-        return X, y, outliers_idx
-    else:
-        return X, y
-
-########################################################################################################################################################################
-
-def get_simulation_2(random_state, return_outlier_idx=False):
-        
-    # Data simulation
-    X, y = make_blobs(n_samples=100000, centers=4, cluster_std=[2,2,2,3], n_features=8, random_state=random_state)
-
-    # Process simulated data
-    X = process_simulated_data(X)
-
-    # Outlier contamination
-    X, outliers_idx_X1 = outlier_contamination(X, col_name='X1', prop_above=0.05, sigma=2, random_state=random_state)
-    X, outliers_idx_X2 = outlier_contamination(X, col_name='X2', prop_below=0.05, sigma=2, random_state=random_state)
-
-    if return_outlier_idx:
-        outliers_idx = outliers_idx_X1.copy() if np.array_equal(outliers_idx_X1, outliers_idx_X2) else np.unique(np.concatenate([outliers_idx_X1, outliers_idx_X2]))
-        return X, y, outliers_idx
-    else:
-        return X, y
-
-########################################################################################################################################################################
-
-def get_simulation_3(random_state, return_outlier_idx=False):
-        
-    # Data simulation
-    X, y = make_blobs(n_samples=300000, centers=3, cluster_std=[2,2,3], n_features=8, random_state=random_state)
-
-    # Process simulated data
-    X = process_simulated_data(X)
-
-    # Outlier contamination
-    X, outliers_idx_X1 = outlier_contamination(X, col_name='X1', prop_above=0.05, sigma=2, random_state=random_state)
-    X, outliers_idx_X2 = outlier_contamination(X, col_name='X2', prop_below=0.05, sigma=2, random_state=random_state)
-
-    if return_outlier_idx:
-        outliers_idx = outliers_idx_X1.copy() if np.array_equal(outliers_idx_X1, outliers_idx_X2) else np.unique(np.concatenate([outliers_idx_X1, outliers_idx_X2]))
-        return X, y, outliers_idx
-    else:
-        return X, y
-    
-########################################################################################################################################################################
-
-def get_simulation_4(random_state, return_outlier_idx=False):
-        
-    # Data simulation
-    X, y = make_blobs(n_samples=1000000, centers=3, cluster_std=[2,2,3], n_features=8, random_state=random_state)
-
-    # Process simulated data
-    X = process_simulated_data(X)
-
-    # Outlier contamination
-    X, outliers_idx_X1 = outlier_contamination(X, col_name='X1', prop_above=0.05, sigma=2, random_state=random_state)
-    X, outliers_idx_X2 = outlier_contamination(X, col_name='X2', prop_below=0.05, sigma=2, random_state=random_state)
-
-    if return_outlier_idx:
-        outliers_idx = outliers_idx_X1.copy() if np.array_equal(outliers_idx_X1, outliers_idx_X2) else np.unique(np.concatenate([outliers_idx_X1, outliers_idx_X2]))
-        return X, y, outliers_idx
-    else:
-        return X, y
-
-########################################################################################################################################################################
-
-def get_simulation_5(random_state, return_outlier_idx=False):
-        
-    # Data simulation
-    X, y = make_blobs(n_samples=300000, centers=3, cluster_std=[2,2,3], n_features=8, random_state=random_state)
-
-    # Process simulated data
-    X = process_simulated_data(X)
-
-    # Outlier contamination
-    X, outliers_idx_X1 = outlier_contamination(X, col_name='X1', prop_above=0.085, sigma=2, random_state=random_state)
-    X, outliers_idx_X2 = outlier_contamination(X, col_name='X2', prop_below=0.10, sigma=2, random_state=random_state)
-    X, outliers_idx_X3 = outlier_contamination(X, col_name='X4', prop_below=0.06, sigma=2, random_state=random_state)
-
-    if return_outlier_idx:
-        outliers_idx = outliers_idx_X1.copy() if np.array_equal(outliers_idx_X1, outliers_idx_X2, outliers_idx_X3) else np.unique(np.concatenate([outliers_idx_X1, outliers_idx_X2, outliers_idx_X3]))
-        return X, y, outliers_idx
-    else:
-        return X, y
-    
-########################################################################################################################################################################
-
-def get_simulation_6(random_state):
-        
-    # Data simulation
-    X, y = make_blobs(n_samples=300000, centers=3, cluster_std=[2,2,3], n_features=8, random_state=random_state)
-
-    # Process simulated data
-    X = process_simulated_data(X)
-
-    return X, y
-    
-########################################################################################################################################################################
-
-def get_simulation_7(random_state, return_outlier_idx=False):
-           
-    centers = 3 
-
-    X, y = make_blobs(n_samples=450000, centers=centers, cluster_std=[2,2,3], n_features=8, random_state=random_state)
- 
-    # Seleccionar aleatoriamente puntos de cada cluster
-    idx = {}
-    n_samples_list = [60000, 90000, 150000]
-    for size, cluster in zip(n_samples_list, range(centers)):
-        idx[cluster] = np.random.choice(np.where(y == cluster)[0], size=size, replace=False)
-
-    # Reconstruir X e y con los tamaños deseados
-    X = np.concatenate([X[idx[c]] for c in range(centers)])
-    y = np.concatenate([y[idx[c]] for c in range(centers)])
-
-    # Process simulated data
-    X = process_simulated_data(X)
-
-    # Outlier contamination
-    X, outliers_idx_X1 = outlier_contamination(X, col_name='X1', prop_above=0.05, sigma=2, random_state=random_state)
-    X, outliers_idx_X2 = outlier_contamination(X, col_name='X2', prop_below=0.05, sigma=2, random_state=random_state)
-
-    if return_outlier_idx:
-        outliers_idx = outliers_idx_X1.copy() if np.array_equal(outliers_idx_X1, outliers_idx_X2) else np.unique(np.concatenate([outliers_idx_X1, outliers_idx_X2]))
-        return X, y, outliers_idx
-    else:
-        return X, y
-
-'''
-
 ########################################################################################################################################################################    
-
-    
-
-
-

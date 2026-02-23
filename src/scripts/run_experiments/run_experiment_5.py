@@ -1,4 +1,3 @@
-###########################################################################################
 # --- IMPORTS ---
 import os
 import sys
@@ -18,11 +17,14 @@ logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 # --- ARGUMENT PARSING ---
 parser = argparse.ArgumentParser(description="Run Experiment 5 Simulations")
 parser.add_argument('--data_id', type=str, required=True, help="ID of the simulation data configuration (e.g., 'simulation_1')")
-parser.add_argument('--force', action='store_true', help="Force execution for all models, ignoring existing results.")
+parser.add_argument('--force', action='store_true', help="Force execution. By default, forces all models. Use with --force_models to restrict.")
+# NUEVO: Argumento que acepta una lista separada por espacios de nombres de modelos
+parser.add_argument('--force_models', nargs='+', type=str, help="List of specific models to force re-execution (e.g., --force_models KMedoids SubKmeans)")
 args = parser.parse_args()
 
 DATA_ID = args.data_id
 FORCE_EXECUTION = args.force
+FORCE_MODELS_LIST = args.force_models # Será None si no se especifica, o una lista ['modelo1', 'modelo2']
 
 ###########################################################################################
 # --- PATH CONFIGURATION ---
@@ -56,10 +58,11 @@ from config.config_simulations import SIMULATION_CONFIGS
 def main():
     """
     Main execution flow of the Experiment 5 pipeline with Incremental Model Update Capability.
-    Handles missing chunk files by reconstructing history from the merged file.
     """
     logging.info(f"▶️ STARTING EXPERIMENT 5 FOR DATA_ID: {DATA_ID}")
     logging.info(f"▶️ FORCE EXECUTION: {FORCE_EXECUTION}")
+    if FORCE_EXECUTION and FORCE_MODELS_LIST:
+        logging.info(f"▶️ FORCING SPECIFIC MODELS: {FORCE_MODELS_LIST}")
 
     # 0. Validate Configuration
     if DATA_ID not in CONFIG_EXPERIMENT:
@@ -67,25 +70,24 @@ def main():
         sys.exit(1)
     
     experiment_config = CONFIG_EXPERIMENT[DATA_ID]
- 
+
     # 1. Setup Environment
     if not os.path.exists(results_dir):
         os.makedirs(results_dir, exist_ok=True)
 
     # 2. Define All Possible Models (Names)
-    quant_distances_names = ['robust_mahalanobis']
-    binary_distances_names = ['jaccard', 'sokal']
-    multiclass_distances_names = ['hamming']
-    robust_method = ['MAD', 'trimmed', 'winsorized']
+    QUANT_DISTANCE_NAMES = ['robust_mahalanobis']
+    BINARY_DISTANCE_NAMES = ['jaccard', 'sokal']
+    MULTICLASS_DISTANCE_NAMES = ['hamming']
+    ROBUST_METHOD_NAMES = ['MAD', 'trimmed', 'winsorized']
 
     mixed_distances_names = get_mixed_distances_names(
-        quant_distances_names, 
-        binary_distances_names, 
-        multiclass_distances_names, 
-        robust_method
+        QUANT_DISTANCE_NAMES, 
+        BINARY_DISTANCE_NAMES, 
+        MULTICLASS_DISTANCE_NAMES, 
+        ROBUST_METHOD_NAMES
     )
     
-    # Instanciamos dummy para obtener nombres
     dummy_models = get_clustering_models_experiment_5(
         random_state=42,
         experiment_config=experiment_config,
@@ -95,30 +97,73 @@ def main():
     logging.info(f" -> Total defined models available: {len(all_model_names)}")
 
     # =========================================================================
-    # 3. Load Global Merged History (To handle missing chunks)
+    # 3. Load Global Merged History 
     # =========================================================================
     final_filename = f'results_exp_5_{DATA_ID}.pkl'
     final_save_path = os.path.join(results_dir, final_filename)
     
-    GLOBAL_MERGED_DATA = {} # Store full history here
+    GLOBAL_MERGED_DATA = {} 
     
-    if os.path.exists(final_save_path) and not FORCE_EXECUTION:
+    # MODIFICADO: Ahora SIEMPRE cargamos el historial si existe, incluso si hay force.
+    # Esto preserva los modelos que NO queremos forzar.
+    if os.path.exists(final_save_path):
         logging.info("STEP 2: Loading existing merged file (as source of truth)...")
         try:
             with open(final_save_path, 'rb') as f:
                 GLOBAL_MERGED_DATA = pickle.load(f)
-            logging.info(f" -> Loaded history for {len(GLOBAL_MERGED_DATA)} realizations from merged file.")
+            logging.info(f" -> Loaded history for {len(GLOBAL_MERGED_DATA)} realizations.")
         except Exception as e:
             logging.warning(f" -> Could not read existing merged file ({e}). Starting fresh.")
     else:
-        logging.info("STEP 2: No previous merged file found (or Force active). Starting fresh.")
+        logging.info("STEP 2: No previous merged file found. Starting fresh.")
 
-    # 4. Prepare Random States & Chunks
-    random.seed(EXPERIMENT_RANDOM_STATE)
-    random_state_list = random.sample(range(N_REALIZATIONS * 1000), N_REALIZATIONS)
+    # =========================================================================
+    # 4. Prepare Random States & Chunks (N_REALIZATIONS Protection & Extension)
+    # =========================================================================
+    if GLOBAL_MERGED_DATA:
+        existing_seeds = list(GLOBAL_MERGED_DATA.keys())
+        num_existing = len(existing_seeds)
+        
+        if N_REALIZATIONS < num_existing:
+            # PROTECCIÓN: Evitamos pérdida de datos si el usuario baja el número por error
+            logging.error(f"❌ PELIGRO: N_REALIZATIONS ({N_REALIZATIONS}) es menor que las realizaciones guardadas ({num_existing}).")
+            logging.error("Ejecución detenida para prevenir pérdida de datos. Sube N_REALIZATIONS en tu config, o borra los archivos a mano si realmente quieres empezar de cero.")
+            sys.exit(1)
+            
+        elif N_REALIZATIONS == num_existing:
+            # Todo cuadra, usamos las mismas semillas
+            logging.info(f"STEP 2.5: Reusing {num_existing} exact seeds from existing global data.")
+            random_state_list = existing_seeds
+            
+        else:
+            # Hay que añadir NUEVAS realizaciones a las ya existentes
+            new_seeds_needed = N_REALIZATIONS - num_existing
+            logging.info(f"STEP 2.5: Found {num_existing} existing seeds. Generating {new_seeds_needed} NEW seeds to reach {N_REALIZATIONS}.")
+            
+            random.seed(EXPERIMENT_RANDOM_STATE)
+            # Generamos un pool muy grande para asegurarnos de no repetir semillas
+            pool_size = N_REALIZATIONS * 1000
+            all_possible_seeds = random.sample(range(pool_size), pool_size)
+            
+            new_seeds = []
+            for s in all_possible_seeds:
+                if s not in existing_seeds:
+                    new_seeds.append(s)
+                if len(new_seeds) == new_seeds_needed:
+                    break
+            
+            # La lista final será: primero las antiguas (para no reordenar chunks), luego las nuevas
+            random_state_list = existing_seeds + new_seeds
+            
+    else:
+        # Primera ejecución desde cero
+        logging.info("STEP 2.5: No previous data found. Generating seeds from scratch.")
+        random.seed(EXPERIMENT_RANDOM_STATE)
+        random_state_list = random.sample(range(N_REALIZATIONS * 1000), N_REALIZATIONS)
+        
     all_chunks = split_list_in_chunks(random_state_list, chunk_size=CHUNK_SIZE)
     
-    # 5. Data Preparation (Load Real Data OR Prepare for Simulation)
+    # 5. Data Preparation
     simulation_names = list(SIMULATION_CONFIGS.keys())
     is_simulation = DATA_ID in simulation_names
     X_real, y_real = None, None
@@ -149,10 +194,9 @@ def main():
         logging.info("STEP 3: Simulation mode configured.")
 
     # =========================================================================
-    # 6. Process Chunks Loop (Reconstruction + Update)
+    # 6. Process Chunks Loop
     # =========================================================================
     logging.info("STEP 4: Processing Chunks (Recovering -> Updating -> Saving)...")
-    
     chunks_processed_count = 0
 
     for chunk_id, chunk_seeds in enumerate(tqdm(all_chunks, desc='Processing Chunks')):
@@ -161,53 +205,44 @@ def main():
         chunk_path = os.path.join(results_dir, chunk_filename)
         
         chunk_results = {}
-        chunk_needs_save = False # Flag para saber si guardamos a disco
+        chunk_needs_save = False 
 
-        # --- A. Estrategia de Carga: Archivo VS Global Merge ---
-        if os.path.exists(chunk_path) and not FORCE_EXECUTION:
-            # Opción 1: El archivo chunk existe, es la fuente más confiable
+        # 1. Intentamos cargar el chunk si existe
+        if os.path.exists(chunk_path):
             try:
                 with open(chunk_path, 'rb') as f:
                     chunk_results = pickle.load(f)
             except Exception as e:
-                logging.error(f"Error loading chunk {chunk_id}, will try to recover from global merge: {e}")
+                logging.error(f"Error loading chunk {chunk_id}: {e}")
                 chunk_results = {}
 
-        # Opción 2: Si el chunk estaba vacío o no existía, intentamos RECUPERAR del Global Merge
-        # Esto soluciona el caso de "archivos chunks borrados"
-        if not chunk_results and not FORCE_EXECUTION:
-            recovered_count = 0
-            for seed in chunk_seeds:
-                if seed in GLOBAL_MERGED_DATA:
-                    chunk_results[seed] = GLOBAL_MERGED_DATA[seed]
-                    recovered_count += 1
-            
-            if recovered_count > 0:
-                # Si recuperamos datos del merge, marcamos para guardar, 
-                # así "regeneramos" el archivo chunk físico.
+        # 2. NUEVO: Recuperación a nivel de SEMILLA (Super importante)
+        # Verificamos si cada semilla de este chunk está en los resultados. Si no, la rescatamos del Global.
+        for seed in chunk_seeds:
+            if seed not in chunk_results and seed in GLOBAL_MERGED_DATA:
+                chunk_results[seed] = GLOBAL_MERGED_DATA[seed]
                 chunk_needs_save = True 
 
         # --- B. Iterar sobre semillas del Chunk ---
         for random_state in chunk_seeds:
-            
-            # 1. Determinar qué modelos faltan
             current_seed_results = chunk_results.get(random_state, {})
             
+            # Lógica para determinar qué correr
+            existing_models_for_seed = set(current_seed_results.get('time', {}).keys())
+
             if FORCE_EXECUTION:
-                existing_models_for_seed = set()
-            else:
-                if 'time' in current_seed_results:
-                    existing_models_for_seed = set(current_seed_results['time'].keys())
+                if FORCE_MODELS_LIST:
+                    existing_models_for_seed = existing_models_for_seed - set(FORCE_MODELS_LIST)
                 else:
                     existing_models_for_seed = set()
 
+            # Modelos finales a correr
             models_to_run_names = all_model_names - existing_models_for_seed
             
-            # Si no faltan modelos, pasamos a la siguiente semilla
             if not models_to_run_names:
                 continue 
 
-            # 2. Generar/Obtener Data (Solo si vamos a correr algo)
+            # 2. Generar/Obtener Data
             try:
                 if is_simulation:
                     simulation_config = SIMULATION_CONFIGS[DATA_ID]
@@ -243,7 +278,6 @@ def main():
                 if random_state not in chunk_results:
                     chunk_results[random_state] = new_results
                 else:
-                    # Update recursivo de diccionarios (time, ARI, etc.)
                     for metric_key, model_dict in new_results.items():
                         if metric_key not in chunk_results[random_state]:
                             chunk_results[random_state][metric_key] = {}
@@ -255,8 +289,7 @@ def main():
                 logging.error(f"Error processing seed {random_state} in chunk {chunk_id}: {e}")
                 continue
 
-        # --- C. Guardar Chunk (Si hubo cambios o recuperación) ---
-        # Guardamos si corrimos modelos nuevos O si recuperamos datos del merge (para restaurar el archivo)
+        # --- C. Guardar Chunk ---
         if chunk_needs_save:
             try:
                 with open(chunk_path, 'wb') as f:
@@ -272,7 +305,6 @@ def main():
     # =========================================================================
     logging.info("STEP 5: Consolidating final results...")
 
-    # Reiniciamos el diccionario final para reconstruirlo limpiamente desde los chunks (ahora actualizados)
     final_merged_results = {}
     missing_chunks_during_merge = 0
     n_total = len(all_chunks)
@@ -282,7 +314,6 @@ def main():
         chunk_path = os.path.join(results_dir, chunk_filename)
         
         if not os.path.exists(chunk_path):
-            # Si a estas alturas no existe, es que falló la recuperación y la generación
             logging.warning(f"   ⚠️ Chunk file missing: {chunk_filename}")
             missing_chunks_during_merge += 1
             continue

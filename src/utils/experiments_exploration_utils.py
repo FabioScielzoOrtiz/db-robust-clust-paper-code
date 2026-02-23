@@ -10,6 +10,8 @@ import matplotlib.lines as mlines
 from sklearn.manifold import MDS
 from sklearn.utils import check_array
 from robust_mixed_dist.mixed import generalized_gower_dist_matrix
+from src.utils.simulations_utils import generate_simulation
+from config.config_simulations import SIMULATION_CONFIGS
 
 ########################################################################################################################################################################
 
@@ -236,28 +238,59 @@ def process_experiment_5_results(results_path, not_feasible_methods_to_add, prop
 
 ########################################################################################################################################################################
 
-def fast_mds(sample_size, X, d1, d2, d3, robust_method, random_state_mds, random_state_sample, config_experiment):
-
-    X = check_array(X)
-
-    np.random.seed(random_state_sample)
-    sample_idx = np.random.choice(range(X.shape[0]), sample_size)
-
-    D = generalized_gower_dist_matrix(
-            X=X[sample_idx,:], 
-            p1=config_experiment['p1'], 
-            p2=config_experiment['p2'], 
-            p3=config_experiment['p3'], 
-            d1=d1, d2=d2, d3=d3, 
-            robust_method=robust_method, 
-            alpha=config_experiment['alpha'], 
-        )
+def process_experiment_6_results(results_path):
+    """
+    Procesa los resultados del Experimento 6 (Estabilidad de muestreo).
+    Estructura esperada: results[seed][metric][model_name]
+    """
+    if not os.path.exists(results_path):
+        print(f"❌ Error: El archivo no existe en la ruta: {results_path}")
+        return None, None
     
-    mds = MDS(n_components=2, dissimilarity='precomputed', random_state=random_state_mds) 
+    with open(results_path, 'rb') as f:
+        results = pickle.load(f)
+    
+    print(f"✅ Archivo cargado correctamente.")
+    print(f"📊 Número de realizaciones (sampling seeds) capturadas: {len(results)}")
 
-    X_mds = mds.fit_transform(D)
+    records = []
+    # Estructura: semilla -> metrica -> modelo -> valor
+    for seed, metrics_dict in results.items():
+        for metric, model_dict in metrics_dict.items():
+            for model_name, value in model_dict.items():
+                records.append({
+                    'sampling_seed': seed,
+                    'model_name': model_name,
+                    'metric': metric,
+                    'value': value
+                })
 
-    return X_mds, sample_idx
+    if not records:
+        print("⚠️ No se encontraron registros en el archivo.")
+        return None, None
+
+    # Crear DataFrame en formato largo
+    df_long = pl.DataFrame(records)
+
+    # Pivotar para tener métricas como columnas (adj_accuracy, ARI, time)
+    df = df_long.pivot(
+        index=['sampling_seed', 'model_name'], 
+        on='metric', 
+        values='value'
+    )
+
+    # Agregación para medir estabilidad
+    # Aquí n_samples no existe, agrupamos solo por modelo para ver su variabilidad total
+    df_avg = df.group_by(["model_name"]).agg([
+            pl.col("adj_accuracy").mean().alias("mean_acc"),
+            pl.col("adj_accuracy").std().alias("std_acc"),
+            pl.col("ARI").mean().alias("mean_ari"),
+            pl.col("ARI").std().alias("std_ari"),
+            pl.col("time").mean().alias("mean_time"),
+            pl.col("time").std().alias("std_time")
+        ]).sort("mean_acc", descending=True)
+    
+    return df, df_avg
 
 ########################################################################################################################################################################
 
@@ -603,7 +636,7 @@ def plot_experiment_4_results(df, df_avg, num_realizations, save_path,
     
     plt.suptitle(
         f'K-Medoids vs Fast K-Medoids vs Fold Fast K-Medoids)\n'
-        f'Num. Experiment Realizations = {num_realizations}', 
+        f'Realizations = {num_realizations}', 
         fontsize=14, weight='bold', color='black', alpha=1, y=1.02
     )
 
@@ -739,3 +772,172 @@ def plot_experiment_5_results(df_avg, data_name, num_realizations, save_path,
 
 ########################################################################################################################################################################
 
+def plot_experiment_6_results(df, num_realizations, save_path, 
+                               ylim_acc=None, ylim_ari=None, ylim_time=None):
+    """
+    Genera boxplots comparativos para evaluar la estabilidad de los algoritmos 
+    frente al muestreo aleatorio simple (Experimento 6).
+    """
+    
+    # 1. Configuración de modelos (Colores consistentes con Exp 4)
+    model_config = {
+        'FastKmedoidsGGower-robust_mahalanobis_winsorized-sokal-hamming': {
+            'color': 'blue', 
+            'label': 'FastKmedoids\n(Robust GGower)'
+        },
+        'FoldFastKmedoidsGGower-robust_mahalanobis_winsorized-sokal-hamming': {
+            'color': 'red', 
+            'label': 'FoldFastKmedoids\n(Robust GGower)' 
+        }
+    }
+
+    # Filtramos modelos presentes
+    unique_models = [m for m in model_config.keys() if m in df["model_name"].unique().to_list()]
+    palette = {m: model_config[m]['color'] for m in unique_models}
+    # Etiquetas simplificadas para el eje X
+    model_labels = [model_config[m]['label'] for m in unique_models]
+
+    # 2. Inicializar la figura
+    fig, axes = plt.subplots(1, 3, figsize=(15, 5))
+    axes = axes.flatten()
+
+    metrics = {
+        'Adj. Accuracy': {
+            'raw_col': 'adj_accuracy', 'mean_col': 'mean_acc', 
+            'ylim': ylim_acc, 'title': 'Stability: Adj. Accuracy'
+        },
+        'ARI': {
+            'raw_col': 'ARI', 'mean_col': 'mean_ari', 
+            'ylim': ylim_ari, 'title': 'Stability: ARI'
+        },
+        'Time (secs)': {
+            'raw_col': 'time', 'mean_col': 'mean_time', 
+            'ylim': ylim_time, 'title': 'Stability: Time'
+        }
+    }
+
+    # 3. Bucle de ploteo
+    for ax, (ylabel, data) in zip(axes, metrics.items()):
+        
+        # Dibujamos el Boxplot
+        # Usamos patch_artist para que los colores se apliquen correctamente
+        sns.boxplot(
+            data=df, x="model_name", hue="model_name", y=data['raw_col'], 
+            order=unique_models, palette=palette, ax=ax,
+            width=0.5, showmeans=True,
+            meanprops={"marker":"s","markerfacecolor":"white", "markeredgecolor":"black", "markersize":6},
+            boxprops={'alpha': 0.7}
+        )
+        
+        # 1. Definimos las posiciones (ticks) fijas
+        ax.set_xticks(range(len(model_labels)))
+        # 2. Asignamos las etiquetas a esas posiciones
+        ax.set_xticklabels(model_labels, size=10)
+
+        # Estética de cada subplot
+        ax.set_title(data['title'], size=13, weight='bold')
+        ax.set_ylabel(ylabel, size=11)
+        ax.set_xlabel('', size=11) # El nombre del modelo ya es explícito
+        ax.set_xticklabels(model_labels, size=10)
+        ax.grid(True, linestyle='--', alpha=0.4, axis='y')
+        
+        if data['ylim'] is not None:
+            ax.set_ylim(data['ylim'])
+
+    # 4. Ajustes globales y Leyenda
+    # Creamos una leyenda para explicar el cuadradito blanco de la media
+    mean_marker = mlines.Line2D([], [], color='white', marker='s', markeredgecolor='black', 
+                                linestyle='None', markersize=8, label='Mean Score')
+    
+    fig.legend(handles=[mean_marker], loc='lower center', bbox_to_anchor=(0.5, -0.05), fontsize=10)
+
+    plt.subplots_adjust(top=0.82, bottom=0.18, wspace=0.3)
+    
+    plt.suptitle(
+        f'Clustering Stability vs. Simple Random Sampling\n'
+        f'Simulation 1 - Realizations: {num_realizations}', 
+        fontsize=14, weight='bold', y=1.02
+    )
+
+    # 5. Guardar y mostrar
+    fig.savefig(save_path, format='png', dpi=300, bbox_inches="tight", pad_inches=0.2)
+    plt.show()
+
+########################################################################################################################################################################
+
+def fast_mds(sample_size, X, d1, d2, d3, robust_method, random_state_mds, random_state_sample, config_experiment):
+
+    X = check_array(X)
+
+    np.random.seed(random_state_sample)
+    sample_idx = np.random.choice(range(X.shape[0]), sample_size)
+
+    D = generalized_gower_dist_matrix(
+            X=X[sample_idx,:], 
+            p1=config_experiment['p1'], 
+            p2=config_experiment['p2'], 
+            p3=config_experiment['p3'], 
+            d1=d1, d2=d2, d3=d3, 
+            robust_method=robust_method, 
+            alpha=config_experiment['alpha'], 
+        )
+    
+    mds = MDS(n_components=2, dissimilarity='precomputed', random_state=random_state_mds) 
+
+    X_mds = mds.fit_transform(D)
+
+    return X_mds, sample_idx
+
+########################################################################################################################################################################
+
+def visualize_separation_factor_effect():
+    # Factores que queremos probar (de muy solapados a muy separados)
+    factors_to_test = [0.2, 0.5, 1.0, 2.0, 3.0]
+    
+    # Cargamos la configuración base de la simulación 1
+    base_config = SIMULATION_CONFIGS['simulation_1']
+    random_state = 42 # Semilla fija para ver el efecto exacto del factor
+
+    # Preparamos la figura (1 fila, 4 columnas)
+    fig, axes = plt.subplots(1, len(factors_to_test), figsize=(20, 5))
+    
+    for ax, factor in zip(axes, factors_to_test):
+        print(f"Generando datos para separation_factor = {factor}...")
+        
+        # Generamos los datos inyectando el factor
+        X, y = generate_simulation(
+            **base_config, 
+            random_state=random_state, 
+            separation_factor=factor,
+            return_outlier_idx=False
+        )
+        
+        # Asumimos que X es un DataFrame de Pandas/Polars o un array de Numpy.
+        # Ploteamos las dos primeras características (features)
+        if hasattr(X, 'to_numpy'):
+            X_plot = X.to_numpy()
+        else:
+            X_plot = X
+            
+        # Scatter plot pintando cada punto según su clúster (y)
+        sns.scatterplot(
+            x=X_plot[:, 0], 
+            y=X_plot[:, 1], 
+            hue=y, 
+            palette='tab10', 
+            s=15, 
+            alpha=0.7, 
+            ax=ax,
+            legend=False
+        )
+        
+        ax.set_title(f'Separation Factor = {factor}', fontsize=14, weight='bold')
+        ax.set_xlabel('Feature 1')
+        ax.set_ylabel('Feature 2')
+        ax.grid(True, linestyle='--', alpha=0.5)
+
+    plt.suptitle('Separation Factor Effect in Simulated Data', fontsize=18, weight='bold', y=1.05)
+    plt.tight_layout()
+    plt.show()
+
+########################################################################################################################################################################

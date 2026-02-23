@@ -1,14 +1,14 @@
 from sklearn.metrics import accuracy_score
 
 EXPERIMENT_RANDOM_STATE = 123 
-N_REALIZATIONS = 100
+N_REALIZATIONS = 10
 CHUNK_SIZE = 5
 
 CONFIG_EXPERIMENT = {
+    'base_method_random_state': EXPERIMENT_RANDOM_STATE,
     'n_splits': 5, 
     'frac_sample_size': 0.1,
     'meta_frac_sample_size': 1,
-    'random_state': 123,
     'method': 'pam',
     'init': 'build',
     'max_iter': 100,
@@ -22,6 +22,5 @@ CONFIG_EXPERIMENT = {
     'alpha': 0.05,
     'shuffle': True, 
     'n_clusters': 4, 
-    'score_metric': accuracy_score,
-    'data_sizes': [5000, 10000, 20000, 35000]
+    'score_metric': accuracy_score
 }
