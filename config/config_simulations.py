@@ -19,7 +19,8 @@ SIMULATION_CONFIGS = {
         'outlier_configs': [
             {'col_name': 'X1', 'prop_above': 0.05, 'sigma': 2},
             {'col_name': 'X2', 'prop_below': 0.05, 'sigma': 2}
-        ]
+        ],
+        'separation_factor': 1
     },
 
     'simulation_2': {
@@ -30,7 +31,8 @@ SIMULATION_CONFIGS = {
         'outlier_configs': [
             {'col_name': 'X1', 'prop_above': 0.05, 'sigma': 2},
             {'col_name': 'X2', 'prop_below': 0.05, 'sigma': 2}
-        ]
+        ],
+        'separation_factor': 1
     },
 
     'simulation_3': {
@@ -41,7 +43,8 @@ SIMULATION_CONFIGS = {
         'outlier_configs': [
             {'col_name': 'X1', 'prop_above': 0.05, 'sigma': 2},
             {'col_name': 'X2', 'prop_below': 0.05, 'sigma': 2}
-        ]
+        ],
+        'separation_factor': 1
     },
 
     'simulation_4': {
@@ -52,7 +55,8 @@ SIMULATION_CONFIGS = {
         'outlier_configs': [
             {'col_name': 'X1', 'prop_above': 0.05, 'sigma': 2},
             {'col_name': 'X2', 'prop_below': 0.05, 'sigma': 2}
-        ]
+        ],
+        'separation_factor': 1
     },
 
     'simulation_5': {
@@ -64,7 +68,8 @@ SIMULATION_CONFIGS = {
             {'col_name': 'X1', 'prop_above': 0.085, 'sigma': 2},
             {'col_name': 'X2', 'prop_below': 0.10, 'sigma': 2},
             {'col_name': 'X3', 'prop_below': 0.06, 'sigma': 2}
-        ]
+        ],
+        'separation_factor': 1
     },
 
     'simulation_6': {
@@ -72,10 +77,12 @@ SIMULATION_CONFIGS = {
         'centers': 3,
         'cluster_std': [2, 2, 3],
         'n_features': 8,
-        'outlier_configs': None
+        'outlier_configs': None,
+        'separation_factor': 1
     },
     
     'simulation_7': {
+        'n_samples': None,
         'centers': 3,
         'cluster_std': [2, 2, 3],
         'n_features': 8,
@@ -83,7 +90,8 @@ SIMULATION_CONFIGS = {
         'outlier_configs': [
             {'col_name': 'X1', 'prop_above': 0.05, 'sigma': 2},
             {'col_name': 'X2', 'prop_below': 0.05, 'sigma': 2}
-        ]
+        ],
+        'separation_factor': 1
     },
 
     'simulation_8': {

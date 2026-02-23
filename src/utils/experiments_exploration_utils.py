@@ -12,6 +12,8 @@ from sklearn.utils import check_array
 from robust_mixed_dist.mixed import generalized_gower_dist_matrix
 from src.utils.simulations_utils import generate_simulation
 from config.config_simulations import SIMULATION_CONFIGS
+from scipy.stats import entropy
+from sklearn.decomposition import PCA
 
 ########################################################################################################################################################################
 
@@ -939,5 +941,84 @@ def visualize_separation_factor_effect():
     plt.suptitle('Separation Factor Effect in Simulated Data', fontsize=18, weight='bold', y=1.05)
     plt.tight_layout()
     plt.show()
+
+########################################################################################################################################################################
+
+def get_dataset_structure(X, y, data_id, quant_predictors, binary_predictors, multiclass_predictors, simulation_config=None):
+    
+    if simulation_config:
+        n_rows = X.shape[0]
+        n_cols = X.shape[1]
+        n_clusters = len(np.unique(y))
+        separation_factor = float(simulation_config.get('separation_factor', 1.0))
+    else:
+        n_rows, n_cols = X.shape
+        n_clusters = len(np.unique(y))
+        separation_factor = None
+
+    n_quant = len(quant_predictors)
+    n_bin = len(binary_predictors)
+    n_multiclass = len(multiclass_predictors)
+    prop_categorical = (n_bin + n_multiclass) / n_cols if n_cols > 0 else 0.0
+
+    # Cambiamos intrinsic_dim por prop_redundancy
+    mean_prop_outliers, prop_high_corr, sphericity, prop_redundancy = 0.0, 0.0, 0.0, 0.0
+
+    if n_quant > 0:
+        X_quant = X.select(quant_predictors).to_numpy()
+        
+        q1, q3 = np.percentile(X_quant, [25, 75], axis=0)
+        iqr = q3 - q1
+        valid_iqr = iqr > 0
+        outliers_mask = np.zeros_like(X_quant, dtype=bool)
+        outliers_mask[:, valid_iqr] = (X_quant[:, valid_iqr] < (q1[valid_iqr] - 1.5 * iqr[valid_iqr])) | \
+                                      (X_quant[:, valid_iqr] > (q3[valid_iqr] + 1.5 * iqr[valid_iqr]))
+        mean_prop_outliers = float(np.mean(np.mean(outliers_mask, axis=0)))
+
+        if n_quant > 1:
+            corr_matrix = np.corrcoef(X_quant, rowvar=False)
+            upper_tri = np.triu(np.abs(corr_matrix), k=1)
+            prop_high_corr = float(np.sum(upper_tri > 0.5) / ((n_quant * (n_quant - 1)) / 2))
+
+        sphericities = []
+        for c in np.unique(y):
+            X_c = X_quant[y == c]
+            if len(X_c) > n_quant:
+                cov_matrix = np.cov(X_c, rowvar=False)
+                eigenvals = np.real(np.linalg.eigvals(cov_matrix))
+                eigenvals = eigenvals[eigenvals > 1e-10]
+                if len(eigenvals) == n_quant:
+                    sphericities.append(np.exp(np.mean(np.log(eigenvals))) / np.mean(eigenvals))
+        sphericity = float(np.mean(sphericities)) if sphericities else 1.0
+
+        # Cálculo de la proporción de redundancia
+        if n_quant > 1:
+            pca = PCA().fit(X_quant)
+            intrinsic_dim = int(np.argmax(np.cumsum(pca.explained_variance_ratio_) >= 0.90) + 1)
+            prop_redundancy = float(1.0 - (intrinsic_dim / n_quant))
+        else:
+            prop_redundancy = 0.0
+
+    counts = np.bincount(y)
+    counts = counts[counts > 0]
+    norm_entropy = float(entropy(counts/n_rows) / np.log(len(counts))) if len(counts) > 1 else 1.0
+
+    return {
+        'data_id': data_id,
+        'n_rows': n_rows,
+        'n_cols': n_cols,
+        'n_clusters': n_clusters,
+        'separation_factor': separation_factor,
+        'n_quant': n_quant,
+        'n_bin': n_bin,
+        'n_multiclass': n_multiclass,
+        'prop_categorical': round(prop_categorical, 4),
+        'mean_prop_outliers_quant': round(mean_prop_outliers, 4),
+        'prop_high_corr_quant': round(prop_high_corr, 4),
+        'sphericity_quant': round(sphericity, 4),
+        'prop_redundancy_quant': round(prop_redundancy, 4), # Métrica actualizada
+        'normalized_balance_entropy': round(norm_entropy, 4),
+        'is_balanced': bool(norm_entropy > 0.8),
+    }
 
 ########################################################################################################################################################################
