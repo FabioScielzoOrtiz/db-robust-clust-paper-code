@@ -43,19 +43,18 @@ from config.config_simulations import SIMULATION_CONFIGS
 # --- CONSTANTS & HELPER FUNCTIONS ---
 
 NOT_FEASIBLE_METHODS_TO_ADD = {
-    k: ['Spectral-Clustering', 'Dipinit']
+    k: ['SpectralClustering', 'Dipinit']
     for k in ['simulation_1', 'kc_houses']
 }
 
 NOT_FEASIBLE_METHODS_TO_ADD.update({
-    k: ['Spectral-Clustering', 'KMedoids-pam', 'Diana', 'Birch', 'Dipinit', 'AgglomerativeClustering']
+    k: ['SpectralClustering', 'KMedoids-euclidean', 'Diana', 'Birch', 'Dipinit', 'AgglomerativeClustering']
     for k in [f'simulation_{i}' for i in range(2, 7 + 1)]
 })
 
 NOT_FEASIBLE_METHODS_TO_ADD.update({
     k: [] for k in ['dubai_houses', 'heart_disease']
 })
-
 
 ###########################################################################################
 

@@ -17,3 +17,5 @@ ucimlrepo
 pyarrow
 fastexcel
 func-timeout
+adjustText
+statsmodels

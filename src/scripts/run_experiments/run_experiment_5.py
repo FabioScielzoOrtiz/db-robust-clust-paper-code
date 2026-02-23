@@ -48,7 +48,8 @@ from config.config_experiment_5 import (
     CONFIG_EXPERIMENT, 
     EXPERIMENT_RANDOM_STATE,
     N_REALIZATIONS, 
-    CHUNK_SIZE
+    CHUNK_SIZE,
+    MAX_DURATION_MINS
 )
 from config.config_simulations import SIMULATION_CONFIGS
 
@@ -271,7 +272,8 @@ def main():
                 # 4. Ejecutar nuevos modelos
                 new_results = make_experiment_5(
                     X=X, y=y, models=models_subset,
-                    score_metric=experiment_config['score_metric']
+                    score_metric=experiment_config['score_metric'],
+                    max_duration_mins=MAX_DURATION_MINS
                 )
 
                 # 5. Merge inteligente a nivel de semilla

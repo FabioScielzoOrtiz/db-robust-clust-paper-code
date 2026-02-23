@@ -223,19 +223,20 @@ def process_experiment_5_results(results_path, not_feasible_methods_to_add, prop
         )
         .sort(['mean_adj_accuracy'], descending=True, nulls_last=True)
     )
-    
-    not_feasible_methods = []
+
+    not_feasible_methods = df_avg.filter(pl.col('prop_status_error') >= prop_errors_threshold)['model_name'].unique().to_list() 
+    df_avg = df_avg.filter( ~ pl.col('model_name').is_in(not_feasible_methods))
     
     if not_feasible_methods_to_add:
-
-        not_feasible_methods = df_avg.filter(pl.col('prop_status_error') >= prop_errors_threshold)['model_name'].unique().to_list() + not_feasible_methods_to_add
+        not_feasible_methods = not_feasible_methods  + not_feasible_methods_to_add
     
+    if not_feasible_methods:
         rows_to_add = []
         for m in not_feasible_methods: 
             if m not in df_avg['model_name'].unique():
                 rows_to_add.append({k: None if k != 'model_name' else m for k in df_avg.columns})
         df_avg = pl.concat([df_avg, pl.DataFrame(rows_to_add)], how='vertical')
-
+    
     return df, df_avg, not_feasible_methods, results
 
 ########################################################################################################################################################################
@@ -648,7 +649,8 @@ def plot_experiment_4_results(df, df_avg, num_realizations, save_path,
 
 ########################################################################################################################################################################
 
-def plot_experiment_5_results(df_avg, data_name, num_realizations, save_path, 
+def plot_experiment_5_results(df_avg, data_name, num_realizations=None, 
+                              time_log_scale=False, save_path=None, 
                               our_methods_1=None, our_methods_2=None, 
                               other_methods=None, not_feasible_methods=None):
     """
@@ -714,7 +716,10 @@ def plot_experiment_5_results(df_avg, data_name, num_realizations, save_path,
             capsize=3.5,
             alpha=1
         )
-        
+
+        if xlabel == 'Time (secs)' and time_log_scale:
+            ax.set_xscale('log')
+
         # D. Etiquetas y Títulos
         ax.set_xlabel(xlabel, size=14)
         ax.tick_params(axis='x', labelsize=12)
@@ -760,16 +765,20 @@ def plot_experiment_5_results(df_avg, data_name, num_realizations, save_path,
         frameon=False
     )
 
+    
+
     # 6. Título Global y Guardado
+    title = f"Clustering Model Comparison \n{data_name.replace('_', ' ').capitalize()} - Realizations: {num_realizations}" if num_realizations else f"Clustering Model Comparison \n{data_name.replace('_', ' ').capitalize()}"
+
     plt.suptitle(
-        f"Clustering Model Comparison \n{data_name.replace('_', ' ').capitalize()} - Realizations: {num_realizations}", 
+        title,
         fontsize=16, fontweight='bold', y=0.98
     )
 
     # Ajuste final
     # plt.tight_layout() # A veces pelea con suptitle y legends externos, cuidado.
-    
-    fig.savefig(save_path, format='png', dpi=300, bbox_inches="tight", pad_inches=0.2)
+    if save_path:
+        fig.savefig(save_path, format='png', dpi=300, bbox_inches="tight", pad_inches=0.2)
     plt.show()
 
 ########################################################################################################################################################################
