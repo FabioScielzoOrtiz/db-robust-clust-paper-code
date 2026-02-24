@@ -5,6 +5,7 @@ import pickle
 import polars as pl
 import numpy as np
 import seaborn as sns
+from matplotlib.lines import Line2D
 import matplotlib.pyplot as plt
 import matplotlib.lines as mlines 
 from sklearn.manifold import MDS
@@ -901,53 +902,81 @@ def fast_mds(sample_size, X, d1, d2, d3, robust_method, random_state_mds, random
 
 ########################################################################################################################################################################
 
-def visualize_separation_factor_effect():
-    # Factores que queremos probar (de muy solapados a muy separados)
-    factors_to_test = [0.2, 0.5, 1.0, 2.0, 3.0]
+def plot_simulation_2d(X, y, title, outliers_idx=None):
+    pca = PCA(n_components=2)
+    X_pca = pca.fit_transform(X.astype(float))
     
-    # Cargamos la configuración base de la simulación 1
-    base_config = SIMULATION_CONFIGS['simulation_1']
-    random_state = 42 # Semilla fija para ver el efecto exacto del factor
-
-    # Preparamos la figura (1 fila, 4 columnas)
-    fig, axes = plt.subplots(1, len(factors_to_test), figsize=(20, 5))
+    plt.figure(figsize=(8, 6))
     
-    for ax, factor in zip(axes, factors_to_test):
-        print(f"Generando datos para separation_factor = {factor}...")
-        
-        # Generamos los datos inyectando el factor
-        X, y = generate_simulation(
-            **base_config, 
-            random_state=random_state, 
-            separation_factor=factor,
-            return_outlier_idx=False
-        )
-        
-        # Asumimos que X es un DataFrame de Pandas/Polars o un array de Numpy.
-        # Ploteamos las dos primeras características (features)
-        if hasattr(X, 'to_numpy'):
-            X_plot = X.to_numpy()
-        else:
-            X_plot = X
-            
-        # Scatter plot pintando cada punto según su clúster (y)
+    # 1. Identificar clústeres reales (>= 0) y micro-clústeres agrupados (< 0)
+    real_clusters = sorted([val for val in np.unique(y) if val >= 0])
+    grouped_clusters = sorted([val for val in np.unique(y) if val < 0])
+    
+    # 2. Construir máscaras lógicas puras
+    mask_grouped = (y < 0)
+    
+    # Los dispersos son los que están en outliers_idx PERO pertenecen a un clúster normal
+    dispersed_mask = np.zeros(len(y), dtype=bool)
+    if outliers_idx is not None and len(outliers_idx) > 0:
+        dispersed_mask[outliers_idx] = True
+    dispersed_mask = dispersed_mask & (y >= 0) 
+    
+    # Los normales son los que no son ni agrupados ni dispersos
+    mask_normal = (y >= 0) & ~dispersed_mask
+    
+    # 3. Dibujar clústeres normales (Círculos, tab10)
+    if mask_normal.sum() > 0:
         sns.scatterplot(
-            x=X_plot[:, 0], 
-            y=X_plot[:, 1], 
-            hue=y, 
-            palette='tab10', 
-            s=15, 
-            alpha=0.7, 
-            ax=ax,
+            x=X_pca[mask_normal, 0], y=X_pca[mask_normal, 1], 
+            hue=y[mask_normal], hue_order=real_clusters, 
+            palette="tab10", alpha=0.7, edgecolor='k', s=50
+        )
+    
+    # 4. Dibujar Outliers Dispersos (Cruces rojas heredando color de su clúster normal)
+    if dispersed_mask.sum() > 0:
+        sns.scatterplot(
+            x=X_pca[dispersed_mask, 0], y=X_pca[dispersed_mask, 1], 
+            hue=y[dispersed_mask], hue_order=real_clusters, 
+            palette="tab10", marker='X', s=80, edgecolor='black', 
             legend=False
         )
         
-        ax.set_title(f'Separation Factor = {factor}', fontsize=14, weight='bold')
-        ax.set_xlabel('Feature 1')
-        ax.set_ylabel('Feature 2')
-        ax.grid(True, linestyle='--', alpha=0.5)
+    # 5. Dibujar Outliers Agrupados (Triángulos, paleta distinta para cada micro-clúster)
+    if mask_grouped.sum() > 0:
+        sns.scatterplot(
+            x=X_pca[mask_grouped, 0], y=X_pca[mask_grouped, 1], 
+            hue=y[mask_grouped], hue_order=grouped_clusters, 
+            palette="Set2", marker='^', s=80, edgecolor='black', 
+            legend=False
+        )
 
-    plt.suptitle('Separation Factor Effect in Simulated Data', fontsize=18, weight='bold', y=1.05)
+    plt.title(title, fontweight='bold')
+    plt.xlabel('PCA Component 1')
+    plt.ylabel('PCA Component 2')
+    
+    # 6. Configurar la leyenda dinámica e inteligente
+    handles, labels = plt.gca().get_legend_handles_labels()
+    
+    clean_handles, clean_labels = [], []
+    for h, l in zip(handles, labels):
+        if l not in clean_labels and l not in ['hue', 'y']: 
+            clean_handles.append(h)
+            clean_labels.append(l)
+            
+    # Solo inyectamos en la leyenda lo que realmente existe en el dataset
+    if dispersed_mask.sum() > 0:
+        dispersed_proxy = Line2D([0], [0], marker='X', color='w', markerfacecolor='gray', 
+                                 markeredgecolor='black', markersize=10)
+        clean_handles.append(dispersed_proxy)
+        clean_labels.append('Dispersed Outliers')
+        
+    if mask_grouped.sum() > 0:
+        grouped_proxy = Line2D([0], [0], marker='^', color='w', markerfacecolor='gray', 
+                               markeredgecolor='black', markersize=10)
+        clean_handles.append(grouped_proxy)
+        clean_labels.append('Grouped Outliers')
+
+    plt.legend(clean_handles, clean_labels, bbox_to_anchor=(1.05, 1), loc='upper left')
     plt.tight_layout()
     plt.show()
 

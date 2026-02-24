@@ -95,7 +95,19 @@ SIMULATION_CONFIGS = {
     },
 
     'simulation_8': {
-        'n_samples': 15000,
+        'n_samples': 10000,
+        'centers': 4,
+        'cluster_std': [2, 2, 2, 3],
+        'n_features': 8,
+        'outlier_configs': [
+            {'col_name': 'X1', 'prop_above': 0.05, 'sigma': 2},
+            {'col_name': 'X2', 'prop_below': 0.05, 'sigma': 2}
+        ],
+        'separation_factor': 1
+    },
+
+    'simulation_9': {
+        'n_samples': 10000,
         'centers': 4,
         'cluster_std': [2, 2, 2, 3],
         'n_features': 8,
@@ -106,8 +118,8 @@ SIMULATION_CONFIGS = {
         'separation_factor': 0.5
     },
     
-    'simulation_9': {
-        'n_samples': 15000,
+    'simulation_10': {
+        'n_samples': 10000,
         'centers': 4,
         'cluster_std': [2, 2, 2, 3],
         'n_features': 8,
