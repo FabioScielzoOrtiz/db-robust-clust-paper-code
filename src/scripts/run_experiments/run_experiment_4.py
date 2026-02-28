@@ -18,8 +18,8 @@ parser = argparse.ArgumentParser(description="Run Experiment 4 Simulations")
 parser.add_argument('--force', action='store_true', help="Force execution for all models, ignoring existing results.")
 args = parser.parse_args()
 
-# Simplificación: Fijamos el DATA_ID a 'simulation_1'
-DATA_ID = 'simulation_1'
+# Simplificación: Fijamos el DATA_ID a 'simulation_size_1'
+DATA_ID = 'simulation_size_1'
 FORCE_EXECUTION = args.force
 
 ###########################################################################################
@@ -51,7 +51,7 @@ from config.config_simulations import SIMULATION_CONFIGS
 def main():
     """
     Main execution flow of the Experiment 4 pipeline.
-    Simplified to run only for 'simulation_1' and a fixed set of 3 models.
+    Simplified to run only for 'simulation_size_1' and a fixed set of 3 models.
     """
     logging.info(f"▶️ STARTING EXPERIMENT 4:")
     logging.info(f"▶️ FORCE EXECUTION: {FORCE_EXECUTION}")

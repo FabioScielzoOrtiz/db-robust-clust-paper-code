@@ -16,7 +16,7 @@ logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 ###########################################################################################
 # --- ARGUMENT PARSING ---
 parser = argparse.ArgumentParser(description="Run Experiment 5 Simulations")
-parser.add_argument('--data_id', type=str, required=True, help="ID of the simulation data configuration (e.g., 'simulation_1')")
+parser.add_argument('--data_id', type=str, required=True, help="ID of the simulation data configuration (e.g., 'simulation_size_1')")
 parser.add_argument('--force', action='store_true', help="Force execution. By default, forces all models. Use with --force_models to restrict.")
 # NUEVO: Argumento que acepta una lista separada por espacios de nombres de modelos
 parser.add_argument('--force_models', nargs='+', type=str, help="List of specific models to force re-execution (e.g., --force_models KMedoids SubKmeans)")
@@ -183,11 +183,7 @@ def main():
             df = pl.read_parquet(processed_data_file_path)
             X_real = df[metadata['quant_predictors'] + metadata['binary_predictors'] + metadata['multiclass_predictors']]
             y_real = df[metadata['response']]
-            
-            experiment_config.update({
-                'p1': metadata['p1'], 'p2': metadata['p2'], 'p3': metadata['p3'],
-                'n_clusters': metadata['n_clusters']
-            })
+
         except Exception as e:
             logging.error(f"Failed to fetch real data: {e}")
             sys.exit(1)
@@ -199,9 +195,14 @@ def main():
     # =========================================================================
     logging.info("STEP 4: Processing Chunks (Recovering -> Updating -> Saving)...")
     chunks_processed_count = 0
+    total_chunks = len(all_chunks)
 
     for chunk_id, chunk_seeds in enumerate(tqdm(all_chunks, desc='Processing Chunks')):
         
+        logging.info(f"\n" + "="*50)
+        logging.info(f"📦 STARTING CHUNK {chunk_id}/{total_chunks - 1} | Contains {len(chunk_seeds)} seeds")
+        logging.info(f"="*50)
+
         chunk_filename = f'results_exp_5_{DATA_ID}_chunk_{chunk_id}.pkl'
         chunk_path = os.path.join(results_dir, chunk_filename)
         
@@ -213,12 +214,12 @@ def main():
             try:
                 with open(chunk_path, 'rb') as f:
                     chunk_results = pickle.load(f)
+                logging.info(f"  -> 📂 Loaded existing chunk file with {len(chunk_results)} seeds.")
             except Exception as e:
-                logging.error(f"Error loading chunk {chunk_id}: {e}")
+                logging.error(f"  -> ❌ Error loading chunk {chunk_id}: {e}")
                 chunk_results = {}
 
         # 2. NUEVO: Recuperación a nivel de SEMILLA (Super importante)
-        # Verificamos si cada semilla de este chunk está en los resultados. Si no, la rescatamos del Global.
         for seed in chunk_seeds:
             if seed not in chunk_results and seed in GLOBAL_MERGED_DATA:
                 chunk_results[seed] = GLOBAL_MERGED_DATA[seed]
@@ -241,7 +242,10 @@ def main():
             models_to_run_names = all_model_names - existing_models_for_seed
             
             if not models_to_run_names:
+                logging.info(f"    ✅ Seed {random_state}: All models already completed. Skipping.")
                 continue 
+
+            logging.info(f"    ▶️ Seed {random_state}: Missing {len(models_to_run_names)} models. Preparing execution...")
 
             # 2. Generar/Obtener Data
             try:
@@ -252,7 +256,7 @@ def main():
                         random_state=random_state,
                         return_outlier_idx=False
                     )
-                    models_random_state = experiment_config['random_state']
+                    models_random_state = EXPERIMENT_RANDOM_STATE
                 else:
                     X, y = X_real, y_real
                     models_random_state = random_state
@@ -270,11 +274,13 @@ def main():
                     continue
 
                 # 4. Ejecutar nuevos modelos
+                logging.info(f"       ⚙️ Handing over to make_experiment_5 with {list(models_subset.keys())}...")
                 new_results = make_experiment_5(
                     X=X, y=y, models=models_subset,
                     score_metric=experiment_config['score_metric'],
                     max_duration_mins=MAX_DURATION_MINS
                 )
+                logging.info(f"       ✔️ Execution finished for Seed {random_state}")
 
                 # 5. Merge inteligente a nivel de semilla
                 if random_state not in chunk_results:
@@ -288,7 +294,7 @@ def main():
                 chunk_needs_save = True
 
             except Exception as e:
-                logging.error(f"Error processing seed {random_state} in chunk {chunk_id}: {e}")
+                logging.error(f"       ❌ Error processing seed {random_state} in chunk {chunk_id}: {e}")
                 continue
 
         # --- C. Guardar Chunk ---
@@ -297,10 +303,13 @@ def main():
                 with open(chunk_path, 'wb') as f:
                     pickle.dump(chunk_results, f)
                 chunks_processed_count += 1
+                logging.info(f"  💾 Saved updates for chunk {chunk_id}.")
             except Exception as e:
-                logging.error(f"Failed to save chunk {chunk_id}: {e}")
+                logging.error(f"  ❌ Failed to save chunk {chunk_id}: {e}")
+        else:
+            logging.info(f"  ⏭️ No new updates to save for chunk {chunk_id}.")
 
-    logging.info(f" -> Chunks updated/restored: {chunks_processed_count}")
+    logging.info(f"\n -> Total chunks updated/restored: {chunks_processed_count}")
 
     # =========================================================================
     # 7. Final Consolidation (Merge Chunk Files)

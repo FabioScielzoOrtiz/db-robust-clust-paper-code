@@ -43,7 +43,7 @@ def main():
     
     logging.info(f"▶️ STARTING EXPERIMENT 1")
      
-    simulation_config = {k: v for k, v in SIMULATION_CONFIGS['simulation_1'].items() if k != 'n_samples'}
+    simulation_config = {k: v for k, v in SIMULATION_CONFIGS['simulation_size_1'].items() if k != 'n_samples'}
 
     results = make_experiment_1(
         **simulation_config,

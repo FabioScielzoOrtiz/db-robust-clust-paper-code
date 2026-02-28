@@ -126,20 +126,27 @@ def generate_simulation(
     # 5. OUTLIERS AGRUPADOS (Nuevos clústeres satélite vinculados a la etiqueta original)
     outlier_indices = []
     if grouped_outliers_config:
-        n_out = grouped_outliers_config.get('n_outliers', 50)
+        prop_outliers = grouped_outliers_config.get('prop_outliers', 0.05)
         n_groups = grouped_outliers_config.get('n_groups', 2)
         dist = grouped_outliers_config.get('distance', 50.0)
         
+        # Calculamos el número absoluto de outliers
+        n_out = int(len(X_arr) * prop_outliers)
+        
+        # Seguridad: por si se introduce una proporción > 1 por error
         n_out = min(n_out, len(X_arr))
+        
         rng_out = np.random.RandomState(random_state + 1)
         
-        out_sizes = [n_out // n_groups] * n_groups
-        out_sizes[-1] += n_out - sum(out_sizes)
-        
-        # Generamos las nubes de puntos de los outliers
-        out_centers = rng_out.uniform(-dist, dist, size=(n_groups, n_features_base))
-        X_out_all, y_out_all = make_blobs(n_samples=out_sizes, centers=out_centers, 
-                                          cluster_std=cluster_std, random_state=random_state + 2)
+        # Pequeña validación por si la proporción es tan baja que da 0 outliers
+        if n_out > 0:
+            out_sizes = [n_out // n_groups] * n_groups
+            out_sizes[-1] += n_out - sum(out_sizes)
+            
+            # Generamos las nubes de puntos de los outliers
+            out_centers = rng_out.uniform(-dist, dist, size=(n_groups, n_features_base))
+            X_out_all, y_out_all = make_blobs(n_samples=out_sizes, centers=out_centers, 
+                                              cluster_std=cluster_std, random_state=random_state + 2)
         
         if anisotropy_factor > 1.0:
             centroid_out = X_out_all.mean(axis=0)

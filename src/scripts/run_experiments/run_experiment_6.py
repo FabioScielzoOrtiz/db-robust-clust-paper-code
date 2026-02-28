@@ -40,8 +40,8 @@ def main():
     logging.info(f"▶️ STARTING EXPERIMENT 6: SAMPLING STABILITY")
      
     # 1. Generar la DATA FIJA (Usamos siempre el mismo EXPERIMENT_RANDOM_STATE para los datos)
-    logging.info("STEP 1: Generating fixed data (Simulation 1)...")
-    simulation_config = SIMULATION_CONFIGS['simulation_1']
+    logging.info("STEP 1: Generating fixed data (simulation_size_1)...")
+    simulation_config = SIMULATION_CONFIGS['simulation_size_1']
     X, y = generate_simulation(**simulation_config, random_state=EXPERIMENT_RANDOM_STATE, return_outlier_idx=False)
 
     # 2. Cargar historial global si existe

@@ -6,13 +6,14 @@ import numpy as np
 from db_robust_clust.models import SampleDistClustering, FoldSampleDistClustering
 from db_robust_clust.metrics import adjusted_score
 from sklearn.metrics import adjusted_rand_score
-from sklearn_extra.cluster import KMedoids, CLARA
+from sklearn_extra.cluster import CLARA
 from sklearn.cluster import (KMeans, AgglomerativeClustering,
                              SpectralClustering, SpectralBiclustering, SpectralCoclustering, Birch, 
                              BisectingKMeans, MiniBatchKMeans)
 from sklearn.mixture import GaussianMixture
 from clustpy.partition import SubKmeans, LDAKmeans, DipInit
 from clustpy.hierarchical import Diana
+from kmedoids import KMedoids
 from func_timeout import func_timeout, FunctionTimedOut 
 
 import os, sys
@@ -252,7 +253,7 @@ def make_experiment_4(data_sizes, centers, cluster_std, n_features, outlier_conf
 ########################################################################################################################################################################
 
 def make_experiment_5(X, y, models, score_metric, 
-                      max_duration_mins=10 
+                      max_duration_mins=20 
                       ):  
     
     model_names = list(models.keys())
@@ -452,17 +453,15 @@ def get_clustering_models_experiment_5(experiment_config, random_state, mixed_di
     clustering_base_method = KMedoids(
                 n_clusters=experiment_config['n_clusters'], 
                 metric='precomputed', 
-                method=experiment_config['method'], 
-                init=experiment_config['init'],
-                max_iter=experiment_config['max_iter'],
-                random_state=experiment_config['random_state'],
+                method='pam', 
+                init='build',
+                random_state=random_state,
     )
 
     models = {
 
         'KMeans': KMeans(
             n_clusters=experiment_config['n_clusters'],
-            max_iter=experiment_config['max_iter'],
             init='k-means++', 
             n_init='auto',
             random_state = random_state,
@@ -483,11 +482,6 @@ def get_clustering_models_experiment_5(experiment_config, random_state, mixed_di
             #random_state = random_state # has not random_state parameter
             ),
 
-        #'DipInit': DipInit(
-        #    n_clusters=experiment_config['n_clusters'],
-        #    random_state = random_state
-        #    ),
-
         'GaussianMixture': GaussianMixture(
             n_components=experiment_config['n_clusters'],
             random_state = random_state
@@ -497,11 +491,6 @@ def get_clustering_models_experiment_5(experiment_config, random_state, mixed_di
             n_clusters=experiment_config['n_clusters'],
             #random_state = random_state # has not random_state parameter
             ),
-
-        #'SpectralClustering': SpectralClustering(
-        #    n_clusters=experiment_config['n_clusters'],
-        #    random_state = random_state
-        #    ),
 
         'SpectralBiclustering': SpectralBiclustering(
             n_clusters=experiment_config['n_clusters'],
@@ -534,16 +523,37 @@ def get_clustering_models_experiment_5(experiment_config, random_state, mixed_di
             #random_state = random_state # has not random_state parameter
             ),
         
-        'KMedoids-euclidean': KMedoids(
+        'KMedoids-pam': KMedoids(
             n_clusters=experiment_config['n_clusters'], 
-            method=experiment_config['method'], 
-            init=experiment_config['init'], 
-            max_iter=experiment_config['max_iter'], 
+            method='pam', 
             metric='euclidean',
+            init='build', 
             random_state = random_state
             ),
-        # TODO: añadir familia KMedoids de la librería KMedoids
-        
+
+        'KMedoids-fastpam': KMedoids(
+            n_clusters=experiment_config['n_clusters'], 
+            method='fastpam1', 
+            metric='euclidean',
+            init='build', 
+            random_state = random_state
+            ),
+
+        'KMedoids-fasterpam': KMedoids(
+            n_clusters=experiment_config['n_clusters'], 
+            method='fasterpam', 
+            metric='euclidean',
+            init='build', 
+            random_state = random_state
+            ),
+
+        'KMedoids-fastermsc': KMedoids(
+            n_clusters=experiment_config['n_clusters'], 
+            method='fastermsc', 
+            metric='euclidean',
+            init='build', 
+            random_state = random_state
+            ),        
     }
 
     for d in mixed_distances_names:
@@ -563,10 +573,10 @@ def get_clustering_models_experiment_5(experiment_config, random_state, mixed_di
                 p1=experiment_config['p1'], 
                 p2=experiment_config['p2'], 
                 p3=experiment_config['p3'], 
-                d1=experiment_config['d1'], 
-                d2=experiment_config['d2'], 
-                d3=experiment_config['d3'], 
-                robust_method=experiment_config['robust_method'], 
+                d1=d1, 
+                d2=d2, 
+                d3=d3, 
+                robust_method=r, 
                 alpha=experiment_config['alpha'], 
             )
 
@@ -574,18 +584,18 @@ def get_clustering_models_experiment_5(experiment_config, random_state, mixed_di
                 clustering_method = clustering_base_method,
                 metric = 'ggower',
                 random_state=random_state,
-                shuffle=experiment_config['shuffle'],
+                shuffle=True,
                 n_splits=experiment_config['n_splits'],
                 frac_sample_size=experiment_config['frac_sample_size_fold_sample_dist_clust'],
-                meta_frac_sample_size=experiment_config['meta_frac_sample_size'],
+                meta_frac_sample_size=1,
                 stratify=False,
                 p1=experiment_config['p1'], 
                 p2=experiment_config['p2'], 
                 p3=experiment_config['p3'], 
-                d1=experiment_config['d1'], 
-                d2=experiment_config['d2'], 
-                d3=experiment_config['d3'], 
-                robust_method=experiment_config['robust_method'], 
+                d1=d1, 
+                d2=d2, 
+                d3=d3, 
+                robust_method=r, 
                 alpha=experiment_config['alpha'], 
             ) 
         

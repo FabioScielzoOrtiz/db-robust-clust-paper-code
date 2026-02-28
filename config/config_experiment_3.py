@@ -34,39 +34,39 @@ CONFIG_EXPERIMENT = {
         'n_clusters': 4
     },
 
-    'simulation_1': {
+    'simulation_size_1': {
         **BASE_CONFIG, 
         'frac_sample_sizes': [0.005, 0.05, 0.1, 0.25],
         'n_clusters': 4
     },
 
-    'simulation_2': {
+    'simulation_size_2': {
         **BASE_CONFIG,
         'frac_sample_sizes': [0.005, 0.05, 0.1, 0.25],
         'n_clusters': 4
     },
 
-    'simulation_3': {
+    'simulation_size_3': {
         **BASE_CONFIG,
     },
 
-    'simulation_4': {
+    'simulation_size_4': {
         **BASE_CONFIG,
         'frac_sample_sizes': [0.0005, 0.005, 0.01]
     },
 
-    'simulation_5': {
-        **BASE_CONFIG,
-    },
+    # 'simulation_5': {
+    #     **BASE_CONFIG,
+    # },
 
-    'simulation_6': {
-        **BASE_CONFIG,
+    # 'simulation_6': {
+    #     **BASE_CONFIG,
 
-    },
+    # },
 
-    'simulation_7': {
-        **BASE_CONFIG,
-    },
+    # 'simulation_7': {
+    #     **BASE_CONFIG,
+    # },
 
     'dubai_houses': {
         **BASE_CONFIG,

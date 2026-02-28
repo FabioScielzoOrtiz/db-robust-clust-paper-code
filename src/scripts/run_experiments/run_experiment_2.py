@@ -22,7 +22,7 @@ logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 
 # --- ARGUMENT PARSING ---
 parser = argparse.ArgumentParser(description="Run Experiment 2 Simulations")
-parser.add_argument('--data_id', type=str, required=True, help="ID of the simulation data configuration (e.g., 'simulation_1')")
+parser.add_argument('--data_id', type=str, required=True, help="ID of the simulation data configuration (e.g., 'simulation_size_1')")
 args = parser.parse_args()
 
 DATA_ID = args.data_id

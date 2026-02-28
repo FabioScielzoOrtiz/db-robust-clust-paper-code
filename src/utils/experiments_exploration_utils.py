@@ -11,10 +11,9 @@ import matplotlib.lines as mlines
 from sklearn.manifold import MDS
 from sklearn.utils import check_array
 from robust_mixed_dist.mixed import generalized_gower_dist_matrix
-from src.utils.simulations_utils import generate_simulation
-from config.config_simulations import SIMULATION_CONFIGS
 from scipy.stats import entropy
 from sklearn.decomposition import PCA
+from BigEDA.descriptive import outliers_table
 
 ########################################################################################################################################################################
 
@@ -179,15 +178,16 @@ def process_experiment_4_results(results_path):
 
 ########################################################################################################################################################################
 
-def process_experiment_5_results(results_path, not_feasible_methods_to_add, prop_errors_threshold):   
+def process_experiment_5_results(results_path, prop_errors_threshold, not_feasible_methods_to_add=None, verbose=True):   
 
     if not os.path.exists(results_path):
         print("❌ Error: El archivo no existe. Revisa el DATA_ID o la ruta.")
     else:
         with open(results_path, 'rb') as f:
             results = pickle.load(f)
-        print(f"✅ Archivo cargado correctamente. Tipo de objeto: {type(results)}")
-        print(f"📊 Número de realizaciones (seeds) capturadas: {len(results)}")
+        if verbose:
+            print(f"✅ Archivo cargado correctamente. Tipo de objeto: {type(results)}") 
+            print(f"📊 Número de realizaciones (seeds) capturadas: {len(results)}")
 
     rows = []
     for seed, metrics in results.items():   
@@ -902,9 +902,9 @@ def fast_mds(sample_size, X, d1, d2, d3, robust_method, random_state_mds, random
 
 ########################################################################################################################################################################
 
-def plot_simulation_2d(X, y, title, outliers_idx=None):
+def plot_datasets_2d(X, y, title, outliers_idx=None):
     pca = PCA(n_components=2)
-    X_pca = pca.fit_transform(X.astype(float))
+    X_pca = pca.fit_transform(X)
     
     plt.figure(figsize=(8, 6))
     
@@ -912,17 +912,15 @@ def plot_simulation_2d(X, y, title, outliers_idx=None):
     real_clusters = sorted([val for val in np.unique(y) if val >= 0])
     grouped_clusters = sorted([val for val in np.unique(y) if val < 0])
     
-    # 2. Construir máscaras lógicas puras
-    mask_grouped = (y < 0)
-    
+  
     # Los dispersos son los que están en outliers_idx PERO pertenecen a un clúster normal
-    dispersed_mask = np.zeros(len(y), dtype=bool)
+    outliers_mask = np.zeros(len(y), dtype=bool)
     if outliers_idx is not None and len(outliers_idx) > 0:
-        dispersed_mask[outliers_idx] = True
-    dispersed_mask = dispersed_mask & (y >= 0) 
+        outliers_mask[outliers_idx] = True
+    outliers_mask = outliers_mask & (y >= 0) 
     
     # Los normales son los que no son ni agrupados ni dispersos
-    mask_normal = (y >= 0) & ~dispersed_mask
+    mask_normal = (y >= 0) & ~outliers_mask
     
     # 3. Dibujar clústeres normales (Círculos, tab10)
     if mask_normal.sum() > 0:
@@ -932,21 +930,12 @@ def plot_simulation_2d(X, y, title, outliers_idx=None):
             palette="tab10", alpha=0.7, edgecolor='k', s=50
         )
     
-    # 4. Dibujar Outliers Dispersos (Cruces rojas heredando color de su clúster normal)
-    if dispersed_mask.sum() > 0:
+    # 4. Dibujar Outliers 
+    if outliers_mask.sum() > 0:
         sns.scatterplot(
-            x=X_pca[dispersed_mask, 0], y=X_pca[dispersed_mask, 1], 
-            hue=y[dispersed_mask], hue_order=real_clusters, 
+            x=X_pca[outliers_mask, 0], y=X_pca[outliers_mask, 1], 
+            hue=y[outliers_mask], hue_order=real_clusters, 
             palette="tab10", marker='X', s=80, edgecolor='black', 
-            legend=False
-        )
-        
-    # 5. Dibujar Outliers Agrupados (Triángulos, paleta distinta para cada micro-clúster)
-    if mask_grouped.sum() > 0:
-        sns.scatterplot(
-            x=X_pca[mask_grouped, 0], y=X_pca[mask_grouped, 1], 
-            hue=y[mask_grouped], hue_order=grouped_clusters, 
-            palette="Set2", marker='^', s=80, edgecolor='black', 
             legend=False
         )
 
@@ -964,17 +953,11 @@ def plot_simulation_2d(X, y, title, outliers_idx=None):
             clean_labels.append(l)
             
     # Solo inyectamos en la leyenda lo que realmente existe en el dataset
-    if dispersed_mask.sum() > 0:
+    if outliers_mask.sum() > 0:
         dispersed_proxy = Line2D([0], [0], marker='X', color='w', markerfacecolor='gray', 
-                                 markeredgecolor='black', markersize=10)
+                                 markeredgecolor='black', markersize=9)
         clean_handles.append(dispersed_proxy)
-        clean_labels.append('Dispersed Outliers')
-        
-    if mask_grouped.sum() > 0:
-        grouped_proxy = Line2D([0], [0], marker='^', color='w', markerfacecolor='gray', 
-                               markeredgecolor='black', markersize=10)
-        clean_handles.append(grouped_proxy)
-        clean_labels.append('Grouped Outliers')
+        clean_labels.append('Outliers')
 
     plt.legend(clean_handles, clean_labels, bbox_to_anchor=(1.05, 1), loc='upper left')
     plt.tight_layout()
@@ -982,42 +965,60 @@ def plot_simulation_2d(X, y, title, outliers_idx=None):
 
 ########################################################################################################################################################################
 
-def get_dataset_structure(X, y, data_id, quant_predictors, binary_predictors, multiclass_predictors, simulation_config=None):
+def get_dataset_structure(X, y, data_id, quant_predictors, n_binary, n_multiclass, simulation_config=None):
     
     if simulation_config:
         n_rows = X.shape[0]
         n_cols = X.shape[1]
+        n_binary = int(simulation_config['feature_types'].get('n_binary', 0))
+        n_multiclass = int(simulation_config['feature_types'].get('n_multiclass', 0))
+        n_quant = n_cols - (n_binary + n_multiclass)
         n_clusters = len(np.unique(y))
         separation_factor = float(simulation_config.get('separation_factor', 1.0))
-    else:
+        n_redundant = int(simulation_config.get('n_redundant', 0))
+        anisotropy_factor = float(simulation_config.get('anisotropy_factor', 1.0))
+        outlier_configs = simulation_config.get('outlier_configs', None)
+        grouped_outliers_config = simulation_config.get('grouped_outliers_config', None)
+        quant_predictors = X.columns[:n_quant]
+
+    else: # real data
         n_rows, n_cols = X.shape
         n_clusters = len(np.unique(y))
-        separation_factor = None
+        n_quant = len(quant_predictors)
+        separation_factor, n_redundant, anisotropy_factor, outlier_configs, grouped_outliers_config = None, None, None, None, None
 
-    n_quant = len(quant_predictors)
-    n_bin = len(binary_predictors)
-    n_multiclass = len(multiclass_predictors)
-    prop_categorical = (n_bin + n_multiclass) / n_cols if n_cols > 0 else 0.0
+    prop_categorical = (n_binary + n_multiclass) / n_cols if n_cols > 0 else 0.0
 
-    # Cambiamos intrinsic_dim por prop_redundancy
-    mean_prop_outliers, prop_high_corr, sphericity, prop_redundancy = 0.0, 0.0, 0.0, 0.0
+    # Inicializar métricas
+    mean_prop_outliers, prop_high_corr, sphericity, prop_redundancy = 0.0, 0.0, 1.0, 0.0
+    outliers_contamination_type = 'not_contaminated'
 
     if n_quant > 0:
-        X_quant = X.select(quant_predictors).to_numpy()
+        # Extraemos variables cuantitativas (Asume que X es un DataFrame de Pandas)
+        X_quant = X[quant_predictors].to_numpy()
         
-        q1, q3 = np.percentile(X_quant, [25, 75], axis=0)
-        iqr = q3 - q1
-        valid_iqr = iqr > 0
-        outliers_mask = np.zeros_like(X_quant, dtype=bool)
-        outliers_mask[:, valid_iqr] = (X_quant[:, valid_iqr] < (q1[valid_iqr] - 1.5 * iqr[valid_iqr])) | \
-                                      (X_quant[:, valid_iqr] > (q3[valid_iqr] + 1.5 * iqr[valid_iqr]))
-        mean_prop_outliers = float(np.mean(np.mean(outliers_mask, axis=0)))
+        # --- 1. Outliers mediante IQR ---
+        mean_prop_outliers = outliers_table(X[quant_predictors], auto=False, col_names=quant_predictors, h=1.5)['prop_outliers'].mean()
+        
+        if outlier_configs:
+            outliers_contamination_type = 'dispersed'
+        if grouped_outliers_config:
+            outliers_contamination_type = 'grouped'
 
+
+        # --- 2. Correlación y Redundancia ---
         if n_quant > 1:
             corr_matrix = np.corrcoef(X_quant, rowvar=False)
             upper_tri = np.triu(np.abs(corr_matrix), k=1)
             prop_high_corr = float(np.sum(upper_tri > 0.5) / ((n_quant * (n_quant - 1)) / 2))
+            
+            pca = PCA().fit(X_quant)
+            # intrinsic_dim: min number of quant variables needed to explain >= 90% of variability
+            intrinsic_dim = int(np.argmax(np.cumsum(pca.explained_variance_ratio_) >= 0.90) + 1) 
+            # compute prop of quant variable that are not adding significant info to explain variability
+            prop_redundancy = float(1.0 - (intrinsic_dim / n_quant))
 
+        # --- 3. Esfericidad ---
         sphericities = []
         for c in np.unique(y):
             X_c = X_quant[y == c]
@@ -1029,34 +1030,43 @@ def get_dataset_structure(X, y, data_id, quant_predictors, binary_predictors, mu
                     sphericities.append(np.exp(np.mean(np.log(eigenvals))) / np.mean(eigenvals))
         sphericity = float(np.mean(sphericities)) if sphericities else 1.0
 
-        # Cálculo de la proporción de redundancia
-        if n_quant > 1:
-            pca = PCA().fit(X_quant)
-            intrinsic_dim = int(np.argmax(np.cumsum(pca.explained_variance_ratio_) >= 0.90) + 1)
-            prop_redundancy = float(1.0 - (intrinsic_dim / n_quant))
-        else:
-            prop_redundancy = 0.0
-
+    # --- 4. Balanceo ---
+    _, cluster_counts = np.unique(y, return_counts=True)
+    cluster_proportions = [float(p) for p in (cluster_counts / n_rows)]    
+    
     counts = np.bincount(y)
     counts = counts[counts > 0]
+
+    # Entropía (si quieres conservarla por completitud)
     norm_entropy = float(entropy(counts/n_rows) / np.log(len(counts))) if len(counts) > 1 else 1.0
+
+    # Imbalance Ratio (IR)
+    imbalance_ratio = float(np.max(counts) / np.min(counts)) if len(counts) > 1 else 1.0
+
+    # Ahora la condición es mucho más interpretable (ej. IR < 1.5 es balanceado)
+    is_balanced = bool(imbalance_ratio < 1.5)
 
     return {
         'data_id': data_id,
         'n_rows': n_rows,
         'n_cols': n_cols,
+        'n_quant': n_quant,
+        'n_binary': n_binary,
+        'n_multiclass': n_multiclass,
         'n_clusters': n_clusters,
         'separation_factor': separation_factor,
-        'n_quant': n_quant,
-        'n_bin': n_bin,
-        'n_multiclass': n_multiclass,
+        'n_redundant': n_redundant,
+        'cluster_proportions': cluster_proportions,
+        'anisotropy_factor': anisotropy_factor,
         'prop_categorical': round(prop_categorical, 4),
         'mean_prop_outliers_quant': round(mean_prop_outliers, 4),
+        'outliers_contamination_type': outliers_contamination_type,
         'prop_high_corr_quant': round(prop_high_corr, 4),
         'sphericity_quant': round(sphericity, 4),
-        'prop_redundancy_quant': round(prop_redundancy, 4), # Métrica actualizada
+        'prop_redundancy_quant': round(prop_redundancy, 4),
         'normalized_balance_entropy': round(norm_entropy, 4),
-        'is_balanced': bool(norm_entropy > 0.8),
+        'imbalance_ratio': round(imbalance_ratio, 4),
+        'is_balanced': is_balanced,
     }
 
 ########################################################################################################################################################################

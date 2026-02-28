@@ -19,3 +19,4 @@ fastexcel
 func-timeout
 adjustText
 statsmodels
+kmedoids
