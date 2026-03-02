@@ -63,8 +63,7 @@ def make_experiment_1(data_sizes, random_state, centers, cluster_std, n_features
 
 ########################################################################################################################################################################
 
-def make_experiment_2(X, y, frac_sample_sizes, n_clusters, method, init, max_iter, random_state, 
-                      p1, p2, p3, d1, d2, d3, robust_method, alpha, score_metric): 
+def make_experiment_2(X, y, frac_sample_sizes, n_clusters, random_state, p1, p2, p3, alpha, score_metric): 
 
     # Logger local para tener contexto
     logger = logging.getLogger(__name__)
@@ -81,9 +80,8 @@ def make_experiment_2(X, y, frac_sample_sizes, n_clusters, method, init, max_ite
     clustering_base_method = KMedoids(
                 n_clusters=n_clusters, 
                 metric='precomputed', 
-                method=method, 
-                init=init, 
-                max_iter=max_iter, 
+                method='pam', 
+                init='build', 
                 random_state=random_state
     )
     
@@ -102,8 +100,10 @@ def make_experiment_2(X, y, frac_sample_sizes, n_clusters, method, init, max_ite
                 random_state=random_state,
                 stratify=False,
                 p1=p1, p2=p2, p3=p3,
-                d1=d1, d2=d2, d3=d3, 
-                robust_method=robust_method, 
+                d1='robust_mahalanobis',
+                d2='jaccard',
+                d3='hamming',
+                robust_method='trimmed',
                 alpha=alpha
             )
             
@@ -142,9 +142,7 @@ def make_experiment_2(X, y, frac_sample_sizes, n_clusters, method, init, max_ite
 
 ########################################################################################################################################################################
 
-def make_experiment_3(X, y, n_splits, shuffle, frac_sample_sizes, meta_frac_sample_size, 
-                      n_clusters, method, init, max_iter, random_state, 
-                      p1, p2, p3, d1, d2, d3, robust_method, alpha, score_metric):
+def make_experiment_3(X, y, n_splits, frac_sample_sizes, n_clusters, random_state, p1, p2, p3, alpha, score_metric):
 
     logger = logging.getLogger(__name__)
 
@@ -153,9 +151,8 @@ def make_experiment_3(X, y, n_splits, shuffle, frac_sample_sizes, meta_frac_samp
     clustering_base_method = KMedoids(
                 n_clusters=n_clusters, 
                 metric='precomputed', 
-                method=method, 
-                init=init, 
-                max_iter=max_iter, 
+                method='pam', 
+                init='build', 
                 random_state=random_state
     )
 
@@ -176,14 +173,16 @@ def make_experiment_3(X, y, n_splits, shuffle, frac_sample_sizes, meta_frac_samp
                     clustering_method = clustering_base_method, 
                     metric = 'ggower',
                     random_state=random_state,
-                    shuffle=shuffle,
+                    shuffle=True,
                     n_splits=split,
                     frac_sample_size=frac_sample_size,
-                    meta_frac_sample_size=meta_frac_sample_size,
+                    meta_frac_sample_size=1,
                     stratify=False,
                     p1=p1, p2=p2, p3=p3,
-                    d1=d1, d2=d2, d3=d3, 
-                    robust_method=robust_method, 
+                    d1='robust_mahalanobis',
+                    d2='jaccard',
+                    d3='hamming',
+                    robust_method='trimmed',
                     alpha=alpha                    
                 )
                 

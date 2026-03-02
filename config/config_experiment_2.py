@@ -1,55 +1,47 @@
+########################################################################################################################################################################
+
+import os 
+import polars as pl
 from sklearn.metrics import accuracy_score, balanced_accuracy_score
+
+########################################################################################################################################################################
+
+script_path = os.path.dirname(os.path.abspath(__file__))
+project_path = os.path.join(script_path, '..')
+data_dir = os.path.join(project_path, 'data', 'processed_data')
+data_path = os.path.join(data_dir, 'datasets_structure.parquet') 
+datasets_structure = pl.read_parquet(data_path)
+
+########################################################################################################################################################################
 
 EXPERIMENT_RANDOM_STATE = 123 
 N_REALIZATIONS = 100
 CHUNK_SIZE = 5
 PROP_ERRORS_THRESHOLD = 0.30
 
-BASE_CONFIG = {
-    'method': 'pam',
-    'init': 'build',
-    'max_iter': 100,
-    'p1': 4,
-    'p2': 2,
-    'p3': 2,
-    'd1': 'robust_mahalanobis',
-    'd2': 'jaccard',
-    'd3': 'hamming',
-    'robust_method': 'trimmed',
-    'alpha': 0.05,
-    # Valores por defecto para variables que cambian a veces
-    'n_clusters': 3, 
-    'frac_sample_sizes': [0.0005, 0.005, 0.01, 0.05, 0.1, 0.20],
-    'score_metric': accuracy_score
-}
+########################################################################################################################################################################
 
 CONFIG_EXPERIMENT = {
 
-    'simulation_testing': {
-        **BASE_CONFIG, 
-        'frac_sample_sizes': [0.1, 0.2, 0.3, 0.4],
-        'n_clusters': 4
-    },
+    # 'simulation_1': {
+    #     **BASE_CONFIG, 
+    #     'frac_sample_sizes': [0.0005, 0.005, 0.01, 0.05, 0.1, 0.2, 0.35],
+    #     'n_clusters': 4
+    # },
 
-    'simulation_size_1': {
-        **BASE_CONFIG, 
-        'frac_sample_sizes': [0.0005, 0.005, 0.01, 0.05, 0.1, 0.2, 0.35],
-        'n_clusters': 4
-    },
+    # 'simulation_2': {
+    #     **BASE_CONFIG,
+    #     'n_clusters': 4
+    # },
 
-    'simulation_size_2': {
-        **BASE_CONFIG,
-        'n_clusters': 4
-    },
+    # 'simulation_3': {
+    #     **BASE_CONFIG,
+    # },
 
-    'simulation_size_3': {
-        **BASE_CONFIG,
-    },
-
-    'simulation_size_4': {
-        **BASE_CONFIG,
-        'frac_sample_sizes': [0.0005, 0.005, 0.01, 0.05, 0.08]
-    },
+    # 'simulation_4': {
+    #     **BASE_CONFIG,
+    #     'frac_sample_sizes': [0.0005, 0.005, 0.01, 0.05, 0.08]
+    # },
 
     # 'simulation_5': {
     #     **BASE_CONFIG,
@@ -64,33 +56,34 @@ CONFIG_EXPERIMENT = {
     #     **BASE_CONFIG,
     # },
 
+    'simulation_base': {
+        'frac_sample_sizes': [0.005, 0.1, 0.2, 0.3, 0.4, 0.5]
+    },
+
     'dubai_houses': {
-        **BASE_CONFIG,
         'frac_sample_sizes': [0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9],
-        'n_clusters': None,
-        'p1': None,
-        'p2': None,
-        'p3': None,
-        'score_metric': balanced_accuracy_score
     },
 
     'heart_disease': {
-        **BASE_CONFIG,
         'frac_sample_sizes': [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9],
-        'n_clusters': None,
-        'p1': None,
-        'p2': None,
-        'p3': None
     },
 
     'kc_houses': {
-        **BASE_CONFIG,
         'frac_sample_sizes': [0.005, 0.01, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5],
-        'n_clusters': None,
-        'p1': None,
-        'p2': None,
-        'p3': None,
-        'score_metric': balanced_accuracy_score
     },
 
 }
+
+for data_id, config in CONFIG_EXPERIMENT.items():
+    row = datasets_structure.filter(pl.col('data_id') == data_id)
+    if not row.is_empty():
+        config.update({
+            'p1': row['n_quant'][0],
+            'p2': row['n_binary'][0],
+            'p3': row['n_multiclass'][0],
+            'n_clusters': row['n_clusters'][0],
+            'alpha': 0.1 if 'outliers' in data_id else 0.05,
+            'score_metric': accuracy_score if row['is_balanced'][0] else balanced_accuracy_score
+        })
+
+########################################################################################################################################################################

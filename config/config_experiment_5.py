@@ -17,7 +17,7 @@ datasets_structure = pl.read_parquet(data_path)
 EXPERIMENT_RANDOM_STATE = 123 
 N_REALIZATIONS = 100
 CHUNK_SIZE = 5
-MAX_DURATION_MINS = 15
+MAX_DURATION_MINS = 15 # TimeOut Threshold
 PROP_ERRORS_THRESHOLD = 0.30
 
 ########################################################################################################################################################################
@@ -66,23 +66,35 @@ CONFIG_EXPERIMENT = {
         'n_splits': 5,
     },
 
-    # 'simulation_size_2': {
-    #     'frac_sample_size_sample_dist_clust': 0.05,
-    #     'frac_sample_size_fold_sample_dist_clust': 0.05,
-    #     'n_splits': 10,
-    # },
+    'simulation_size_2': {
+        'frac_sample_size_sample_dist_clust': 0.05,
+        'frac_sample_size_fold_sample_dist_clust': 0.05,
+        'n_splits': 10,
+    },
 
-    # 'simulation_size_3': {
-    #     'frac_sample_size_sample_dist_clust': 0.005,
-    #     'frac_sample_size_fold_sample_dist_clust': 0.005,
-    #     'n_splits': 10,
-    # },
+    'simulation_dim_1': {
+        'frac_sample_size_sample_dist_clust': 0.1,
+        'frac_sample_size_fold_sample_dist_clust': 0.1,
+        'n_splits': 5,
+    },
 
-    # 'simulation_size_4': {
-    #     'frac_sample_size_sample_dist_clust': 0.005,
-    #     'frac_sample_size_fold_sample_dist_clust': 0.005,
-    #     'n_splits': 20,
-    # },
+    'simulation_num_clusters_1': {
+        'frac_sample_size_sample_dist_clust': 0.1,
+        'frac_sample_size_fold_sample_dist_clust': 0.1,
+        'n_splits': 5,
+    },
+
+    'simulation_separation_1': {
+        'frac_sample_size_sample_dist_clust': 0.2,
+        'frac_sample_size_fold_sample_dist_clust': 0.2,
+        'n_splits': 5,
+    },
+
+    'simulation_corr_1': {
+        'frac_sample_size_sample_dist_clust': 0.1,
+        'frac_sample_size_fold_sample_dist_clust': 0.1,
+        'n_splits': 5,
+    },
 
     'dubai_houses': {
         'frac_sample_size_sample_dist_clust': 0.1,
@@ -112,7 +124,7 @@ for data_id, config in CONFIG_EXPERIMENT.items():
             'p2': row['n_binary'][0],
             'p3': row['n_multiclass'][0],
             'n_clusters': row['n_clusters'][0],
-            'alpha': 0.1 if 'outliers' in data_id else 0.5,
+            'alpha': 0.1 if 'outliers' in data_id else 0.05,
             'score_metric': accuracy_score if row['is_balanced'][0] else balanced_accuracy_score
         })
 
@@ -137,13 +149,11 @@ NOT_FEASIBLE_METHODS.update({
 ########################################################################################################################################################################
 
 RANDOM_STATE_MDS = {
-    'simulation_1': 73704,
-    'simulation_2': 78328,
-    'simulation_3': 35084,
-    'simulation_4': 3431,
-    'simulation_5': 4173,
-    'simulation_6': 20927,
-    'simulation_7': 11554,
+    'simulation_base': 73704,
+    'simulation_size_1': 78328,
+    'simulation_dim_1': 35084,
+    'simulation_num_clusters_1': 3431,
+    'simulation_separation_1': 4173,
     'heart_disease': 6863,
     'dubai_houses': 6863,
     'kc_houses': 6802
@@ -152,13 +162,11 @@ RANDOM_STATE_MDS = {
 ########################################################################################################################################################################
 
 ADDITIONAL_METHODS_MDS = {
-    'simulation_1': ['KMeans', 'KMedoids-pam'],
-    'simulation_2': ['KMeans', 'CLARA'],
-    'simulation_3': ['KMeans', 'CLARA'],
-    'simulation_4': ['KMeans', 'CLARA'],
-    'simulation_5': ['KMeans', 'CLARA'],
-    'simulation_6': ['KMeans', 'CLARA'],
-    'simulation_7': ['KMeans', 'GaussianMixture'],
+    'simulation_base': ['KMeans', 'KMedoids-pam'],
+    'simulation_size_1': ['KMeans', 'CLARA'],
+    'simulation_dim_1': ['KMeans', 'CLARA'],
+    'simulation_num_clusters_1': ['KMeans', 'CLARA'],
+    'simulation_separation_1': ['KMeans', 'CLARA'],
     'heart_disease': ['MiniBatchKMeans', 'CLARA'],
     'dubai_houses': ['MiniBatchKMeans', 'CLARA'],
     'kc_houses': ['MiniBatchKMeans', 'CLARA']

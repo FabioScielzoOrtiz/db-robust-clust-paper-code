@@ -139,11 +139,11 @@ SIMULATION_CONFIGS = {
     },
 
     'simulation_dim_2': {
-        'n_samples': 10000,
-        'centers': 3,
-        'cluster_std': [2, 2, 3],
-        'n_features': 50,
-        'feature_types': {'n_binary': 13, 'n_multiclass': 12, 'n_bins_multiclass': 4},
+       'n_samples': 10000,
+       'centers': 3,
+       'cluster_std': [2, 2, 3],
+       'n_features': 50,
+       'feature_types': {'n_binary': 13, 'n_multiclass': 12, 'n_bins_multiclass': 4},
     },
 
 #######################################################################################################################
@@ -152,7 +152,7 @@ SIMULATION_CONFIGS = {
 
     'simulation_num_clusters_1': {
         'n_samples': 10000,
-        'centers': 10,
+        'centers': 5,
         'cluster_std': 2,
         'n_features': 8,
         'feature_types': {'n_binary': 2, 'n_multiclass': 2, 'n_bins_multiclass': 4},
@@ -160,7 +160,7 @@ SIMULATION_CONFIGS = {
 
     'simulation_num_clusters_2': {
         'n_samples': 10000,
-        'centers': 20,
+        'centers': 10,
         'cluster_std': 2,
         'n_features': 8,
         'feature_types': {'n_binary': 2, 'n_multiclass': 2, 'n_bins_multiclass': 4},
@@ -176,7 +176,7 @@ SIMULATION_CONFIGS = {
         'cluster_std': [2, 2, 3],
         'n_features': 8,
         'feature_types': {'n_binary': 2, 'n_multiclass': 2, 'n_bins_multiclass': 4},
-        'separation_factor': 0.1
+        'separation_factor': 0.3
     },
 
     'simulation_separation_2': {
@@ -185,10 +185,19 @@ SIMULATION_CONFIGS = {
         'cluster_std': [2, 2, 3],
         'n_features': 8,
         'feature_types': {'n_binary': 2, 'n_multiclass': 2, 'n_bins_multiclass': 4},
-        'separation_factor': 0.3
+        'separation_factor': 0.6
     },
 
     'simulation_separation_3': {
+        'n_samples': 10000,
+        'centers': 3,
+        'cluster_std': [2, 2, 3],
+        'n_features': 8,
+        'feature_types': {'n_binary': 2, 'n_multiclass': 2, 'n_bins_multiclass': 4},
+        'separation_factor': 0.8
+    },
+
+    'simulation_separation_4': {
         'n_samples': 10000,
         'centers': 3,
         'cluster_std': [2, 2, 3],

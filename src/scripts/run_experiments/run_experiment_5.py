@@ -71,6 +71,7 @@ def main():
         sys.exit(1)
     
     experiment_config = CONFIG_EXPERIMENT[DATA_ID]
+    print('experiment_config:', experiment_config)
 
     # 1. Setup Environment
     if not os.path.exists(results_dir):
@@ -251,6 +252,7 @@ def main():
             try:
                 if is_simulation:
                     simulation_config = SIMULATION_CONFIGS[DATA_ID]
+                    print('simulation_config: ', simulation_config)
                     X, y = generate_simulation(
                         **simulation_config,
                         random_state=random_state,

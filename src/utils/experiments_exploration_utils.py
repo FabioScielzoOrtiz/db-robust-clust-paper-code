@@ -318,7 +318,7 @@ def plot_experiment_1_results(time_results, data_sizes, save_path):
 
 ########################################################################################################################################################################
 
-def plot_experiment_2_results(df, df_avg, data_name, num_realizations, save_path, 
+def plot_experiment_2_results(df, df_avg, data_name, num_realizations, save_path=None, 
                               error_style='fill', ylim_acc=None, ylim_ari=None, ylim_time=None):
     """
     Genera los gráficos del experimento 2 partiendo del DataFrame crudo.
@@ -411,13 +411,15 @@ def plot_experiment_2_results(df, df_avg, data_name, num_realizations, save_path
         f'Accuracy, ARI and Time vs. Sample Size Parameter\n{formatted_data_name} - Realizations: {num_realizations}', 
         fontsize=13, y=1.02, weight='bold', color='black', alpha=1
     )
-
-    fig.savefig(save_path, format='png', dpi=300, bbox_inches="tight", pad_inches=0.2)
+    
+    if save_path:
+        fig.savefig(save_path, format='png', dpi=300, bbox_inches="tight", pad_inches=0.2)
+    
     plt.show()
 
 ########################################################################################################################################################################
 
-def plot_experiment_3_results(df, df_avg, data_name, num_realizations, save_path, 
+def plot_experiment_3_results(df, df_avg, data_name, num_realizations, save_path=None, 
                               error_style='fill', ylim_acc=None, ylim_ari=None, ylim_time=None):
     """
     Genera los gráficos del experimento 3 alineando correctamente las líneas
@@ -526,7 +528,9 @@ def plot_experiment_3_results(df, df_avg, data_name, num_realizations, save_path
         fontsize=13, fontweight='bold', y=1.02
     )
 
-    fig.savefig(save_path, format='png', dpi=300, bbox_inches="tight", pad_inches=0.2)
+    if save_path:
+        fig.savefig(save_path, format='png', dpi=300, bbox_inches="tight", pad_inches=0.2)
+    
     plt.show()
 
 ########################################################################################################################################################################
