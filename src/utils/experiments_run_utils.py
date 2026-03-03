@@ -69,7 +69,7 @@ def make_experiment_2(X, y, frac_sample_sizes, n_clusters, random_state, p1, p2,
     logger = logging.getLogger(__name__)
 
     # Log inicial informativo
-    logger.info(f"🚀 Starting Experiment 2 | random_state: {random_state} | frac_sample_sizes: {frac_sample_sizes}")
+    logger.info(f"  ⚙️ Processing frac_sample_sizes: {frac_sample_sizes}")
 
     results = {
         'time': {}, 
@@ -89,7 +89,7 @@ def make_experiment_2(X, y, frac_sample_sizes, n_clusters, random_state, p1, p2,
         
         # 1. Configuración del modelo
         # Usamos debug para configuración detallada, info para progreso
-        logger.info(f"  ⚙️ Processing frac_sample_size: {frac_sample_size:.2f}")
+        logger.info(f"     ➡️ Processing frac_sample_size: {frac_sample_size:.3f}")
         
         try:
             
@@ -130,10 +130,10 @@ def make_experiment_2(X, y, frac_sample_sizes, n_clusters, random_state, p1, p2,
             results['ARI'][frac_sample_size] = ari
 
             # 5. Log de Resultados Inmediato (Feedback instantáneo)
-            logger.info(f"     ✅ Finished in {elapsed_time:.2f}s | ARI: {ari:.2f} | Acc: {adj_acc:.2f}")
+            logger.info(f"        ✅ Finished in {elapsed_time:.2f}s | ARI: {ari:.2f} | Acc: {adj_acc:.2f}")
 
         except Exception as e:
-            logger.error(f"     ❌ Error fitting model for frac {frac_sample_size}: {e}")
+            logger.error(f"       ❌ Error fitting model for frac {frac_sample_size}: {e}")
             for k in results.keys():
                 results[k][frac_sample_size] = None
             results['status'][frac_sample_size] = f"Error: {str(e)}"
@@ -146,7 +146,7 @@ def make_experiment_3(X, y, n_splits, frac_sample_sizes, n_clusters, random_stat
 
     logger = logging.getLogger(__name__)
 
-    logger.info(f"🚀 Starting Experiment 3 | Random State: {random_state} | n_splits: {n_splits} | frac_sample_sizes: {frac_sample_sizes}")
+    logger.info(f"  ⚙️ Processing n_splits {n_splits} and frac_sample_sizes {frac_sample_sizes}")
 
     clustering_base_method = KMedoids(
                 n_clusters=n_clusters, 
@@ -165,7 +165,7 @@ def make_experiment_3(X, y, n_splits, frac_sample_sizes, n_clusters, random_stat
     for split in n_splits:
         for frac_sample_size in frac_sample_sizes:
             
-            logger.info(f"  ⚙️ Processing  n_splits: {split:.2f} | frac_sample_size: {frac_sample_size:.2f}")
+            logger.info(f"      ➡️ Processing  n_splits: {split} | frac_sample_size: {frac_sample_size:.3f}")
 
             try:
             
@@ -198,10 +198,10 @@ def make_experiment_3(X, y, n_splits, frac_sample_sizes, n_clusters, random_stat
                 results['adj_accuracy'][split][frac_sample_size] = adj_acc
                 results['ARI'][split][frac_sample_size] = ari
 
-                logger.info(f"     ✅ Finished in {elapsed_time:.2f}s | ARI: {ari:.2f} | Acc: {adj_acc:.2f}")         
-            
+                logger.info(f"         ✅ Finished in {elapsed_time:.2f}s | ARI: {ari:.2f} | Acc: {adj_acc:.2f}")         
+             
             except Exception as e:
-                logger.error(f"     ❌ Error fitting model for split {split} and frac {frac_sample_size}: {e}")
+                logger.error(f"        ❌ Error fitting model for split {split} and frac {frac_sample_size}: {e}")
                 for k in results.keys():
                     results[k][split][frac_sample_size] = None
                 results['status'][split][frac_sample_size] = f"Error: {str(e)}"

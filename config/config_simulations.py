@@ -130,20 +130,21 @@ SIMULATION_CONFIGS = {
     
     # DIMENSION 
 
-    'simulation_dim_1': {
+    'simulation_dim_1': { # dim increase, adding useful info (not noise) --> increase clusters separation
         'n_samples': 10000,
         'centers': 3,
         'cluster_std': [2, 2, 3],
-        'n_features': 20,
-        'feature_types': {'n_binary': 5, 'n_multiclass': 5, 'n_bins_multiclass': 4},
+        'n_features': 50, 
+        'feature_types': {'n_binary': 12, 'n_multiclass': 13, 'n_bins_multiclass': 4},
     },
 
-    'simulation_dim_2': {
-       'n_samples': 10000,
-       'centers': 3,
-       'cluster_std': [2, 2, 3],
-       'n_features': 50,
-       'feature_types': {'n_binary': 13, 'n_multiclass': 12, 'n_bins_multiclass': 4},
+
+    'simulation_dim_2': { # dim increase, adding useful info (not noise) --> increase clusters separation
+        'n_samples': 10000,
+        'centers': 3,
+        'cluster_std': [2, 2, 3],
+        'n_features': 100, 
+        'feature_types': {'n_binary': 25, 'n_multiclass': 25, 'n_bins_multiclass': 4},
     },
 
 #######################################################################################################################
@@ -176,7 +177,7 @@ SIMULATION_CONFIGS = {
         'cluster_std': [2, 2, 3],
         'n_features': 8,
         'feature_types': {'n_binary': 2, 'n_multiclass': 2, 'n_bins_multiclass': 4},
-        'separation_factor': 0.3
+        'separation_factor': 0.2
     },
 
     'simulation_separation_2': {
@@ -185,7 +186,7 @@ SIMULATION_CONFIGS = {
         'cluster_std': [2, 2, 3],
         'n_features': 8,
         'feature_types': {'n_binary': 2, 'n_multiclass': 2, 'n_bins_multiclass': 4},
-        'separation_factor': 0.6
+        'separation_factor': 0.5
     },
 
     'simulation_separation_3': {
@@ -194,8 +195,9 @@ SIMULATION_CONFIGS = {
         'cluster_std': [2, 2, 3],
         'n_features': 8,
         'feature_types': {'n_binary': 2, 'n_multiclass': 2, 'n_bins_multiclass': 4},
-        'separation_factor': 0.8
+        'separation_factor': 0.7
     },
+
 
     'simulation_separation_4': {
         'n_samples': 10000,
@@ -219,6 +221,15 @@ SIMULATION_CONFIGS = {
         'n_redundant': 1
     },
 
+    'simulation_corr_2': {
+        'n_samples': 10000,
+        'centers': 3,
+        'cluster_std': [2, 2, 3],
+        'n_features': 8,
+        'feature_types': {'n_binary': 2, 'n_multiclass': 2, 'n_bins_multiclass': 4},
+        'n_redundant': 4
+    },
+
 #######################################################################################################################
 
    # OUTLIERS 
@@ -230,8 +241,8 @@ SIMULATION_CONFIGS = {
         'n_features': 8,
         'feature_types': {'n_binary': 2, 'n_multiclass': 2, 'n_bins_multiclass': 4},
         'outlier_configs': [
-            {'col_name': 'X1', 'prop_above': 0.05, 'sigma': 2},
-            {'col_name': 'X2', 'prop_below': 0.05, 'sigma': 2}
+            {'col_name': 'X1', 'prop_above': 0.1, 'sigma': 2},
+            {'col_name': 'X2', 'prop_below': 0.1, 'sigma': 2}
         ]
     },
 
@@ -242,8 +253,9 @@ SIMULATION_CONFIGS = {
         'n_features': 8,
         'feature_types': {'n_binary': 2, 'n_multiclass': 2, 'n_bins_multiclass': 4},
         'outlier_configs': [
-            {'col_name': 'X1', 'prop_above': 0.1, 'sigma': 2},
-            {'col_name': 'X2', 'prop_below': 0.1, 'sigma': 2}
+            {'col_name': 'X1', 'prop_above': 0.1, 'sigma': 5},
+            {'col_name': 'X2', 'prop_below': 0.1, 'sigma': 2},
+            {'col_name': 'X3', 'prop_below': 0.1, 'sigma': 2}
         ]
     },
 
@@ -255,7 +267,7 @@ SIMULATION_CONFIGS = {
         'feature_types': {'n_binary': 2, 'n_multiclass': 2, 'n_bins_multiclass': 4},
         'outlier_configs': None,
         'grouped_outliers_config': {
-        'prop_outliers': 0.1, 'n_groups': 3, 'distance': 15
+        'prop_outliers': 0.1, 'n_groups': 3, 'distance': 45
         },
     },
 
@@ -267,7 +279,7 @@ SIMULATION_CONFIGS = {
         'feature_types': {'n_binary': 2, 'n_multiclass': 2, 'n_bins_multiclass': 4},
         'outlier_configs': None,
         'grouped_outliers_config': {
-        'prop_outliers': 0.15, 'n_groups': 3, 'distance': 20
+        'prop_outliers': 0.15, 'n_groups': 3, 'distance': 70
         },
     },
 
@@ -281,17 +293,17 @@ SIMULATION_CONFIGS = {
         'cluster_std': [2, 2, 3],
         'n_features': 8,
         'feature_types': {'n_binary': 2, 'n_multiclass': 2, 'n_bins_multiclass': 4},
-        'cluster_proportions': [0.2, 0.3, 0.5],
+        'cluster_proportions': [0.15, 0.2, 0.65],
 
     },
 
     'simulation_imbalance_2': {
         'n_samples': 10000,
-        'centers': 3,
-        'cluster_std': [2, 2, 3],
+        'centers': 2,
+        'cluster_std': [2, 3],
         'n_features': 8,
         'feature_types': {'n_binary': 2, 'n_multiclass': 2, 'n_bins_multiclass': 4},
-        'cluster_proportions': [0.2, 0.2, 0.6],
+        'cluster_proportions': [0.25, 0.75],
     },    
 
 
@@ -305,7 +317,7 @@ SIMULATION_CONFIGS = {
         'cluster_std': [2, 2, 3],
         'n_features': 8,
         'feature_types': {'n_binary': 2, 'n_multiclass': 2, 'n_bins_multiclass': 4},
-        'anisotropy_factor': 2.5
+        'anisotropy_factor': 4
     },
 
     'simulation_sphericity_2': {
@@ -314,7 +326,36 @@ SIMULATION_CONFIGS = {
         'cluster_std': [2, 2, 3],
         'n_features': 8,
         'feature_types': {'n_binary': 2, 'n_multiclass': 2, 'n_bins_multiclass': 4},
-        'anisotropy_factor': 3
+        'anisotropy_factor': 6
+    },
+
+    'simulation_sphericity_3': {
+        'n_samples': 10000,
+        'centers': 3,
+        'cluster_std': [2, 2, 3],
+        'n_features': 8,
+        'feature_types': {'n_binary': 2, 'n_multiclass': 2, 'n_bins_multiclass': 4},
+        'anisotropy_factor': 10
+    },
+
+#######################################################################################################################
+
+    'simulation_geometry_1': {
+        'n_samples': 10000,
+        'centers': 3,
+        'cluster_std': [2, 2, 3],
+        'n_features': 8,
+        'feature_types': {'n_binary': 2, 'n_multiclass': 2, 'n_bins_multiclass': 4},
+        'geometry': 'moons'
+    },
+
+    'simulation_geometry_2': {
+        'n_samples': 10000,
+        'centers': 3,
+        'cluster_std': [2, 2, 3],
+        'n_features': 8,
+        'feature_types': {'n_binary': 2, 'n_multiclass': 2, 'n_bins_multiclass': 4},
+        'geometry': 'circles'
     },
 
 #######################################################################################################################

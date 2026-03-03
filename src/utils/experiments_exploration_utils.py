@@ -14,6 +14,8 @@ from robust_mixed_dist.mixed import generalized_gower_dist_matrix
 from scipy.stats import entropy
 from sklearn.decomposition import PCA
 from BigEDA.descriptive import outliers_table
+from sklearn.metrics import silhouette_score
+from sklearn.manifold import TSNE
 
 ########################################################################################################################################################################
 
@@ -310,7 +312,7 @@ def plot_experiment_1_results(time_results, data_sizes, save_path):
     plt.yticks(fontsize=10)
     ax.set_xticks(data_sizes)
     ax.set_yticks(np.round(np.linspace(np.min(times_values), np.max(times_values), 9), 0))
-    plt.title("KMedoids (Euclidean) - Time and Data Size", fontsize=12.5, weight='bold')
+    plt.title("KMedoids-PAM (Euclidean) - Time and Data Size", fontsize=12.5, weight='bold')
     plt.tight_layout()
     # Guardado
     fig.savefig(save_path, format='png', dpi=300, bbox_inches="tight", pad_inches=0.2)
@@ -969,6 +971,220 @@ def plot_datasets_2d(X, y, title, outliers_idx=None):
 
 ########################################################################################################################################################################
 
+def plot_dataset_projection(X, y, title, method='pca', outliers_idx=None, **kwargs):
+    """
+    Proyecta y visualiza datasets de clustering en 2D con la lógica de leyenda original.
+    """
+    # 1. Selección del motor de proyección
+    if method.lower() == 'pca':
+        model = PCA(n_components=2)
+        X_2d = model.fit_transform(X)
+        xlabel, ylabel = 'PCA Component 1', 'PCA Component 2'
+    elif method.lower() == 'tsne':
+        model = TSNE(n_components=2, perplexity=kwargs.get('perplexity', 30), random_state=42)
+        X_2d = model.fit_transform(X)
+        xlabel, ylabel = 't-SNE Component 1', 't-SNE Component 2'
+    else:
+        raise ValueError("Método no soportado. Usa 'pca' o 'tsne'.")
+
+    plt.figure(figsize=(8, 6))
+    
+    # 2. Identificar clústeres reales y outliers
+    real_clusters = sorted([val for i, val in enumerate(np.unique(y)) if val >= 0])
+    
+    outliers_mask = np.zeros(len(y), dtype=bool)
+    if outliers_idx is not None and len(outliers_idx) > 0:
+        outliers_mask[outliers_idx] = True
+    
+    # Los dispersos pertenecen a un clúster normal pero están en outliers_idx
+    outliers_mask = outliers_mask & (y >= 0) 
+    mask_normal = (y >= 0) & ~outliers_mask
+    
+    # 3. Dibujar clústeres normales (Círculos, tab10)
+    if mask_normal.sum() > 0:
+        sns.scatterplot(
+            x=X_2d[mask_normal, 0], y=X_2d[mask_normal, 1], 
+            hue=y[mask_normal], hue_order=real_clusters, 
+            palette="tab10", alpha=0.7, edgecolor='k', s=50
+        )
+    
+    # 4. Dibujar Outliers (Marcador 'X')
+    if outliers_mask.sum() > 0:
+        sns.scatterplot(
+            x=X_2d[outliers_mask, 0], y=X_2d[outliers_mask, 1], 
+            hue=y[outliers_mask], hue_order=real_clusters, 
+            palette="tab10", marker='X', s=80, edgecolor='black', 
+            legend=False
+        )
+
+    plt.title(title, fontweight='bold')
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    
+    # 5. Configurar la leyenda dinámica e inteligente (Lógica original restaurada)
+    handles, labels = plt.gca().get_legend_handles_labels()
+    
+    clean_handles, clean_labels = [], []
+    for h, l in zip(handles, labels):
+        # Filtramos etiquetas internas de Seaborn y duplicados
+        if l not in clean_labels and l not in ['hue', 'y', 'x']: 
+            clean_handles.append(h)
+            clean_labels.append(l)
+            
+    # Solo inyectamos el proxy de Outliers si realmente existen en el dataset
+    if outliers_mask.sum() > 0:
+        dispersed_proxy = Line2D([0], [0], marker='X', color='w', markerfacecolor='gray', 
+                                 markeredgecolor='black', markersize=9)
+        clean_handles.append(dispersed_proxy)
+        clean_labels.append('Outliers')
+
+    plt.legend(clean_handles, clean_labels, bbox_to_anchor=(1.05, 1), loc='upper left')
+    plt.tight_layout()
+    plt.show()
+
+########################################################################################################################################################################
+
+def get_dataset_structure(X, y, data_id, quant_predictors, n_binary, n_multiclass, simulation_config=None):
+    
+    if simulation_config:
+        n_rows, n_cols = X.shape
+        n_binary = int(simulation_config['feature_types'].get('n_binary', 0))
+        n_multiclass = int(simulation_config['feature_types'].get('n_multiclass', 0))
+        n_quant = n_cols - (n_binary + n_multiclass)
+        n_clusters = len(np.unique(y))
+        geometry = simulation_config.get('geometry', None)
+        separation_factor = float(simulation_config.get('separation_factor', 1.0))
+        n_redundant = int(simulation_config.get('n_redundant', 0))
+        anisotropy_factor = float(simulation_config.get('anisotropy_factor', 1.0))
+        outlier_configs = simulation_config.get('outlier_configs', None)
+        grouped_outliers_config = simulation_config.get('grouped_outliers_config', None)
+        # En simulaciones, asumimos que las primeras n_quant son las numéricas
+        quant_predictors = X.columns[:n_quant]
+        convex_geometry = False if geometry else True
+
+    else: # real data
+        n_rows, n_cols = X.shape
+        n_clusters = len(np.unique(y))
+        n_quant = len(quant_predictors)
+        separation_factor, convex_geometry, n_redundant, anisotropy_factor, outlier_configs, grouped_outliers_config = None, None, None, None, None, None
+
+    prop_categorical = (n_binary + n_multiclass) / n_cols if n_cols > 0 else 0.0
+
+    # Inicializar métricas por defecto
+    mean_prop_outliers, prop_high_corr, sphericity, prop_redundancy = 0.0, 0.0, 1.0, 0.0
+    log_separation_index, norm_separation_index = 0.0, 0.0
+    outliers_contamination_type = 'not_contaminated'
+
+    if n_quant > 0:
+        # Extraemos variables cuantitativas (Polars maneja bien X[quant_predictors])
+        X_quant = X[quant_predictors].to_numpy()
+        
+        # --- 1. Outliers mediante IQR ---
+        mean_prop_outliers = outliers_table(X[quant_predictors], auto=False, col_names=quant_predictors, h=1.5)['prop_outliers'].mean()
+        
+        if outlier_configs:
+            outliers_contamination_type = 'dispersed'
+        if grouped_outliers_config:
+            outliers_contamination_type = 'grouped'
+
+        # --- 2. Correlación y Redundancia (Ajuste PCA 0.95) ---
+        if n_quant > 1:
+
+            corr_matrix = X[quant_predictors].corr().to_numpy()
+            n_corr = len(corr_matrix[np.triu_indices_from(corr_matrix, k=1)])
+            n_corr_above_60 = np.sum(np.abs(corr_matrix[np.triu_indices_from(corr_matrix, k=1)]) > 0.60)
+            prop_high_corr = float(n_corr_above_60 / n_corr)
+            
+            pca = PCA().fit(X_quant)
+            intrinsic_dim = int(np.argmax(np.cumsum(pca.explained_variance_ratio_) >= 0.90) + 1) 
+            prop_redundancy = float(1.0 - (intrinsic_dim / n_quant))
+
+        # --- 3. Esfericidad ---
+        sphericities = []
+        for c in np.unique(y):
+            X_c = X_quant[y == c]
+            if len(X_c) > n_quant:
+                cov_matrix = np.cov(X_c, rowvar=False)
+                eigenvals = np.real(np.linalg.eigvals(cov_matrix))
+                eigenvals = eigenvals[eigenvals > 1e-10]
+                if len(eigenvals) == n_quant:
+                    # Ratio de media geométrica vs media aritmética
+                    sphericities.append(np.exp(np.mean(np.log(eigenvals))) / np.mean(eigenvals))
+        sphericity = float(np.mean(sphericities)) if sphericities else 1.0
+
+        # --- 4. Separabilidad (Sigmoide sobre Log-F) ---
+        if n_clusters > 1:
+
+            # Silhouette Score (Métrica visual: estable frente a N)
+            # Para n > 5k submuestreamos para mantener la eficiencia
+            if n_rows > 5000:
+                idx = np.random.choice(n_rows, 5000, replace=False)
+                silhouette_quant = silhouette_score(X_quant[idx], y[idx])
+            else:
+                silhouette_quant = silhouette_score(X_quant, y)
+             
+            # # Estadístico F (Log-F)
+            # overall_mean = np.mean(X_quant, axis=0)
+            # ssw = 1e-9  
+            # ssb = 0.0
+            
+            # for c in np.unique(y):
+            #     X_c = X_quant[y == c]
+            #     if len(X_c) > 0:
+            #         cluster_mean = np.mean(X_c, axis=0)
+            #         ssw += np.sum((X_c - cluster_mean) ** 2)
+            #         ssb += len(X_c) * np.sum((cluster_mean - overall_mean) ** 2)
+            
+            # df_between = n_clusters - 1
+            # df_within = n_rows - n_clusters
+            
+            # # 1. Fuerza estadística (Log-F)
+            # f_stat = (ssb / df_between) / (ssw / df_within)
+            # log_separation_index = np.log10(f_stat + 1)
+            
+            # # 2. Normalización Sigmoide calibrada
+            # center = 3.8 # log_separation_index for simulation_base
+            # k = 1.5  # Usamos k=1.5 para dar una transición suave pero firme
+            # norm_separation_index = 1 / (1 + np.exp(-k * (log_separation_index - center)))
+
+    # --- 5. Balanceo ---
+    _, cluster_counts = np.unique(y, return_counts=True)
+    cluster_proportions = [float(p) for p in (cluster_counts / n_rows)]    
+    
+    counts = np.bincount(y)
+    counts = counts[counts > 0]
+
+    norm_entropy = float(entropy(counts/n_rows) / np.log(len(counts))) if len(counts) > 1 else 1.0
+    imbalance_ratio = float(np.max(counts) / np.min(counts)) if len(counts) > 1 else 1.0
+    is_balanced = bool(imbalance_ratio < 1.5)
+
+    return {
+        'data_id': data_id,
+        'n_rows': n_rows,
+        'n_cols': n_cols,
+        'n_quant': n_quant,
+        'n_binary': n_binary,
+        'n_multiclass': n_multiclass,
+        'n_clusters': n_clusters,
+        'separation_factor': separation_factor,
+        'n_redundant': n_redundant,
+        'cluster_proportions': cluster_proportions,
+        'anisotropy_factor': anisotropy_factor,
+        'prop_categorical': round(prop_categorical, 4),
+        'mean_prop_outliers_quant': round(mean_prop_outliers, 4),
+        'outliers_contamination_type': outliers_contamination_type,
+        'silhouette_index': round(silhouette_quant, 4),
+        'prop_high_corr_quant': round(prop_high_corr, 4),
+        'sphericity_quant': round(sphericity, 4),
+        'prop_redundancy_quant': round(prop_redundancy, 4),
+        'normalized_balance_entropy': round(norm_entropy, 4),
+        'imbalance_ratio': round(imbalance_ratio, 4),
+        'is_balanced': is_balanced,
+        'convex_geometry': convex_geometry
+    }
+
+
+'''
 def get_dataset_structure(X, y, data_id, quant_predictors, n_binary, n_multiclass, simulation_config=None):
     
     if simulation_config:
@@ -995,20 +1211,21 @@ def get_dataset_structure(X, y, data_id, quant_predictors, n_binary, n_multiclas
 
     # Inicializar métricas
     mean_prop_outliers, prop_high_corr, sphericity, prop_redundancy = 0.0, 0.0, 1.0, 0.0
+    estimated_separation_index, clustering_r2 = 0.0, 0.0
     outliers_contamination_type = 'not_contaminated'
 
     if n_quant > 0:
-        # Extraemos variables cuantitativas (Asume que X es un DataFrame de Pandas)
+        # Extraemos variables cuantitativas
         X_quant = X[quant_predictors].to_numpy()
         
         # --- 1. Outliers mediante IQR ---
+        # (Asume que outliers_table está definida globalmente)
         mean_prop_outliers = outliers_table(X[quant_predictors], auto=False, col_names=quant_predictors, h=1.5)['prop_outliers'].mean()
         
         if outlier_configs:
             outliers_contamination_type = 'dispersed'
         if grouped_outliers_config:
             outliers_contamination_type = 'grouped'
-
 
         # --- 2. Correlación y Redundancia ---
         if n_quant > 1:
@@ -1017,9 +1234,7 @@ def get_dataset_structure(X, y, data_id, quant_predictors, n_binary, n_multiclas
             prop_high_corr = float(np.sum(upper_tri > 0.5) / ((n_quant * (n_quant - 1)) / 2))
             
             pca = PCA().fit(X_quant)
-            # intrinsic_dim: min number of quant variables needed to explain >= 90% of variability
             intrinsic_dim = int(np.argmax(np.cumsum(pca.explained_variance_ratio_) >= 0.90) + 1) 
-            # compute prop of quant variable that are not adding significant info to explain variability
             prop_redundancy = float(1.0 - (intrinsic_dim / n_quant))
 
         # --- 3. Esfericidad ---
@@ -1034,20 +1249,60 @@ def get_dataset_structure(X, y, data_id, quant_predictors, n_binary, n_multiclas
                     sphericities.append(np.exp(np.mean(np.log(eigenvals))) / np.mean(eigenvals))
         sphericity = float(np.mean(sphericities)) if sphericities else 1.0
 
-    # --- 4. Balanceo ---
+        # --- 4. Separabilidad (Nueva Sección) ---
+        if n_clusters > 1:
+            overall_mean = np.mean(X_quant, axis=0)
+            ssw = 1e-9  # Evitar división por cero
+            ssb = 0.0
+            
+            for c in np.unique(y):
+                X_c = X_quant[y == c]
+                if len(X_c) > 0:
+                    cluster_mean = np.mean(X_c, axis=0)
+                    ssw += np.sum((X_c - cluster_mean) ** 2)
+                    ssb += len(X_c) * np.sum((cluster_mean - overall_mean) ** 2)
+            
+            # Métrica F-style (Escala abierta)
+            df_between = n_clusters - 1
+            df_within = n_rows - n_clusters
+            estimated_separation_index = (ssb / df_between) / (ssw / df_within)
+            
+            # Métrica R2 (Escala 0-1)
+            clustering_r2 = ssb / (ssb + ssw)
+
+        # --- 4. Separabilidad Normalizada ---
+        if n_clusters > 1:
+            overall_mean = np.mean(X_quant, axis=0)
+            ssw = 1e-9 
+            ssb = 0.0
+            
+            for c in np.unique(y):
+                X_c = X_quant[y == c]
+                if len(X_c) > 0:
+                    cluster_mean = np.mean(X_c, axis=0)
+                    ssw += np.sum((X_c - cluster_mean) ** 2)
+                    ssb += len(X_c) * np.sum((cluster_mean - overall_mean) ** 2)
+            
+            # 1. Tu métrica original (para registro técnico)
+            df_between = n_clusters - 1
+            df_within = n_rows - n_clusters
+            f_stat = (ssb / df_between) / (ssw / df_within)
+            log_separation_index = np.log10(f_stat + 1)
+            
+            # 2. MÉTRICA NORMALIZADA (0 a 1)
+            # Representa qué fracción de la dispersión total es debida a la separación de los grupos.
+            # Es extremadamente intuitiva: 0.9 = 90% de separación clara.
+            norm_separation_index = ssb / (ssb + ssw)
+
+    # --- 5. Balanceo ---
     _, cluster_counts = np.unique(y, return_counts=True)
     cluster_proportions = [float(p) for p in (cluster_counts / n_rows)]    
     
     counts = np.bincount(y)
     counts = counts[counts > 0]
 
-    # Entropía (si quieres conservarla por completitud)
     norm_entropy = float(entropy(counts/n_rows) / np.log(len(counts))) if len(counts) > 1 else 1.0
-
-    # Imbalance Ratio (IR)
     imbalance_ratio = float(np.max(counts) / np.min(counts)) if len(counts) > 1 else 1.0
-
-    # Ahora la condición es mucho más interpretable (ej. IR < 1.5 es balanceado)
     is_balanced = bool(imbalance_ratio < 1.5)
 
     return {
@@ -1065,6 +1320,8 @@ def get_dataset_structure(X, y, data_id, quant_predictors, n_binary, n_multiclas
         'prop_categorical': round(prop_categorical, 4),
         'mean_prop_outliers_quant': round(mean_prop_outliers, 4),
         'outliers_contamination_type': outliers_contamination_type,
+        'log_separation_index': round(float(log_separation_index), 4),
+        'norm_separation_index': round(float(norm_separation_index), 4),
         'prop_high_corr_quant': round(prop_high_corr, 4),
         'sphericity_quant': round(sphericity, 4),
         'prop_redundancy_quant': round(prop_redundancy, 4),
@@ -1072,5 +1329,5 @@ def get_dataset_structure(X, y, data_id, quant_predictors, n_binary, n_multiclas
         'imbalance_ratio': round(imbalance_ratio, 4),
         'is_balanced': is_balanced,
     }
-
+'''
 ########################################################################################################################################################################

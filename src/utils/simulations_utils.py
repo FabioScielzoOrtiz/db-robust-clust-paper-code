@@ -3,7 +3,7 @@
 import pandas as pd
 import polars as pl
 import numpy as np
-from sklearn.datasets import make_blobs
+from sklearn.datasets import make_blobs, make_moons, make_circles
 
 ########################################################################################################################################################################
 
@@ -68,10 +68,10 @@ def outlier_contamination(X, col_name, prop_below=None, prop_above=None, sigma=2
 
 def generate_simulation(
     n_samples=1000, centers=3, cluster_std=1.0, n_features=10, n_redundant=0,
-    cluster_proportions=None, 
+    cluster_proportions=None, geometry='convex',
     anisotropy_factor=1.0, 
     feature_types=None, outlier_configs=None, grouped_outliers_config=None, 
-    separation_factor=1.0, return_outlier_idx=False, random_state=42
+    separation_factor=1.0, return_outlier_idx=False, random_state=123
 ):
     np.random.seed(random_state)
     
@@ -95,10 +95,40 @@ def generate_simulation(
     else:
         adjusted_centers = None if cluster_proportions else centers
         c_box = (-10.0 * separation_factor, 10.0 * separation_factor)
+   
+    # 3. BASE (Modificado para geometrías no convexas)
+    if geometry in ['moons', 'circles']:
+        
+        noise = cluster_std[0] if isinstance(cluster_std, list) else cluster_std
 
-    # 3. BASE (Esferas perfectas en el subespacio base)
-    X_arr, y = make_blobs(n_samples=n_samples_input, centers=adjusted_centers, center_box=c_box, 
-                          cluster_std=cluster_std, n_features=n_features_base, random_state=random_state)
+        if geometry == 'moons':
+            # Generamos la base en 2D
+            X_base, y = make_moons(
+                n_samples=n_samples_input, 
+                noise=noise, 
+                random_state=random_state
+            )
+        else:
+            X_base, y = make_circles(
+                n_samples=n_samples_input, 
+                noise=noise, 
+                random_state=random_state
+            )
+        
+        # Escalamos la base según tu separation_factor
+        X_base = X_base * separation_factor * 5 
+
+        # Rellenamos el resto de dimensiones base (n_features_base) con ruido
+        # Esto evita que el clustering sea "demasiado fácil" por tener dimensiones vacías
+        if n_features_base > 2:
+            extra_dims = np.random.normal(0, noise, size=(X_base.shape[0], n_features_base - 2))
+            X_arr = np.hstack([X_base, extra_dims])
+        else:
+            X_arr = X_base
+    else:
+        # Tu lógica original de make_blobs
+        X_arr, y = make_blobs(n_samples=n_samples_input, centers=adjusted_centers, center_box=c_box, 
+                              cluster_std=cluster_std, n_features=n_features_base, random_state=random_state)
 
     # 4. ESFERICIDAD / ANISOTROPÍA (Deformación controlada sin mover los centros)
     if anisotropy_factor > 1.0:
@@ -179,7 +209,7 @@ def generate_simulation(
         B = 2 * rng_red.rand(n_features_base, n_redundant) - 1
         X_redundant = np.dot(X_arr, B)
         # Añadir ruido para no hacer colinealidad matemáticamente perfecta
-        X_redundant += rng_red.normal(scale=0.1, size=X_redundant.shape)
+        #X_redundant += rng_red.normal(scale=0.02, size=X_redundant.shape)
         # Unir variables base con redundantes (Total de columnas volverá a ser n_features)
         X_arr = np.hstack([X_arr, X_redundant])
 

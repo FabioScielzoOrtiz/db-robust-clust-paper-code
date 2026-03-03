@@ -62,25 +62,25 @@ CONFIG_EXPERIMENT = {
 
     'simulation_size_1': {
         'frac_sample_size_sample_dist_clust': 0.1,
-        'frac_sample_size_fold_sample_dist_clust': 0.1,
+        'frac_sample_size_fold_sample_dist_clust': 0.2,
         'n_splits': 5,
     },
 
-    'simulation_size_2': {
-        'frac_sample_size_sample_dist_clust': 0.05,
-        'frac_sample_size_fold_sample_dist_clust': 0.05,
-        'n_splits': 10,
-    },
+    # 'simulation_size_2': {
+    #     'frac_sample_size_sample_dist_clust': 0.05,
+    #     'frac_sample_size_fold_sample_dist_clust': 0.1,
+    #     'n_splits': 10,
+    # },
 
     'simulation_dim_1': {
         'frac_sample_size_sample_dist_clust': 0.1,
-        'frac_sample_size_fold_sample_dist_clust': 0.1,
+        'frac_sample_size_fold_sample_dist_clust': 0.2,
         'n_splits': 5,
     },
 
     'simulation_num_clusters_1': {
         'frac_sample_size_sample_dist_clust': 0.1,
-        'frac_sample_size_fold_sample_dist_clust': 0.1,
+        'frac_sample_size_fold_sample_dist_clust': 0.2,
         'n_splits': 5,
     },
 
@@ -92,7 +92,7 @@ CONFIG_EXPERIMENT = {
 
     'simulation_corr_1': {
         'frac_sample_size_sample_dist_clust': 0.1,
-        'frac_sample_size_fold_sample_dist_clust': 0.1,
+        'frac_sample_size_fold_sample_dist_clust': 0.2,
         'n_splits': 5,
     },
 

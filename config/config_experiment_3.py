@@ -58,9 +58,49 @@ CONFIG_EXPERIMENT = {
     # },
 
     'simulation_base': {
-         'frac_sample_sizes': [0.1, 0.2, 0.3, 0.4],
+         'frac_sample_sizes': [0.2, 0.3, 0.4],
          'n_splits': [3, 5, 10]
     },
+
+    'simulation_size_1': {
+         'frac_sample_sizes': [0.2, 0.3, 0.4],
+         'n_splits': [3, 5, 10]
+    },
+
+    'simulation_dim_1': {
+         'frac_sample_sizes': [0.2, 0.3, 0.4],
+         'n_splits': [3, 5, 10]
+    },   
+
+    'simulation_num_clusters_1': {
+         'frac_sample_sizes': [0.2, 0.3, 0.4],
+         'n_splits': [3, 5, 10]
+    },   
+
+    'simulation_separation_1': {
+         'frac_sample_sizes': [0.2, 0.3, 0.4],
+         'n_splits': [3, 5, 10]
+    },   
+
+    'simulation_corr_1': {
+         'frac_sample_sizes': [0.2, 0.3, 0.4],
+         'n_splits': [3, 5, 10]
+    },   
+
+    'simulation_outliers_1': {
+         'frac_sample_sizes': [0.2, 0.3, 0.4],
+         'n_splits': [3, 5, 10]
+    },  
+
+    'simulation_outliers_2': {
+         'frac_sample_sizes': [0.2, 0.3, 0.4],
+         'n_splits': [3, 5, 10]
+    },  
+
+    'simulation_imbalance_1': {
+         'frac_sample_sizes': [0.2, 0.3, 0.4],
+         'n_splits': [3, 5, 10]
+    },  
 
     'dubai_houses': {
         'frac_sample_sizes': [0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9],
