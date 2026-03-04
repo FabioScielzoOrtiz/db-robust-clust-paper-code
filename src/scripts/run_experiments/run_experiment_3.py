@@ -49,6 +49,9 @@ def main():
         sys.exit(1)
     
     experiment_config = CONFIG_EXPERIMENT[DATA_ID]
+    logging.info('Experiment config loaded...')
+    logging.info(f'> Experiment Config: {experiment_config}')
+
     if not os.path.exists(results_dir):
         os.makedirs(results_dir, exist_ok=True)
 
@@ -99,6 +102,11 @@ def main():
     simulation_names = list(SIMULATION_CONFIGS.keys())
     is_simulation = DATA_ID in simulation_names
     X_real, y_real = None, None
+
+    if is_simulation:
+        simulation_config = SIMULATION_CONFIGS[DATA_ID]
+        logging.info("STEP 3: Simulation Config Loaded...")
+        logging.info(f'> Simulation Config: {simulation_config}')
 
     if not is_simulation:
         logging.info("STEP 3: Loading Real Data for Exp 3...")

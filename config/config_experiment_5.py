@@ -55,15 +55,15 @@ CONFIG_EXPERIMENT = {
     # },
 
     'simulation_base': {
-        'frac_sample_size_sample_dist_clust': 0.1,
-        'frac_sample_size_fold_sample_dist_clust': 0.1,
-        'n_splits': 5
+        'frac_sample_size_sample_dist_clust': 0.1, # verify with exp 2a
+        'frac_sample_size_fold_sample_dist_clust': 0.2, # verify with exp 3a
+        'n_splits': 5 # verify with exp 3a
     },
 
     'simulation_size_1': {
-        'frac_sample_size_sample_dist_clust': 0.1,
-        'frac_sample_size_fold_sample_dist_clust': 0.2,
-        'n_splits': 5,
+        'frac_sample_size_sample_dist_clust': 0.1, # verify with exp 2a
+        'frac_sample_size_fold_sample_dist_clust': 0.2, # verify with exp 3a
+        'n_splits': 5, # verify with exp 3a
     },
 
     # 'simulation_size_2': {

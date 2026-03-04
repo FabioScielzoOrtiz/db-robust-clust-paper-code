@@ -1,6 +1,6 @@
 ########################################################################################################################################################################
 
-import os 
+import os, sys
 import polars as pl
 from sklearn.metrics import accuracy_score, balanced_accuracy_score
 
@@ -8,6 +8,14 @@ from sklearn.metrics import accuracy_score, balanced_accuracy_score
 
 script_path = os.path.dirname(os.path.abspath(__file__))
 project_path = os.path.join(script_path, '..')
+sys.path.append(project_path)
+
+########################################################################################################################################################################
+
+from config.config_simulations import SIMULATION_CONFIGS, REAL_DATASET_KEYS
+
+########################################################################################################################################################################
+
 data_dir = os.path.join(project_path, 'data', 'processed_data')
 data_path = os.path.join(data_dir, 'datasets_structure.parquet') 
 datasets_structure = pl.read_parquet(data_path)
@@ -56,55 +64,15 @@ CONFIG_EXPERIMENT = {
     #     **BASE_CONFIG,
     # },
 
-    'simulation_base': {
+    k: {
         'frac_sample_sizes': [0.005, 0.1, 0.2, 0.3, 0.4]
-    },
-
-    'simulation_size_1': {
-        'frac_sample_sizes': [0.005, 0.1, 0.2, 0.3, 0.4]
-    },
-
-    'simulation_dim_1': {
-        'frac_sample_sizes': [0.005, 0.1, 0.2, 0.3, 0.4]
-    },
-
-    'simulation_num_clusters_1': {
-        'frac_sample_sizes': [0.005, 0.1, 0.2, 0.3, 0.4]
-    },
-
-    'simulation_separation_1': {
-        'frac_sample_sizes': [0.005, 0.1, 0.2, 0.3, 0.4]
-    },
-
-    'simulation_corr_1': {
-        'frac_sample_sizes': [0.005, 0.1, 0.2, 0.3, 0.4]
-    },
-
-    'simulation_outliers_1': {
-        'frac_sample_sizes': [0.005, 0.1, 0.2, 0.3, 0.4]
-    },
-
-    'simulation_outliers_2': {
-        'frac_sample_sizes': [0.005, 0.1, 0.2, 0.3, 0.4]
-    },
-
-    'simulation_imbalance_1': {
-        'frac_sample_sizes': [0.005, 0.1, 0.2, 0.3, 0.4]
-    },
-
-    'dubai_houses': {
-        'frac_sample_sizes': [0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9],
-    },
-
-    'heart_disease': {
-        'frac_sample_sizes': [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9],
-    },
-
-    'kc_houses': {
-        'frac_sample_sizes': [0.005, 0.01, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5],
-    },
+    }
+    
+    for k in list(SIMULATION_CONFIGS.keys()) + REAL_DATASET_KEYS
 
 }
+
+########################################################################################################################################################################
 
 for data_id, config in CONFIG_EXPERIMENT.items():
     row = datasets_structure.filter(pl.col('data_id') == data_id)

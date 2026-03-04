@@ -47,6 +47,9 @@ def main():
         sys.exit(1)
     
     experiment_config = CONFIG_EXPERIMENT[DATA_ID]
+    logging.info('Experiment config loaded...')
+    logging.info(f'> Experiment Config: {experiment_config}')
+
     if not os.path.exists(results_dir):
         os.makedirs(results_dir, exist_ok=True)
 
@@ -97,6 +100,11 @@ def main():
     simulation_names = list(SIMULATION_CONFIGS.keys())
     is_simulation = DATA_ID in simulation_names
     X_real, y_real = None, None
+
+    if is_simulation:
+        simulation_config = SIMULATION_CONFIGS[DATA_ID]
+        logging.info("STEP 3: Simulation Config Loaded...")
+        logging.info(f'> Simulation Config: {simulation_config}')
 
     if not is_simulation:
         logging.info("STEP 3: Loading Real Data...")
@@ -166,10 +174,10 @@ def main():
 
             try:
                 if is_simulation:
-                    X, y = generate_simulation(**SIMULATION_CONFIGS[DATA_ID], random_state=data_seed, return_outlier_idx=False)
+                    X, y = generate_simulation(**simulation_config, random_state=data_seed, return_outlier_idx=False)
                 else:
                     X, y = X_real, y_real
-
+                 
                 new_results = make_experiment_2(**experiment_config, X=X, y=y, random_state=model_seed)
                 chunk_results[rs_loop] = new_results
                 chunk_needs_save = True

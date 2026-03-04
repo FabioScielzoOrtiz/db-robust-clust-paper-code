@@ -16,18 +16,17 @@ from sklearn.decomposition import PCA
 from BigEDA.descriptive import outliers_table
 from sklearn.metrics import silhouette_score
 from sklearn.manifold import TSNE
+from adjustText import adjust_text
 
 ########################################################################################################################################################################
 
 def process_experiment_2_results(results_path, prop_errors_threshold):
 
     if not os.path.exists(results_path):
-        print("❌ Error: El archivo no existe. Revisa el DATA_ID o la ruta.")
+        raise ValueError("❌ Error: El archivo no existe. Revisa el DATA_ID o la ruta.")
     else:
         with open(results_path, 'rb') as f:
             results = pickle.load(f)
-        print(f"✅ Archivo cargado correctamente. Tipo de objeto: {type(results)}")
-        print(f"📊 Número de realizaciones (seeds) capturadas: {len(results)}")
 
     rows = []
     for seed, metrics in results.items():   
@@ -80,12 +79,10 @@ def process_experiment_2_results(results_path, prop_errors_threshold):
 def process_experiment_3_results(results_path, prop_errors_threshold):
 
     if not os.path.exists(results_path):
-        print("❌ Error: El archivo no existe. Revisa el DATA_ID o la ruta.")
+        raise ValueError("❌ Error: El archivo no existe. Revisa el DATA_ID o la ruta.")
     else:
         with open(results_path, 'rb') as f:
             results = pickle.load(f)
-        print(f"✅ Archivo cargado correctamente. Tipo de objeto: {type(results)}")
-        print(f"📊 Número de realizaciones (seeds) capturadas: {len(results)}")
 
     rows = []
     for seed, metrics in results.items():   
@@ -139,12 +136,10 @@ def process_experiment_3_results(results_path, prop_errors_threshold):
 def process_experiment_4_results(results_path):
 
     if not os.path.exists(results_path):
-        print("❌ Error: El archivo no existe. Revisa el DATA_ID o la ruta.")
+        raise ValueError("❌ Error: El archivo no existe. Revisa el DATA_ID o la ruta.")
     else:
         with open(results_path, 'rb') as f:
             results = pickle.load(f)
-        print(f"✅ Archivo cargado correctamente. Tipo de objeto: {type(results)}")
-        print(f"📊 Número de realizaciones (seeds) capturadas: {len(results)}")
 
     records = []
     for seed, metrics_dict in results.items():
@@ -180,16 +175,13 @@ def process_experiment_4_results(results_path):
 
 ########################################################################################################################################################################
 
-def process_experiment_5_results(results_path, prop_errors_threshold, not_feasible_methods_to_add=None, verbose=True):   
+def process_experiment_5_results(results_path, prop_errors_threshold, not_feasible_methods_to_add=None):   
 
     if not os.path.exists(results_path):
-        print("❌ Error: El archivo no existe. Revisa el DATA_ID o la ruta.")
+        raise ValueError("❌ Error: El archivo no existe. Revisa el DATA_ID o la ruta.")
     else:
         with open(results_path, 'rb') as f:
             results = pickle.load(f)
-        if verbose:
-            print(f"✅ Archivo cargado correctamente. Tipo de objeto: {type(results)}") 
-            print(f"📊 Número de realizaciones (seeds) capturadas: {len(results)}")
 
     rows = []
     for seed, metrics in results.items():   
@@ -250,14 +242,10 @@ def process_experiment_6_results(results_path):
     Estructura esperada: results[seed][metric][model_name]
     """
     if not os.path.exists(results_path):
-        print(f"❌ Error: El archivo no existe en la ruta: {results_path}")
-        return None, None
-    
-    with open(results_path, 'rb') as f:
-        results = pickle.load(f)
-    
-    print(f"✅ Archivo cargado correctamente.")
-    print(f"📊 Número de realizaciones (sampling seeds) capturadas: {len(results)}")
+        raise ValueError("❌ Error: El archivo no existe. Revisa la ruta.")
+    else:
+        with open(results_path, 'rb') as f:
+            results = pickle.load(f)
 
     records = []
     # Estructura: semilla -> metrica -> modelo -> valor
@@ -320,7 +308,7 @@ def plot_experiment_1_results(time_results, data_sizes, save_path):
 
 ########################################################################################################################################################################
 
-def plot_experiment_2_results(df, df_avg, data_name, num_realizations, save_path=None, 
+def plot_experiment_2_results(df, df_avg, data_name=None, num_realizations=None, save_path=None, title=None,
                               error_style='fill', ylim_acc=None, ylim_ari=None, ylim_time=None):
     """
     Genera los gráficos del experimento 2 partiendo del DataFrame crudo.
@@ -405,12 +393,13 @@ def plot_experiment_2_results(df, df_avg, data_name, num_realizations, save_path
 
     # 5. Ajustes finales y guardado
     plt.subplots_adjust(top=0.83, hspace=0.3, wspace=0.25)
-    
-    # Subtítulo adaptado al estilo elegido
-    formatted_data_name = data_name.replace('_', ' ').capitalize()
+       
+    if not title:
+        formatted_data_name = data_name.replace('_', ' ').capitalize()
+        title = f'Accuracy, ARI and Time vs. Sample Size Parameter\n{formatted_data_name} - Realizations: {num_realizations}'
     
     plt.suptitle(
-        f'Accuracy, ARI and Time vs. Sample Size Parameter\n{formatted_data_name} - Realizations: {num_realizations}', 
+        title, 
         fontsize=13, y=1.02, weight='bold', color='black', alpha=1
     )
     
@@ -421,7 +410,7 @@ def plot_experiment_2_results(df, df_avg, data_name, num_realizations, save_path
 
 ########################################################################################################################################################################
 
-def plot_experiment_3_results(df, df_avg, data_name, num_realizations, save_path=None, 
+def plot_experiment_3_results(df, df_avg, data_name=None, num_realizations=None, save_path=None, title=None, 
                               error_style='fill', ylim_acc=None, ylim_ari=None, ylim_time=None):
     """
     Genera los gráficos del experimento 3 alineando correctamente las líneas
@@ -524,10 +513,13 @@ def plot_experiment_3_results(df, df_avg, data_name, num_realizations, save_path
     fig.legend(handles, labels, loc='lower center', ncol=len(folds)+1, fontsize=10, bbox_to_anchor=(0.5, 0.0))
     plt.subplots_adjust(top=0.83, bottom=0.20, wspace=0.25)
 
-    formatted_data_name = data_name.replace('_', ' ').capitalize()
-    fig.suptitle(
-        f'Accuracy, ARI and Time vs. Number of Folds and Sample Size Parameter\n{formatted_data_name} - Realizations: {num_realizations}',  
-        fontsize=13, fontweight='bold', y=1.02
+    if not title:
+        formatted_data_name = data_name.replace('_', ' ').capitalize()
+        title = f'Accuracy, ARI and Time vs. Number of Folds and Sample Size Parameter\n{formatted_data_name} - Realizations: {num_realizations}'
+    
+    plt.suptitle(
+        title, 
+        fontsize=13, y=1.02, weight='bold', color='black', alpha=1
     )
 
     if save_path:
@@ -656,7 +648,8 @@ def plot_experiment_4_results(df, df_avg, num_realizations, save_path,
 
 ########################################################################################################################################################################
 
-def plot_experiment_5_results(df_avg, data_name, num_realizations=None, 
+def plot_experiment_5_results(df_avg, title=None, title_height=1.03, 
+                              data_name=None, num_realizations=None, 
                               time_log_scale=False, save_path=None, 
                               our_methods_1=None, our_methods_2=None, 
                               other_methods=None, not_feasible_methods=None):
@@ -748,7 +741,7 @@ def plot_experiment_5_results(df_avg, data_name, num_realizations=None,
             label.set_color('darkviolet') 
         elif txt in our_methods_2:
             label.set_color('green') 
-        elif txt in other_methods:
+        elif txt in other_methods and txt not in not_feasible_methods:
             label.set_color('black') 
         elif txt in not_feasible_methods:
             label.set_color('red') 
@@ -772,20 +765,497 @@ def plot_experiment_5_results(df_avg, data_name, num_realizations=None,
         frameon=False
     )
 
-    
-
     # 6. Título Global y Guardado
-    title = f"Clustering Model Comparison \n{data_name.replace('_', ' ').capitalize()} - Realizations: {num_realizations}" if num_realizations else f"Clustering Model Comparison \n{data_name.replace('_', ' ').capitalize()}"
+    if not title:
+        title = f"Clustering Model Comparison \n{data_name.replace('_', ' ').capitalize()} - Realizations: {num_realizations}" if num_realizations else f"Clustering Model Comparison \n{data_name.replace('_', ' ').capitalize()}"
 
     plt.suptitle(
         title,
-        fontsize=16, fontweight='bold', y=0.98
+        fontsize=16, fontweight='bold', y=title_height
     )
 
     # Ajuste final
     # plt.tight_layout() # A veces pelea con suptitle y legends externos, cuidado.
     if save_path:
         fig.savefig(save_path, format='png', dpi=300, bbox_inches="tight", pad_inches=0.2)
+    plt.show()
+
+########################################################################################################################################################################
+
+def multi_plot_experiment_5_results(df_master, subplots_col, subplot_col_target_values=None, title=None, title_height=1.03,
+                                    num_realizations=None, time_log_scale=False, save_path=None, 
+                                    our_methods_1=None, our_methods_2=None, 
+                                    other_methods=None, not_feasible_methods=None,
+                                    fig_height=20, fig_width=15, hspace=0.6, wspace=0.25):
+    """
+    Genera un grid de gráficos comparando modelos.
+    Usa subplots_adjust para un control manual preciso del espaciado (hspace y wspace).
+    """
+    
+    our_methods_1 = our_methods_1 or []
+    our_methods_2 = our_methods_2 or []
+    other_methods = other_methods or []
+    not_feasible_methods = not_feasible_methods or {}
+
+    if subplot_col_target_values is not None:
+        df_plot = df_master.filter(pl.col(subplots_col).is_in(subplot_col_target_values))
+        subplot_col_values = subplot_col_target_values 
+    else:
+        df_plot = df_master
+        subplot_col_values = df_plot.get_column(subplots_col).unique(maintain_order=True).to_list()
+        
+    num_subplots = len(subplot_col_values)
+    
+    if num_subplots == 0:
+        print("Error: No hay datos para plotear.")
+        return
+
+    #fig_height = max(5.5 * num_datasets, 6) 
+    fig, axes = plt.subplots(nrows=num_subplots, ncols=3, figsize=(fig_width, fig_height))
+    
+    if num_subplots == 1:
+        axes = np.array([axes])
+
+    for row_idx, subplot_col_value in enumerate(subplot_col_values):
+        
+        current_not_feasible = not_feasible_methods.get(subplot_col_value, [])
+
+        df_avg = (
+            df_plot.filter(pl.col(subplots_col) == subplot_col_value)
+                   .sort("mean_adj_accuracy", descending=True, nulls_last=True)
+        )
+        
+        model_names = df_avg.get_column("model_name").to_numpy()
+        avg_adj_accuracy = df_avg.get_column("mean_adj_accuracy").fill_null(0).to_numpy()
+        avg_ari = df_avg.get_column("mean_ari").fill_null(0).to_numpy()
+        avg_time = df_avg.get_column("mean_time").fill_null(0).to_numpy()
+        std_adj_acc = df_avg.get_column("std_adj_accuracy").fill_null(0).to_numpy()
+        std_ari = df_avg.get_column("std_ari").fill_null(0).to_numpy()
+        std_time = df_avg.get_column("std_time").fill_null(0).to_numpy()
+        
+        y_pos = np.arange(len(model_names))
+
+        metrics = [
+            (0, avg_adj_accuracy, std_adj_acc, 'Adj. Accuracy'),
+            (1, avg_ari, std_ari, 'Adj. Rand Index'),
+            (2, avg_time, std_time, 'Time (secs)')
+        ]
+
+        for col_idx, means, stds, xlabel in metrics:
+            ax = axes[row_idx, col_idx]
+            
+            sns.barplot(x=means, y=model_names, color='blue', width=0.5, alpha=0.9, ax=ax)
+            
+            if len(means) > 0:
+                sns.barplot(x=[means[0]], y=[model_names[0]], color='red', width=0.5, alpha=0.9, ax=ax)
+
+            ax.errorbar(
+                x=means, y=y_pos, xerr=stds, fmt='none', ecolor='black',
+                elinewidth=1.2, capsize=3.5, alpha=1
+            )
+
+            if xlabel == 'Time (secs)' and time_log_scale:
+                ax.set_xscale('log')
+
+            ax.set_xlabel(xlabel, size=14, weight='bold')
+            ax.tick_params(axis='x', labelsize=12)
+            
+            # Título único centrado
+            if col_idx == 1:
+                subplot_col_value_clean = subplot_col_value.replace('_', ' ').upper()
+                ax.set_title(subplot_col_value_clean, size=15, weight='bold', pad=15)
+            else:
+                ax.set_title("") 
+
+            # Configuración Eje Y
+            if col_idx == 0:
+                ax.set_ylabel('Clustering Methods', size=14, weight='bold')
+                ax.tick_params(axis='y', labelsize=12)
+                
+                for label in ax.get_yticklabels():
+                    label.set_weight('bold')
+                    txt = label.get_text()
+                    if txt in our_methods_1: label.set_color('darkviolet') 
+                    elif txt in our_methods_2: label.set_color('green') 
+                    elif txt in other_methods and txt not in current_not_feasible: label.set_color('black') 
+                    elif txt in current_not_feasible: label.set_color('red') 
+            else:
+                ax.set_ylabel('')
+                ax.set_yticklabels([])
+
+    # Leyenda
+    legend_elements = [
+        mlines.Line2D([0], [0], color='darkviolet', lw=6, label='Fast $k$-Medoids'),
+        mlines.Line2D([0], [0], color='green', lw=6, label='$q$-Fold Fast $k$-Medoids'),
+        mlines.Line2D([0], [0], color='black', lw=6, label='Other clustering methods'),
+        mlines.Line2D([0], [0], color='red', lw=6, label='Not feasible clustering methods')
+    ]
+
+    # Ajustado el bbox_to_anchor para compensar el nuevo margen inferior
+    axes[num_subplots-1, 1].legend(
+        handles=legend_elements, loc='upper center', bbox_to_anchor=(0.5, -0.1),
+        ncol=len(legend_elements), fontsize=12, frameon=True
+    )
+
+    if not title:
+        title = "Clustering Model Comparison Across Datasets"
+        if num_realizations:
+            title += f" - Realizations: {num_realizations}"
+
+    # El suptitle se posiciona en el borde superior de la figura  
+    plt.suptitle(title, fontsize=18, fontweight='bold', y=title_height)
+    
+    # --- CONTROL MANUAL DE ESPACIOS ---
+    # hspace: Separación vertical entre filas
+    # wspace: Separación horizontal entre columnas
+    # top: Baja los gráficos para dejar sitio al suptitle
+    # bottom: Sube los gráficos para dejar sitio a la leyenda
+    fig.subplots_adjust(top=0.92, bottom=0.08, hspace=hspace, wspace=wspace)
+    
+    if save_path:
+        fig.savefig(save_path, format='png', dpi=300, bbox_inches="tight", pad_inches=0.2)
+        
+    plt.show()
+
+########################################################################################################################################################################
+
+def pareto_plot_experiment_5_results(df, models_to_plot, palette, models_formatted_names=None, 
+                                     title=None, title_height=0.98, title_size=15, 
+                                     time_log_scale=False, save_path=None):
+    """
+    Genera un único gráfico de Frontera de Pareto comparando modelos directamente.
+    Mantiene la misma estética y leyenda manual que el gráfico múltiple.
+    """
+    
+    # 1. Filtrar solo los modelos que nos interesan
+    df = df.filter(pl.col("model_name").is_in(models_to_plot))
+    
+    if models_formatted_names is None:
+        models_formatted_names = {m: m for m in models_to_plot}
+
+    palette_clean = {k: palette.get(k, '#000000') for k in models_to_plot}
+    
+    # 2. Preparar datos y figura
+    df_pd = df.to_pandas()
+    
+    sns.set_theme(style="whitegrid", context="paper", font_scale=1.2)
+    fig, ax = plt.subplots(figsize=(10, 6))
+       
+    # 3. Plotear
+    sns.scatterplot(
+        data=df_pd, 
+        x='mean_time', 
+        y='mean_adj_accuracy', 
+        hue='model_name', 
+        palette=palette_clean,
+        s=150,           
+        alpha=0.8,
+        ax=ax,
+        legend=False # Apagada para crearla manual
+    )
+    
+    if time_log_scale:
+        ax.set_xscale('log') 
+    
+    # 4. Textos
+    texts = []
+    for _, row in df_pd.iterrows():
+        if pd.isna(row['mean_time']) or pd.isna(row['mean_adj_accuracy']):
+            continue 
+            
+        short_name = models_formatted_names.get(row['model_name'], row['model_name'])
+        texts.append(ax.text(row['mean_time'], row['mean_adj_accuracy'], short_name, fontsize=9))
+
+    if texts:
+        adjust_text(texts, ax=ax, arrowprops=dict(arrowstyle="-", color='gray', lw=0.5))
+        
+    # 5. Títulos y Ejes
+    if title:
+        ax.set_title(title, weight='bold', pad=15, y=title_height, fontsize=title_size)
+        
+    ax.set_xlabel("Mean Time (seconds - log scale)" if time_log_scale else "Mean Time (seconds)", weight='bold')
+    ax.set_ylabel("Mean Adjusted Accuracy", weight='bold')
+    
+    # 6. Leyenda manual uniforme
+    legend_elements = [
+        Line2D([0], [0], marker='o', color='w', label=models_formatted_names.get(mod, mod),
+               markerfacecolor=palette_clean[mod], markersize=10, alpha=0.8)
+        for mod in models_to_plot
+    ]
+    
+    ax.legend(
+        handles=legend_elements, loc='upper left', bbox_to_anchor=(1.05, 1),
+        ncol=1, fontsize=10, frameon=True, title="Models", title_fontsize=11
+    )
+    
+    # 7. Guardar y mostrar
+    if save_path:
+        fig.savefig(save_path, format='pdf', dpi=300, bbox_inches="tight")
+        
+    plt.show()
+########################################################################################################################################################################
+
+def multi_pareto_plot_experiment_5(df_master, subplots_col, models_to_plot, palette, models_formatted_names=None,
+                                   subplot_col_target_values=None, title=None, title_height=0.98, title_size=15, 
+                                   time_log_scale=False, save_path=None, 
+                                   fig_height=None, fig_width=12, hspace=0.4, wspace=0.25):
+    """
+    Genera un grid vertical de Fronteras de Pareto comparando modelos directamente.
+    Todos los modelos usan un punto circular ('o') como marcador.
+    """
+    
+    # 1. Extraer y filtrar los subplots
+    if subplot_col_target_values is not None:
+        df_plot = df_master.filter(pl.col(subplots_col).is_in(subplot_col_target_values))
+        subplot_col_values = subplot_col_target_values 
+    else:
+        df_plot = df_master
+        subplot_col_values = df_plot.get_column(subplots_col).unique(maintain_order=True).to_list()
+        
+    num_subplots = len(subplot_col_values)
+    
+    if num_subplots == 0:
+        print("Error: No hay datos para plotear.")
+        return
+
+    # 2. Preprocesar datos (Filtrar modelos de interés)
+    df_plot = df_plot.filter(pl.col("model_name").is_in(models_to_plot))
+    
+    if models_formatted_names is None:
+        models_formatted_names = {m: m for m in models_to_plot}
+
+    # 3. Configuración de la Figura
+    if fig_height is None:
+        fig_height = max(6 * num_subplots, 7)
+        
+    sns.set_theme(style="whitegrid", context="paper", font_scale=1.2)
+    fig, axes = plt.subplots(nrows=num_subplots, ncols=1, figsize=(fig_width, fig_height), squeeze=False)
+    axes = axes.flatten()
+
+    palette_clean = {k: palette.get(k, '#000000') for k in models_to_plot}
+    
+    # --- BUCLE PRINCIPAL ---
+    for row_idx, subplot_col_value in enumerate(subplot_col_values):
+        ax = axes[row_idx]
+        
+        df_current = df_plot.filter(pl.col(subplots_col) == subplot_col_value)
+        
+        if df_current.height == 0:
+            ax.set_title(f"{subplot_col_value} (No Data)", size=12, color='red')
+            continue
+        
+        df_pd = df_current.to_pandas()
+        
+        # Plot sin 'style', solo diferenciamos por color
+        sns.scatterplot(
+            data=df_pd, 
+            x='mean_time', 
+            y='mean_adj_accuracy', 
+            hue='model_name', 
+            palette=palette_clean,
+            s=150,           
+            alpha=0.8,
+            ax=ax,
+            legend=False 
+        )
+        
+        if time_log_scale:
+            ax.set_xscale('log')
+
+        # Textos
+        texts = []
+        for _, row in df_pd.iterrows(): 
+            if pd.isna(row['mean_time']) or pd.isna(row['mean_adj_accuracy']):
+                continue 
+                
+            short_name = models_formatted_names.get(row['model_name'], row['model_name'])
+            texts.append(ax.text(row['mean_time'], row['mean_adj_accuracy'], short_name, fontsize=9))
+
+        if texts:
+            adjust_text(texts, ax=ax, arrowprops=dict(arrowstyle="-", color='gray', lw=0.5))
+            
+        # Títulos y Ejes
+        subplot_col_value_clean = str(subplot_col_value).replace('_', ' ').upper()
+        ax.set_title(subplot_col_value_clean, size=15, weight='bold', pad=10)
+        ax.set_ylabel("Mean Adjusted Accuracy", weight='bold', size=12)
+        
+        if row_idx == num_subplots - 1:
+            xlabel = "Mean Time (seconds - log scale)" if time_log_scale else "Mean Time (seconds)"
+            ax.set_xlabel(xlabel, weight='bold', size=12)
+        else:
+            ax.set_xlabel("")
+
+    # --- LEYENDA Y AJUSTES FINALES ---
+    legend_elements = [
+        Line2D([0], [0], marker='o', color='w', label=models_formatted_names.get(mod, mod),
+               markerfacecolor=palette_clean[mod], markersize=10, alpha=0.8)
+        for mod in models_to_plot
+    ]
+    
+    axes[0].legend(
+        handles=legend_elements, loc='upper left', bbox_to_anchor=(1.02, 1),
+        ncol=1, fontsize=10, frameon=True, title="Models", title_fontsize=11
+    )
+
+    if not title:
+        title = "Pareto Front Comparison: Adjusted Accuracy vs. Computational Time"
+
+    fig.suptitle(title, fontsize=title_size, fontweight='bold', y=title_height)
+    fig.subplots_adjust(top=0.92, bottom=0.08, right=0.82, hspace=hspace, wspace=wspace)
+    
+    if save_path:
+        fig.savefig(save_path, format='png', dpi=300, bbox_inches="tight", pad_inches=0.2)
+        
+    plt.show()
+
+########################################################################################################################################################################
+
+def dimensions_plot_experiment_5(df, dimensions_dict, models_to_plot=None, models_formatted_names=None, palette=None,
+                                title="Comprehensive Sensitivity & Robustness Analysis", title_height=0.98, title_size=15,
+                                hspace=0.5, wspace=0.3, save_path=None):
+    """
+    Genera un grid combinado para publicación.
+    Métricas en el eje Y de los lineplots.
+    Dimensión analizada como título (subtitle) del subplot central.
+    """
+
+    metrics = [
+        {'col': 'mean_adj_accuracy', 'std': 'std_adj_accuracy', 'name': 'Adj Accuracy', 
+         'is_time': False, 'ylim': (0, 1.05), 'heat_label': '% Drop', 'cmap': sns.light_palette("darkred", as_cmap=True)},
+        {'col': 'mean_ari', 'std': 'std_ari', 'name': 'Adjusted Rand Index', 
+         'is_time': False, 'ylim': (-0.05, 1.05), 'heat_label': '% Drop', 'cmap': sns.light_palette("darkred", as_cmap=True)},
+        {'col': 'mean_time', 'std': 'std_time', 'name': 'Computation Time (s)', 
+         'is_time': True, 'ylim': None, 'heat_label': '% Increase', 'cmap': sns.light_palette("indigo", as_cmap=True)}
+    ]
+
+    if models_to_plot:
+        df = df.filter(pl.col('model_name').is_in(models_to_plot))
+
+    num_dims = len(dimensions_dict)
+    num_metrics = len(metrics)
+    
+    total_rows = num_dims * 2 
+    
+    sns.set_theme(style="whitegrid", context="paper", font_scale=1.1)
+    
+    fig, axes = plt.subplots(total_rows, num_metrics, 
+                             figsize=(6.5 * num_metrics, 5.0 * num_dims + 3.5 * num_dims), 
+                             squeeze=False)
+
+    for dim_idx, (dim_name, data_ids) in enumerate(dimensions_dict.items()):
+        row_line = dim_idx * 2
+        row_heat = dim_idx * 2 + 1
+        
+        df_dim = df.filter(pl.col('data_id').is_in(data_ids)).to_pandas()
+        x_positions = np.arange(len(data_ids))
+        x_labels = [str(d).replace('simulation_', '').replace('_', ' ').title() for d in data_ids]
+
+        # --- TÍTULO DE DIMENSIÓN (En el subplot central) ---
+        ax_mid_line = axes[row_line, 1]
+        dim_formatted = f"Dimension: {dim_name.replace('_', ' ').upper()}"
+        
+        # Usamos directamente set_title en el gráfico del medio
+        ax_mid_line.set_title(dim_formatted, weight='bold', size=14, pad=15)
+
+        for col_idx, met in enumerate(metrics):
+            ax_line = axes[row_line, col_idx]
+            ax_heat = axes[row_heat, col_idx]
+            
+            heat_data = []
+
+            for model in df_dim['model_name'].unique():
+                df_model = df_dim[df_dim['model_name'] == model]
+                df_model_aligned = df_model.set_index('data_id').reindex(data_ids)
+                
+                # --- PARTE 1: LINE PLOT ---
+                y_mean = np.array(df_model_aligned[met['col']].values, dtype=float)
+                y_std = np.array(df_model_aligned[met['std']].values, dtype=float)
+                
+                color = palette.get(model, 'black') if palette else None
+                display_name = models_formatted_names.get(model, model) if models_formatted_names else model
+                
+                ax_line.plot(x_positions, y_mean, marker='o', markersize=6, label=display_name,
+                             color=color, linewidth=2)
+                
+                lower_bound = y_mean - y_std
+                upper_bound = y_mean + y_std
+                
+                if met['is_time']:
+                    ax_line.set_yscale('log')
+                    lower_bound = np.clip(lower_bound, a_min=1e-5, a_max=None)
+                    
+                ax_line.fill_between(x_positions, lower_bound, upper_bound, color=color, alpha=0.1)
+
+                # --- PARTE 2: DATOS HEATMAP ---
+                val_base = y_mean[0] 
+                
+                for step_idx in range(1, len(y_mean)):
+                    val_perturbed = y_mean[step_idx]
+                    
+                    if pd.isna(val_base) or pd.isna(val_perturbed) or val_base == 0:
+                        change = np.nan
+                    else:
+                        if met['is_time']:
+                            change = ((val_perturbed - val_base) / np.abs(val_base)) * 100
+                        else:
+                            change = ((val_base - val_perturbed) / np.abs(val_base)) * 100
+                    
+                    heat_data.append({
+                        'Model': display_name, 
+                        'Scenario': x_labels[step_idx], 
+                        'Change': change
+                    })
+
+            # --- ESTILIZAR LINE PLOT ---
+            ax_line.set_xticks(x_positions)
+            ax_line.set_xticklabels(x_labels, rotation=0, weight='bold', size=10) 
+            
+            if met['ylim']: ax_line.set_ylim(met['ylim'])
+            
+            # Etiqueta del eje Y con el nombre de la métrica
+            ax_line.set_ylabel(met['name'], weight='bold', size=12)
+
+            # --- DIBUJAR HEATMAP ---
+            df_heat = pd.DataFrame(heat_data).pivot(index='Model', columns='Scenario', values='Change')
+            
+            perturbed_labels = x_labels[1:]
+            df_heat = df_heat[perturbed_labels]
+            
+            df_heat['Mean_Degradation'] = df_heat.mean(axis=1)
+            df_heat = df_heat.sort_values('Mean_Degradation', ascending=True)
+            df_heat = df_heat.drop(columns=['Mean_Degradation'])
+
+            sns.heatmap(df_heat, ax=ax_heat, annot=True, fmt=".1f", cmap=met['cmap'], 
+                        linewidths=.5, cbar_kws={'label': met['heat_label']}, vmin=0)
+            
+            # --- ESTILIZAR HEATMAP ---
+            ax_heat.set_ylabel("")
+            ax_heat.set_xlabel("")
+            ax_heat.set_xticklabels(ax_heat.get_xticklabels(), rotation=0, weight='bold')
+            ax_heat.set_yticklabels(ax_heat.get_yticklabels(), size=9, rotation=0)
+
+    # --- LEYENDA LATERAL ---
+    handles, labels = axes[0, 0].get_legend_handles_labels()
+    by_label = dict(zip(labels, handles))
+    
+    top_right_ax = axes[0, num_metrics - 1]
+    top_right_ax.legend(by_label.values(), by_label.keys(),
+                        loc='center left',             
+                        bbox_to_anchor=(1.05, 0.5),    
+                        ncol=1,                        
+                        frameon=False, 
+                        fontsize=11,
+                        title="Models",                
+                        title_fontsize=12)
+
+    plt.suptitle(title, weight='bold', size=title_size, y=title_height)
+    
+    # Reducido un poco el hspace ahora que no hay recuadros de texto flotando
+    fig.subplots_adjust(bottom=0.05, wspace=wspace, hspace=hspace) 
+
+    if save_path:
+        fig.savefig(save_path, format='png', dpi=300, bbox_inches="tight")
+
     plt.show()
 
 ########################################################################################################################################################################
