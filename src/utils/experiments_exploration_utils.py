@@ -2,6 +2,7 @@
 
 import os
 import pickle
+import pandas as pd
 import polars as pl
 import numpy as np
 import seaborn as sns
@@ -920,8 +921,9 @@ def multi_plot_experiment_5_results(df_master, subplots_col, subplot_col_target_
 ########################################################################################################################################################################
 
 def pareto_plot_experiment_5_results(df, models_to_plot, palette, models_formatted_names=None, 
-                                     title=None, title_height=0.98, title_size=15, 
-                                     time_log_scale=False, save_path=None):
+                                     title=None, title_height=0.98, title_size=15, text_annotations_size=10, 
+                                     text_annotations_y_extra_space=0, text_annotations_x_extra_space=0,
+                                     time_log_scale=False, show_legend=False, save_path=None):
     """
     Genera un único gráfico de Frontera de Pareto comparando modelos directamente.
     Mantiene la misma estética y leyenda manual que el gráfico múltiple.
@@ -964,7 +966,7 @@ def pareto_plot_experiment_5_results(df, models_to_plot, palette, models_formatt
             continue 
             
         short_name = models_formatted_names.get(row['model_name'], row['model_name'])
-        texts.append(ax.text(row['mean_time'], row['mean_adj_accuracy'], short_name, fontsize=9))
+        texts.append(ax.text(row['mean_time'] + text_annotations_x_extra_space, row['mean_adj_accuracy'] + text_annotations_y_extra_space, short_name, fontsize=text_annotations_size))
 
     if texts:
         adjust_text(texts, ax=ax, arrowprops=dict(arrowstyle="-", color='gray', lw=0.5))
@@ -983,10 +985,11 @@ def pareto_plot_experiment_5_results(df, models_to_plot, palette, models_formatt
         for mod in models_to_plot
     ]
     
-    ax.legend(
-        handles=legend_elements, loc='upper left', bbox_to_anchor=(1.05, 1),
-        ncol=1, fontsize=10, frameon=True, title="Models", title_fontsize=11
-    )
+    if show_legend:
+        ax.legend(
+            handles=legend_elements, loc='upper left', bbox_to_anchor=(1.05, 1),
+            ncol=1, fontsize=10, frameon=True, title="Models", title_fontsize=11
+        )
     
     # 7. Guardar y mostrar
     if save_path:
@@ -997,7 +1000,8 @@ def pareto_plot_experiment_5_results(df, models_to_plot, palette, models_formatt
 
 def multi_pareto_plot_experiment_5(df_master, subplots_col, models_to_plot, palette, models_formatted_names=None,
                                    subplot_col_target_values=None, title=None, title_height=0.98, title_size=15, 
-                                   time_log_scale=False, save_path=None, 
+                                   time_log_scale=False, save_path=None, show_legend=False,
+                                   text_annotations_size=10, text_annotations_y_extra_space=0, text_annotations_x_extra_space=0,
                                    fig_height=None, fig_width=12, hspace=0.4, wspace=0.25):
     """
     Genera un grid vertical de Fronteras de Pareto comparando modelos directamente.
@@ -1069,7 +1073,7 @@ def multi_pareto_plot_experiment_5(df_master, subplots_col, models_to_plot, pale
                 continue 
                 
             short_name = models_formatted_names.get(row['model_name'], row['model_name'])
-            texts.append(ax.text(row['mean_time'], row['mean_adj_accuracy'], short_name, fontsize=9))
+            texts.append(ax.text(row['mean_time'] + text_annotations_x_extra_space, row['mean_adj_accuracy'] + text_annotations_y_extra_space, short_name, fontsize=text_annotations_size))
 
         if texts:
             adjust_text(texts, ax=ax, arrowprops=dict(arrowstyle="-", color='gray', lw=0.5))
@@ -1086,16 +1090,17 @@ def multi_pareto_plot_experiment_5(df_master, subplots_col, models_to_plot, pale
             ax.set_xlabel("")
 
     # --- LEYENDA Y AJUSTES FINALES ---
-    legend_elements = [
-        Line2D([0], [0], marker='o', color='w', label=models_formatted_names.get(mod, mod),
-               markerfacecolor=palette_clean[mod], markersize=10, alpha=0.8)
-        for mod in models_to_plot
-    ]
-    
-    axes[0].legend(
-        handles=legend_elements, loc='upper left', bbox_to_anchor=(1.02, 1),
-        ncol=1, fontsize=10, frameon=True, title="Models", title_fontsize=11
-    )
+    if show_legend:
+        legend_elements = [
+            Line2D([0], [0], marker='o', color='w', label=models_formatted_names.get(mod, mod),
+                markerfacecolor=palette_clean[mod], markersize=10, alpha=0.8)
+            for mod in models_to_plot
+        ]
+        
+        axes[0].legend(
+            handles=legend_elements, loc='upper left', bbox_to_anchor=(1.02, 1),
+            ncol=1, fontsize=10, frameon=True, title="Models", title_fontsize=11
+        )
 
     if not title:
         title = "Pareto Front Comparison: Adjusted Accuracy vs. Computational Time"
@@ -1110,26 +1115,45 @@ def multi_pareto_plot_experiment_5(df_master, subplots_col, models_to_plot, pale
 
 ########################################################################################################################################################################
 
-def dimensions_plot_experiment_5(df, dimensions_dict, models_to_plot=None, models_formatted_names=None, palette=None,
-                                title="Comprehensive Sensitivity & Robustness Analysis", title_height=0.98, title_size=15,
+import numpy as np
+import pandas as pd
+import polars as pl
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+def dimensions_plot_experiment_5(df, dimensions_dict, dimensions_formatted=None, models_to_plot=None, models_formatted_names=None, palette=None,
+                                title="Comprehensive Sensitivity & Robustness Analysis", time_log_scale=False, title_height=0.98, title_size=15,
                                 hspace=0.5, wspace=0.3, save_path=None):
     """
     Genera un grid combinado para publicación.
     Métricas en el eje Y de los lineplots.
     Dimensión analizada como título (subtitle) del subplot central.
+    Nombres de los modelos en el eje Y del heatmap coloreados según la leyenda.
     """
 
     metrics = [
         {'col': 'mean_adj_accuracy', 'std': 'std_adj_accuracy', 'name': 'Adj Accuracy', 
-         'is_time': False, 'ylim': (0, 1.05), 'heat_label': '% Drop', 'cmap': sns.light_palette("darkred", as_cmap=True)},
+         'is_time': False, 'ylim': None, #(0, 1.05), 
+         'heat_label': '% Drop', 'cmap': sns.light_palette("darkred", as_cmap=True)},
         {'col': 'mean_ari', 'std': 'std_ari', 'name': 'Adjusted Rand Index', 
-         'is_time': False, 'ylim': (-0.05, 1.05), 'heat_label': '% Drop', 'cmap': sns.light_palette("darkred", as_cmap=True)},
+         'is_time': False, 'ylim': None, #(-0.05, 1.05), 
+         'heat_label': '% Drop', 'cmap': sns.light_palette("darkred", as_cmap=True)},
         {'col': 'mean_time', 'std': 'std_time', 'name': 'Computation Time (s)', 
          'is_time': True, 'ylim': None, 'heat_label': '% Increase', 'cmap': sns.light_palette("indigo", as_cmap=True)}
     ]
 
     if models_to_plot:
         df = df.filter(pl.col('model_name').is_in(models_to_plot))
+
+    # --- CREAR MAPEO INVERSO DE COLORES ---
+    # Necesitamos saber qué color le toca a cada 'display_name' para pintar los labels del heatmap
+    display_to_color = {}
+    if palette:
+        # Obtenemos todos los modelos únicos del df filtrado
+        unique_models = df.get_column('model_name').unique().to_list()
+        for mod in unique_models:
+            disp_name = models_formatted_names.get(mod, mod) if models_formatted_names else mod
+            display_to_color[disp_name] = palette.get(mod, 'black')
 
     num_dims = len(dimensions_dict)
     num_metrics = len(metrics)
@@ -1148,13 +1172,15 @@ def dimensions_plot_experiment_5(df, dimensions_dict, models_to_plot=None, model
         
         df_dim = df.filter(pl.col('data_id').is_in(data_ids)).to_pandas()
         x_positions = np.arange(len(data_ids))
-        x_labels = [str(d).replace('simulation_', '').replace('_', ' ').title() for d in data_ids]
+        if dimensions_formatted:
+            x_labels = [dimensions_formatted[dim_name][d] for d in data_ids]
+        else:
+            x_labels = [str(d).replace('simulation_', '').replace('_', ' ').title() for d in data_ids]
 
         # --- TÍTULO DE DIMENSIÓN (En el subplot central) ---
         ax_mid_line = axes[row_line, 1]
         dim_formatted = f"Dimension: {dim_name.replace('_', ' ').upper()}"
         
-        # Usamos directamente set_title en el gráfico del medio
         ax_mid_line.set_title(dim_formatted, weight='bold', size=14, pad=15)
 
         for col_idx, met in enumerate(metrics):
@@ -1181,7 +1207,8 @@ def dimensions_plot_experiment_5(df, dimensions_dict, models_to_plot=None, model
                 upper_bound = y_mean + y_std
                 
                 if met['is_time']:
-                    ax_line.set_yscale('log')
+                    if time_log_scale:
+                        ax_line.set_yscale('log')
                     lower_bound = np.clip(lower_bound, a_min=1e-5, a_max=None)
                     
                 ax_line.fill_between(x_positions, lower_bound, upper_bound, color=color, alpha=0.1)
@@ -1212,7 +1239,6 @@ def dimensions_plot_experiment_5(df, dimensions_dict, models_to_plot=None, model
             
             if met['ylim']: ax_line.set_ylim(met['ylim'])
             
-            # Etiqueta del eje Y con el nombre de la métrica
             ax_line.set_ylabel(met['name'], weight='bold', size=12)
 
             # --- DIBUJAR HEATMAP ---
@@ -1234,6 +1260,13 @@ def dimensions_plot_experiment_5(df, dimensions_dict, models_to_plot=None, model
             ax_heat.set_xticklabels(ax_heat.get_xticklabels(), rotation=0, weight='bold')
             ax_heat.set_yticklabels(ax_heat.get_yticklabels(), size=9, rotation=0)
 
+            # --- NUEVO: COLOREAR LOS LABELS DEL EJE Y DEL HEATMAP ---
+            for tick_label in ax_heat.get_yticklabels():
+                model_text = tick_label.get_text()
+                if model_text in display_to_color:
+                    tick_label.set_color(display_to_color[model_text])
+                    tick_label.set_fontweight('bold')
+
     # --- LEYENDA LATERAL ---
     handles, labels = axes[0, 0].get_legend_handles_labels()
     by_label = dict(zip(labels, handles))
@@ -1250,14 +1283,13 @@ def dimensions_plot_experiment_5(df, dimensions_dict, models_to_plot=None, model
 
     plt.suptitle(title, weight='bold', size=title_size, y=title_height)
     
-    # Reducido un poco el hspace ahora que no hay recuadros de texto flotando
     fig.subplots_adjust(bottom=0.05, wspace=wspace, hspace=hspace) 
 
     if save_path:
         fig.savefig(save_path, format='png', dpi=300, bbox_inches="tight")
 
     plt.show()
-
+    
 ########################################################################################################################################################################
 
 def plot_experiment_6_results(df, num_realizations, save_path, 

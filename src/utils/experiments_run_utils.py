@@ -255,6 +255,8 @@ def make_experiment_5(X, y, models, score_metric,
                       max_duration_mins=20 
                       ):  
     
+    logger = logging.getLogger(__name__)
+
     model_names = list(models.keys())
 
     results = {
@@ -298,6 +300,8 @@ def make_experiment_5(X, y, models, score_metric,
             results['ARI'][model_name] = adjusted_rand_score(labels_pred=results['adj_labels'][model_name], labels_true=y)
 
             results['status'][model_name] = 'OK'
+
+            logger.info(f"     ✅ Finished in {results['time'][model_name]:.2f}s | ARI: {results['ARI'][model_name]:.2f} | Acc: {results['adj_accuracy'][model_name]:.2f}")    
             
         except FunctionTimedOut:
             # Capturamos específicamente el Timeout para imprimir un mensaje claro
@@ -306,8 +310,8 @@ def make_experiment_5(X, y, models, score_metric,
             for k in results.keys():
                 results[k][model_name] = None
           
-            results['status'][model_name] = f"Error: Timeout {round(max_duration_mins, 2)} mins"
-        
+            results['status'][model_name] = f"Error: Timeout {round(max_duration_mins, 2)} mins"     
+
         except Exception as e:
             # Captura cualquier otro error (memoria, convergencia, etc.)
             print(f"   ❌ [ERROR] {model_name}: {e}")
