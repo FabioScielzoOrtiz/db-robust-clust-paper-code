@@ -119,7 +119,7 @@ SIMULATION_CONFIGS = {
     },
 
     'simulation_size_2': {
-        'n_samples': 100000,
+        'n_samples': 50000,
         'centers': 3,
         'cluster_std': [2, 2, 3],
         'n_features': 8,
@@ -161,7 +161,7 @@ SIMULATION_CONFIGS = {
 
     'simulation_num_clusters_2': {
         'n_samples': 10000,
-        'centers': 10,
+        'centers': 7,
         'cluster_std': 2,
         'n_features': 8,
         'feature_types': {'n_binary': 2, 'n_multiclass': 2, 'n_bins_multiclass': 4},
@@ -218,7 +218,7 @@ SIMULATION_CONFIGS = {
         'cluster_std': [2, 2, 3],
         'n_features': 8,
         'feature_types': {'n_binary': 2, 'n_multiclass': 2, 'n_bins_multiclass': 4},
-        'n_redundant': 1
+        'n_redundant': 5
     },
 
     'simulation_corr_2': {
@@ -227,7 +227,7 @@ SIMULATION_CONFIGS = {
         'cluster_std': [2, 2, 3],
         'n_features': 8,
         'feature_types': {'n_binary': 2, 'n_multiclass': 2, 'n_bins_multiclass': 4},
-        'n_redundant': 4
+        'n_redundant': 6
     },
 
 #######################################################################################################################
@@ -240,10 +240,12 @@ SIMULATION_CONFIGS = {
         'cluster_std': [2, 2, 3],
         'n_features': 8,
         'feature_types': {'n_binary': 2, 'n_multiclass': 2, 'n_bins_multiclass': 4},
-        'outlier_configs': [
-            {'col_name': 'X1', 'prop_above': 0.1, 'sigma': 2},
-            {'col_name': 'X2', 'prop_below': 0.1, 'sigma': 2}
-        ]
+        'outliers_config': { # disperse univariate outliers
+            'feature_specific': [
+                {'col_idx': 0, 'prop_above': 0.1, 'sigma': 2},
+                {'col_idx': 1, 'prop_below': 0.1, 'sigma': 2}
+            ]
+        }
     },
 
     'simulation_outliers_2': {
@@ -252,11 +254,13 @@ SIMULATION_CONFIGS = {
         'cluster_std': [2, 2, 3],
         'n_features': 8,
         'feature_types': {'n_binary': 2, 'n_multiclass': 2, 'n_bins_multiclass': 4},
-        'outlier_configs': [
-            {'col_name': 'X1', 'prop_above': 0.1, 'sigma': 5},
-            {'col_name': 'X2', 'prop_below': 0.1, 'sigma': 2},
-            {'col_name': 'X3', 'prop_below': 0.1, 'sigma': 2}
-        ]
+        'outliers_config': { # disperse univariate outliers
+            'feature_specific': [ 
+                {'col_idx': 0, 'prop_above': 0.1, 'sigma': 5},
+                {'col_idx': 1, 'prop_below': 0.1, 'sigma': 2},
+                {'col_idx': 2, 'prop_below': 0.1, 'sigma': 2}
+            ]
+        }
     },
 
     'simulation_outliers_3': {
@@ -265,10 +269,11 @@ SIMULATION_CONFIGS = {
         'cluster_std': [2, 2, 3],
         'n_features': 8,
         'feature_types': {'n_binary': 2, 'n_multiclass': 2, 'n_bins_multiclass': 4},
-        'outlier_configs': None,
-        'grouped_outliers_config': {
-        'prop_outliers': 0.1, 'n_groups': 3, 'distance': 45
-        },
+        'outliers_config': { # grouped outliers (convex, isolated)
+            'grouped': {
+                'prop_outliers': 0.1, 'n_groups': 2, 'distance': 60, 'dispersion_factor': 1
+            }
+        }
     },
 
     'simulation_outliers_4': {
@@ -277,11 +282,65 @@ SIMULATION_CONFIGS = {
         'cluster_std': [2, 2, 3],
         'n_features': 8,
         'feature_types': {'n_binary': 2, 'n_multiclass': 2, 'n_bins_multiclass': 4},
-        'outlier_configs': None,
-        'grouped_outliers_config': {
-        'prop_outliers': 0.15, 'n_groups': 3, 'distance': 70
-        },
+        'outliers_config': { # grouped outliers (convex, mixed)
+            'grouped': {
+                'prop_outliers': 0.1, 'n_groups': 2, 'distance': 60, 'dispersion_factor': 4
+            }
+        }
     },
+
+    'simulation_outliers_5': {
+        'n_samples': 10000,
+        'centers': 3,
+        'cluster_std': [2, 2, 3],
+        'n_features': 8,
+        'feature_types': {'n_binary': 2, 'n_multiclass': 2, 'n_bins_multiclass': 4},
+        'outliers_config': { # grouped outliers (not convex)
+            'grouped': {
+                'n_groups': 2, 'group_proportions': [0.05, 0.1], 'geometry': 'anisotropic', 'anisotropy_factor': 4, 'distance': 50
+            }
+        }
+    },
+
+    'simulation_outliers_6': {
+        'n_samples': 10000,
+        'centers': 3,
+        'cluster_std': [2, 2, 3],
+        'n_features': 8,
+        'feature_types': {'n_binary': 2, 'n_multiclass': 2, 'n_bins_multiclass': 4},
+        'outliers_config': { # grouped outliers (not convex, higher anisotropy_factor)
+            'grouped': {
+                'n_groups': 2, 'group_proportions': [0.05, 0.1], 'geometry': 'anisotropic', 'anisotropy_factor': 12, 'distance': 50
+            }
+        }
+    },
+
+    # 'simulation_outliers_6': {
+    #     'n_samples': 10000,
+    #     'centers': 3,
+    #     'cluster_std': [2, 2, 3],
+    #     'n_features': 8,
+    #     'feature_types': {'n_binary': 2, 'n_multiclass': 2, 'n_bins_multiclass': 4},
+    #     'outliers_config': { # disperse multivariate outliers
+    #         'scattered': {
+    #             'prop_outliers': 0.1
+    #         }
+    #     }
+    # },
+
+    # 'simulation_outliers_7': {
+    #     'n_samples': 10000,
+    #     'centers': 3,
+    #     'cluster_std': [2, 2, 3],
+    #     'n_features': 8,
+    #     'feature_types': {'n_binary': 2, 'n_multiclass': 2, 'n_bins_multiclass': 4},
+    #     'outliers_config': { # disperse multivariate outliers
+    #         'cluster_localized': { 
+    #             'prop_outliers': 0.1,
+    #             'scale_factor': 2
+    #         }
+    #     }
+    # },
 
 #######################################################################################################################
 
@@ -357,6 +416,24 @@ SIMULATION_CONFIGS = {
         'feature_types': {'n_binary': 2, 'n_multiclass': 2, 'n_bins_multiclass': 4},
         'geometry': 'circles'
     },
+
+#######################################################################################################################
+
+   # SIZE : OUTLIERS 
+
+   # TODO
+
+#######################################################################################################################
+
+   # SPHERICITY : OUTLIERS 
+
+   # TODO
+
+#######################################################################################################################
+
+   # CORRELATION : OUTLIERS 
+
+   # TODO
 
 #######################################################################################################################
 

@@ -67,6 +67,7 @@ def main():
     DATA_IDS = simulation_names + REAL_DATASET_KEYS
     
     experiment_seeds = get_experiment_seeds()
+    #experiment_seeds = experiment_seeds[:20]
     
     logging.info(f"  > Generated {len(experiment_seeds)} seeds for simulation averaging.")
     logging.info(f"  > Total datasets to process: {len(DATA_IDS)} ({len(simulation_names)} sims, {len(REAL_DATASET_KEYS)} real)")

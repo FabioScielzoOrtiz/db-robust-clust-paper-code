@@ -92,8 +92,8 @@ RANDOM_STATE_MDS = {
     'simulation_base': 73704,
     'simulation_size_1': 78328,
     'simulation_dim_1': 35084,
-    'simulation_num_clusters_1': 3431,
-    'simulation_separation_1': 4173,
+    'simulation_num_clusters_1': 35084,
+    'simulation_separation_1': 35084,
     'heart_disease': 6863,
     'dubai_houses': 6863,
     'kc_houses': 6802
