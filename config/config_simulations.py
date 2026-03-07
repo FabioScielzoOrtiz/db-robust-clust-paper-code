@@ -128,7 +128,7 @@ SIMULATION_CONFIGS = {
 
 #######################################################################################################################
     
-    # DIMENSION 
+    # DIMENSIONALITY
 
     'simulation_dim_1': { # dim increase, adding useful info (not noise) --> increase clusters separation
         'n_samples': 10000,
@@ -269,7 +269,7 @@ SIMULATION_CONFIGS = {
         'cluster_std': [2, 2, 3],
         'n_features': 8,
         'feature_types': {'n_binary': 2, 'n_multiclass': 2, 'n_bins_multiclass': 4},
-        'outliers_config': { # grouped outliers (convex, isolated)
+        'outliers_config': { # grouped outliers (convex)
             'grouped': {
                 'prop_outliers': 0.1, 'n_groups': 2, 'distance': 60, 'dispersion_factor': 1
             }
@@ -282,7 +282,7 @@ SIMULATION_CONFIGS = {
         'cluster_std': [2, 2, 3],
         'n_features': 8,
         'feature_types': {'n_binary': 2, 'n_multiclass': 2, 'n_bins_multiclass': 4},
-        'outliers_config': { # grouped outliers (convex, mixed)
+        'outliers_config': { # grouped outliers (convex, more dispersed)
             'grouped': {
                 'prop_outliers': 0.1, 'n_groups': 2, 'distance': 60, 'dispersion_factor': 4
             }
@@ -399,6 +399,8 @@ SIMULATION_CONFIGS = {
 
 #######################################################################################################################
 
+# GEOMETRY 
+    
     'simulation_geometry_1': {
         'n_samples': 10000,
         'centers': 3,
@@ -421,7 +423,35 @@ SIMULATION_CONFIGS = {
 
    # SIZE : OUTLIERS 
 
-   # TODO
+    'simulation_size_outliers_1': {  # simulation_outliers_2 with more size
+        'n_samples': 25000,
+        'centers': 3,
+        'cluster_std': [2, 2, 3],
+        'n_features': 8,
+        'feature_types': {'n_binary': 2, 'n_multiclass': 2, 'n_bins_multiclass': 4},
+        'outliers_config': { # disperse univariate outliers
+            'feature_specific': [ 
+                {'col_idx': 0, 'prop_above': 0.1, 'sigma': 5},
+                {'col_idx': 1, 'prop_below': 0.1, 'sigma': 2},
+                {'col_idx': 2, 'prop_below': 0.1, 'sigma': 2}
+            ]
+        }
+    },
+
+    'simulation_size_outliers_2': { # simulation_outliers_6 with more size
+        'n_samples': 10000,
+        'centers': 3,
+        'cluster_std': [2, 2, 3],
+        'n_features': 8,
+        'feature_types': {'n_binary': 2, 'n_multiclass': 2, 'n_bins_multiclass': 4},
+        'outliers_config': { # grouped outliers (not convex, higher anisotropy_factor)
+            'grouped': {
+                'n_groups': 2, 'group_proportions': [0.05, 0.1], 'geometry': 'anisotropic', 'anisotropy_factor': 12, 'distance': 50
+            }
+        }
+    }
+
+
 
 #######################################################################################################################
 
@@ -431,11 +461,16 @@ SIMULATION_CONFIGS = {
 
 #######################################################################################################################
 
-   # CORRELATION : OUTLIERS 
+   # IMBALANCE : OUTLIERS 
 
    # TODO
 
+
 #######################################################################################################################
+
+   # SPHERICITY : IMBALANCE 
+
+   # TODO
 
 }
 

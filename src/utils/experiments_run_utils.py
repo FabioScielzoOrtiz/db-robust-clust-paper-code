@@ -453,13 +453,21 @@ def get_clustering_models_experiment_4(experiment_config, random_state):
 
 def get_clustering_models_experiment_5(experiment_config, random_state, mixed_distances_names):
 
-    clustering_base_method = KMedoids(
+    kmedoids_pam = KMedoids(
                 n_clusters=experiment_config['n_clusters'], 
                 metric='precomputed', 
                 method='pam', 
                 init='build',
                 random_state=random_state,
     )
+
+    # kmedoids_fasterpam = KMedoids(
+    #             n_clusters=experiment_config['n_clusters'], 
+    #             metric='precomputed', 
+    #             method='fasterpam', 
+    #             init='build',
+    #             random_state=random_state,
+    # )
 
     models = {
 
@@ -568,7 +576,7 @@ def get_clustering_models_experiment_5(experiment_config, random_state, mixed_di
             d1 = '_'.join(d1.split('_')[:2])
             
         models[f'FastKmedoidsGGower-{d1}_{r}-{d2}-{d3}'] = SampleDistClustering(
-                clustering_method = clustering_base_method,
+                clustering_method = kmedoids_pam,
                 metric = 'ggower',
                 frac_sample_size=experiment_config['frac_sample_size_sample_dist_clust'],
                 random_state=random_state,
@@ -584,7 +592,7 @@ def get_clustering_models_experiment_5(experiment_config, random_state, mixed_di
             )
 
         models[f'FoldFastKmedoidsGGower-{d1}_{r}-{d2}-{d3}'] = FoldSampleDistClustering(
-                clustering_method = clustering_base_method,
+                clustering_method = kmedoids_pam,
                 metric = 'ggower',
                 random_state=random_state,
                 shuffle=True,
@@ -601,6 +609,79 @@ def get_clustering_models_experiment_5(experiment_config, random_state, mixed_di
                 robust_method=r, 
                 alpha=experiment_config['alpha'], 
             ) 
+        
+        '''
+        models[f'FastKmedoidsRelMS-{d1}_{r}-{d2}-{d3}'] = SampleDistClustering(
+                clustering_method = kmedoids_pam,
+                metric = 'relms',
+                frac_sample_size=experiment_config['frac_sample_size_sample_dist_clust'],
+                random_state=random_state,
+                stratify=False,
+                p1=experiment_config['p1'], 
+                p2=experiment_config['p2'], 
+                p3=experiment_config['p3'], 
+                d1=d1, 
+                d2=d2, 
+                d3=d3, 
+                robust_method=r, 
+                alpha=experiment_config['alpha'], 
+            )
+        
+        
+        models[f'FoldFastKmedoidsRelMS-{d1}_{r}-{d2}-{d3}'] = FoldSampleDistClustering(
+                clustering_method = kmedoids_pam,
+                metric = 'relms',
+                random_state=random_state,
+                shuffle=True,
+                n_splits=experiment_config['n_splits'],
+                frac_sample_size=experiment_config['frac_sample_size_fold_sample_dist_clust'],
+                meta_frac_sample_size=1,
+                stratify=False,
+                p1=experiment_config['p1'], 
+                p2=experiment_config['p2'], 
+                p3=experiment_config['p3'], 
+                d1=d1, 
+                d2=d2, 
+                d3=d3, 
+                robust_method=r, 
+                alpha=experiment_config['alpha'], 
+            ) 
+        
+        models[f'FastKmedoidsGGower-fasterpam-{d1}_{r}-{d2}-{d3}'] = SampleDistClustering(
+                clustering_method = kmedoids_fasterpam,
+                metric = 'ggower',
+                frac_sample_size=experiment_config['frac_sample_size_sample_dist_clust'],
+                random_state=random_state,
+                stratify=False,
+                p1=experiment_config['p1'], 
+                p2=experiment_config['p2'], 
+                p3=experiment_config['p3'], 
+                d1=d1, 
+                d2=d2, 
+                d3=d3, 
+                robust_method=r, 
+                alpha=experiment_config['alpha'], 
+            )
+
+        models[f'FoldFastKmedoidsRelMS-{d1}_{r}-{d2}-{d3}'] = FoldSampleDistClustering(
+                clustering_method = kmedoids_fasterpam,
+                metric = 'ggower',
+                random_state=random_state,
+                shuffle=True,
+                n_splits=experiment_config['n_splits'],
+                frac_sample_size=experiment_config['frac_sample_size_fold_sample_dist_clust'],
+                meta_frac_sample_size=1,
+                stratify=False,
+                p1=experiment_config['p1'], 
+                p2=experiment_config['p2'], 
+                p3=experiment_config['p3'], 
+                d1=d1, 
+                d2=d2, 
+                d3=d3, 
+                robust_method=r, 
+                alpha=experiment_config['alpha'], 
+            ) 
+        '''
         
     return models
 

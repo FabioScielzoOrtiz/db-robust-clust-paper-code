@@ -42,11 +42,9 @@ mean = df[response].mean()
 
 df = df.with_columns(pl.col(response).cut(
     breaks=[q10, q90],
-    labels=[
-        'c1',
-        'c2',
-        'c3'
-    ],
+    #breaks=[q90],
+    labels=['c1', 'c2', 'c3'],
+    #labels=['c1', 'c2'],
     left_closed=True
 ).alias(response))
 
@@ -61,11 +59,8 @@ for col in cat_variables:
 
 ################################################################################################
 
-encoding[response] = {
-    'c1': 0,
-    'c2': 1,
-    'c3': 2
-}
+encoding[response] = {'c1': 0, 'c2': 1, 'c3': 2}
+#encoding[response] = {'c1': 0, 'c2': 1}
 
 encoding['floors'] = { # 1, 2, 3
     1.5: 1,

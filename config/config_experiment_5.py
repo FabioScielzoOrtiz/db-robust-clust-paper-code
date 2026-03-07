@@ -4,6 +4,9 @@ import os, sys
 import polars as pl
 from sklearn.metrics import accuracy_score, balanced_accuracy_score
 
+import warnings
+warnings.filterwarnings("ignore")
+
 ########################################################################################################################################################################
 
 script_path = os.path.dirname(os.path.abspath(__file__))
@@ -88,25 +91,36 @@ for data_id, config in CONFIG_EXPERIMENT.items():
 
 ########################################################################################################################################################################
 
-RANDOM_STATE_MDS = {
-    'simulation_base': 73704,
-    'simulation_size_1': 78328,
-    'simulation_dim_1': 35084,
-    'simulation_num_clusters_1': 35084,
-    'simulation_separation_1': 35084,
-    'heart_disease': 6863,
-    'dubai_houses': 6863,
-    'kc_houses': 6802
-}
 
 ########################################################################################################################################################################
 
 ADDITIONAL_METHODS_MDS = {
     'simulation_base': ['KMeans', 'KMedoids-pam'],
     'simulation_size_1': ['KMeans', 'CLARA'],
+    'simulation_size_2': ['KMeans', 'CLARA'],
     'simulation_dim_1': ['KMeans', 'CLARA'],
+    'simulation_dim_2': ['KMeans', 'CLARA'],
     'simulation_num_clusters_1': ['KMeans', 'CLARA'],
+    'simulation_num_clusters_2': ['KMeans', 'CLARA'],
     'simulation_separation_1': ['KMeans', 'CLARA'],
+    'simulation_separation_2': ['KMeans', 'CLARA'],
+    'simulation_separation_3': ['KMeans', 'CLARA'],
+    'simulation_separation_4': ['KMeans', 'CLARA'],
+    'simulation_corr_1': ['KMeans', 'CLARA'],
+    'simulation_corr_2': ['KMeans', 'CLARA'],
+    'simulation_outliers_1': ['KMeans', 'CLARA'],
+    'simulation_outliers_2': ['KMeans', 'CLARA'],
+    'simulation_outliers_3': ['KMeans', 'CLARA'],
+    'simulation_outliers_4': ['KMeans', 'CLARA'],
+    'simulation_outliers_5': ['KMeans', 'CLARA'],
+    'simulation_outliers_6': ['KMeans', 'CLARA'],
+    'simulation_imbalance_1': ['KMeans', 'CLARA'],
+    'simulation_imbalance_2': ['KMeans', 'CLARA'],
+    'simulation_sphericity_1': ['KMeans', 'CLARA'],
+    'simulation_sphericity_2': ['KMeans', 'CLARA'],
+    'simulation_sphericity_3': ['KMeans', 'CLARA'],
+    'simulation_geometry_1': ['KMeans', 'CLARA'],
+    'simulation_geometry_2': ['KMeans', 'CLARA'],
     'heart_disease': ['MiniBatchKMeans', 'CLARA'],
     'dubai_houses': ['MiniBatchKMeans', 'CLARA'],
     'kc_houses': ['MiniBatchKMeans', 'CLARA']

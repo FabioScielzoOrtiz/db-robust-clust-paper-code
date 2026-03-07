@@ -366,7 +366,7 @@ def plot_experiment_2_results(df, df_avg, data_name=None, num_realizations=None,
             sns.boxplot(data=df, x="sample_size_pct", y=data['raw_col'], color="whitesmoke", ax=ax)
             ax.plot(x_indices, y_mean.to_list(), color='blue', marker='o', markersize=5, linestyle='-', linewidth=1.5)
             ax.plot(best_x_idx, best_y, color='red', marker='o', markersize=8, linestyle='None')
-            ax.grid(True, linestyle='--', alpha=0.5, axis='y') # Grid solo horizontal para boxplots
+            ax.grid(True, linestyle='--', alpha=0.6, axis='y') # Grid solo horizontal para boxplots
             
         else:
             # Matplotlib usa el eje X numérico real (10, 20, 30...)
@@ -375,14 +375,14 @@ def plot_experiment_2_results(df, df_avg, data_name=None, num_realizations=None,
                 ax.plot(x_vals.to_list(), y_mean.to_list(), color='blue', marker='o', markersize=5)
                 # Solo añadimos el sombreado si es 'fill'
                 if error_style == 'fill':
-                    ax.fill_between(x_vals.to_list(), (y_mean - y_std).to_list(), (y_mean + y_std).to_list(), color='blue', alpha=0.2)
+                    ax.fill_between(x_vals.to_list(), (y_mean - y_std).to_list(), (y_mean + y_std).to_list(), color='blue', alpha=0.1)
             
             # Si es 'bar', usamos errorbar que ya incluye la línea
             elif error_style == 'bar':
                 ax.errorbar(x_vals.to_list(), y_mean.to_list(), yerr=y_std.to_list(), color='blue', marker='o', markersize=5, capsize=4)
             
             ax.plot(best_x_val, best_y, color='red', marker='o', markersize=8, linestyle='None')
-            ax.grid(True, linestyle='--', alpha=0.5)
+            ax.grid(True, linestyle='--', alpha=0.6)
 
         # Configuraciones comunes
         ax.set_title(data['title'], size=12, weight='bold')
@@ -449,7 +449,7 @@ def plot_experiment_3_results(df, df_avg, data_name=None, num_realizations=None,
 
         if error_style == 'boxplot':
             sns.boxplot(data=df_pd, x="sample_size_pct", y=data['raw_col'], hue="n_splits", 
-                        palette=palette, ax=ax, boxprops={'alpha': 0.6})
+                        palette=palette, ax=ax, boxprops={'alpha': 0.4})
             
             # --- CÁLCULO DEL OFFSET (DODGE) DE SEABORN ---
             n_hues = len(folds)
@@ -488,7 +488,7 @@ def plot_experiment_3_results(df, df_avg, data_name=None, num_realizations=None,
                     if error_style == 'fill':
                         y_upper = (subset.get_column(data['mean_col']) + subset.get_column(data['std_col'])).to_list()
                         y_lower = (subset.get_column(data['mean_col']) - subset.get_column(data['std_col'])).to_list()
-                        ax.fill_between(x_vals, y_lower, y_upper, color=color, alpha=0.15)
+                        ax.fill_between(x_vals, y_lower, y_upper, color=color, alpha=0.1)
                         
                 elif error_style == 'bar':
                     ax.errorbar(x_vals, y_mean, yerr=y_std, marker='o', markersize=5, color=color, capsize=4, label=f"{k}-Fold")
@@ -499,7 +499,7 @@ def plot_experiment_3_results(df, df_avg, data_name=None, num_realizations=None,
         ax.set_title(f"{ylabel.split()[0]} vs Number of Folds and Sample Size", fontsize=11, fontweight='bold')
         ax.set_xlabel("Sample Size Parameter (%)", size=11)
         ax.set_ylabel(ylabel, size=11)
-        ax.grid(True, linestyle='--', alpha=0.5)
+        ax.grid(True, linestyle='--', alpha=0.6)
         
         if data['ylim'] is not None:
             ax.set_ylim(data['ylim'])
@@ -649,7 +649,7 @@ def plot_experiment_4_results(df, df_avg, num_realizations, save_path,
 
 ########################################################################################################################################################################
 
-def plot_experiment_5_results(df_avg, title=None, title_height=1.03, 
+def plot_experiment_5_results(df_avg, figsize=(15,11), title=None, title_height=1.03, 
                               data_name=None, num_realizations=None, 
                               time_log_scale=False, save_path=None, 
                               our_methods_1=None, our_methods_2=None, 
@@ -683,7 +683,7 @@ def plot_experiment_5_results(df_avg, title=None, title_height=1.03,
     y_pos = np.arange(len(model_names))
 
     # 3. Configuración de Subplots
-    fig, axes = plt.subplots(1, 3, figsize=(15, 11))
+    fig, axes = plt.subplots(1, 3, figsize=figsize)
     axes = axes.flatten()
 
     # Definir métricas para iterar
@@ -787,7 +787,7 @@ def multi_plot_experiment_5_results(df_master, subplots_col, subplot_col_target_
                                     num_realizations=None, time_log_scale=False, save_path=None, 
                                     our_methods_1=None, our_methods_2=None, 
                                     other_methods=None, not_feasible_methods=None,
-                                    fig_height=20, fig_width=15, hspace=0.6, wspace=0.25):
+                                    figsize=(20,15), hspace=0.6, wspace=0.25):
     """
     Genera un grid de gráficos comparando modelos.
     Usa subplots_adjust para un control manual preciso del espaciado (hspace y wspace).
@@ -812,7 +812,7 @@ def multi_plot_experiment_5_results(df_master, subplots_col, subplot_col_target_
         return
 
     #fig_height = max(5.5 * num_datasets, 6) 
-    fig, axes = plt.subplots(nrows=num_subplots, ncols=3, figsize=(fig_width, fig_height))
+    fig, axes = plt.subplots(nrows=num_subplots, ncols=3, figsize=figsize)
     
     if num_subplots == 1:
         axes = np.array([axes])
@@ -1574,7 +1574,7 @@ def get_dataset_structure(X, y, data_id, quant_predictors, n_binary, n_multiclas
 
     # Inicializar métricas por defecto
     mean_prop_outliers, prop_high_corr, sphericity, prop_redundancy = 0.0, 0.0, 1.0, 0.0
-    log_separation_index, norm_separation_index = 0.0, 0.0
+    #log_separation_index, norm_separation_index = 0.0, 0.0
     outliers_contamination_type = 'not_contaminated'
 
     if n_quant > 0:
