@@ -863,7 +863,7 @@ def multi_plot_experiment_5_results(df_master, subplots_col, subplot_col_target_
             
             # Título único centrado
             if col_idx == 1:
-                subplot_col_value_clean = subplot_col_value.replace('_', ' ').upper()
+                subplot_col_value_clean = subplot_col_value.replace('_', ' ').capitalize()
                 ax.set_title(subplot_col_value_clean, size=15, weight='bold', pad=15)
             else:
                 ax.set_title("") 
@@ -920,13 +920,14 @@ def multi_plot_experiment_5_results(df_master, subplots_col, subplot_col_target_
 
 ########################################################################################################################################################################
 
-def pareto_plot_experiment_5_results(df, models_to_plot, palette, models_formatted_names=None, 
+def pareto_plot_experiment_5_results(df, models_to_plot, palette, models_formatted_names=None, show_variability=True,
                                      title=None, title_height=0.98, title_size=15, text_annotations_size=10, 
                                      text_annotations_y_extra_space=0, text_annotations_x_extra_space=0,
                                      time_log_scale=False, show_legend=False, save_path=None):
     """
     Genera un único gráfico de Frontera de Pareto comparando modelos directamente.
-    Mantiene la misma estética y leyenda manual que el gráfico múltiple.
+    Mantiene la misma estética y leyenda manual que el gráfico múltiple, 
+    incorporando barras de error para la desviación estándar del rendimiento.
     """
     
     # 1. Filtrar solo los modelos que nos interesan
@@ -943,7 +944,7 @@ def pareto_plot_experiment_5_results(df, models_to_plot, palette, models_formatt
     sns.set_theme(style="whitegrid", context="paper", font_scale=1.2)
     fig, ax = plt.subplots(figsize=(10, 6))
        
-    # 3. Plotear
+    # 3. Plotear los puntos principales
     sns.scatterplot(
         data=df_pd, 
         x='mean_time', 
@@ -956,6 +957,22 @@ def pareto_plot_experiment_5_results(df, models_to_plot, palette, models_formatt
         legend=False # Apagada para crearla manual
     )
     
+    # 3.5. Plotear las barras de error (std_adj_accuracy)
+    if show_variability: 
+        for _, row in df_pd.iterrows():
+            # Verificamos que tengamos tanto la media como la desviación estándar para no romper el plot
+            if pd.notna(row['mean_time']) and pd.notna(row['mean_adj_accuracy']) and pd.notna(row.get('std_adj_accuracy')):
+                ax.errorbar(
+                    x=row['mean_time'], 
+                    y=row['mean_adj_accuracy'], 
+                    yerr=row['std_adj_accuracy'], 
+                    fmt='none',           # 'none' porque el punto ya lo dibujó seaborn
+                    c=palette_clean.get(row['model_name'], '#000000'), 
+                    alpha=0.5,            # Un poco de transparencia para no saturar el gráfico
+                    capsize=3,            # Tamaño de los topes horizontales de la barra de error
+                    zorder=0              # Asegura que las barras queden por debajo de los puntos principales
+                )
+    
     if time_log_scale:
         ax.set_xscale('log') 
     
@@ -966,7 +983,9 @@ def pareto_plot_experiment_5_results(df, models_to_plot, palette, models_formatt
             continue 
             
         short_name = models_formatted_names.get(row['model_name'], row['model_name'])
-        texts.append(ax.text(row['mean_time'] + text_annotations_x_extra_space, row['mean_adj_accuracy'] + text_annotations_y_extra_space, short_name, fontsize=text_annotations_size))
+        texts.append(ax.text(row['mean_time'] + text_annotations_x_extra_space, 
+                             row['mean_adj_accuracy'] + text_annotations_y_extra_space, 
+                             short_name, fontsize=text_annotations_size))
 
     if texts:
         adjust_text(texts, ax=ax, arrowprops=dict(arrowstyle="-", color='gray', lw=0.5))
@@ -996,16 +1015,18 @@ def pareto_plot_experiment_5_results(df, models_to_plot, palette, models_formatt
         fig.savefig(save_path, format='pdf', dpi=300, bbox_inches="tight")
         
     plt.show()
+
 ########################################################################################################################################################################
 
 def multi_pareto_plot_experiment_5(df_master, subplots_col, models_to_plot, palette, models_formatted_names=None,
                                    subplot_col_target_values=None, title=None, title_height=0.98, title_size=15, 
-                                   time_log_scale=False, save_path=None, show_legend=False,
+                                   time_log_scale=False, save_path=None, show_variability=False, show_legend=False,
                                    text_annotations_size=10, text_annotations_y_extra_space=0, text_annotations_x_extra_space=0,
-                                   fig_height=None, fig_width=12, hspace=0.4, wspace=0.25):
+                                   figsize=(12,10), sharey=False, wspace=0.1):
     """
     Genera un grid vertical de Fronteras de Pareto comparando modelos directamente.
     Todos los modelos usan un punto circular ('o') como marcador.
+    Todos los subplots comparten la misma escala en el eje Y si sharey=True.
     """
     
     # 1. Extraer y filtrar los subplots
@@ -1028,12 +1049,10 @@ def multi_pareto_plot_experiment_5(df_master, subplots_col, models_to_plot, pale
     if models_formatted_names is None:
         models_formatted_names = {m: m for m in models_to_plot}
 
-    # 3. Configuración de la Figura
-    if fig_height is None:
-        fig_height = max(6 * num_subplots, 7)
-        
+    # 3. Configuración de la Figura       
     sns.set_theme(style="whitegrid", context="paper", font_scale=1.2)
-    fig, axes = plt.subplots(nrows=num_subplots, ncols=1, figsize=(fig_width, fig_height), squeeze=False)
+    
+    fig, axes = plt.subplots(nrows=1, ncols=num_subplots, figsize=figsize, squeeze=False, sharey=sharey)
     axes = axes.flatten()
 
     palette_clean = {k: palette.get(k, '#000000') for k in models_to_plot}
@@ -1063,6 +1082,21 @@ def multi_pareto_plot_experiment_5(df_master, subplots_col, models_to_plot, pale
             legend=False 
         )
         
+        if show_variability:
+            # Agregar las barras de error
+            for _, row in df_pd.iterrows():
+                if pd.notna(row['mean_time']) and pd.notna(row['mean_adj_accuracy']) and pd.notna(row.get('std_adj_accuracy')):
+                    ax.errorbar(
+                        x=row['mean_time'], 
+                        y=row['mean_adj_accuracy'], 
+                        yerr=row['std_adj_accuracy'], 
+                        fmt='none',           
+                        c=palette_clean.get(row['model_name'], '#000000'), 
+                        alpha=0.5,            
+                        capsize=3,            
+                        zorder=0              
+                    )
+        
         if time_log_scale:
             ax.set_xscale('log')
 
@@ -1078,16 +1112,19 @@ def multi_pareto_plot_experiment_5(df_master, subplots_col, models_to_plot, pale
         if texts:
             adjust_text(texts, ax=ax, arrowprops=dict(arrowstyle="-", color='gray', lw=0.5))
             
-        # Títulos y Ejes
-        subplot_col_value_clean = str(subplot_col_value).replace('_', ' ').upper()
+        # --- TÍTULOS Y EJES CORREGIDOS ---
+        subplot_col_value_clean = str(subplot_col_value).replace('_', ' ').capitalize()
         ax.set_title(subplot_col_value_clean, size=15, weight='bold', pad=10)
-        ax.set_ylabel("Mean Adjusted Accuracy", weight='bold', size=12)
         
-        if row_idx == num_subplots - 1:
-            xlabel = "Mean Time (seconds - log scale)" if time_log_scale else "Mean Time (seconds)"
-            ax.set_xlabel(xlabel, weight='bold', size=12)
+        # El título del eje Y solo se escribe en el primer subplot (índice 0)
+        if row_idx == 0:
+            ax.set_ylabel("Mean Adjusted Accuracy", weight='bold', size=12)
         else:
-            ax.set_xlabel("")
+            ax.set_ylabel("") # Borramos explícitamente el label por defecto de Seaborn
+        
+        # El título del eje X se aplica en TODOS los subplots sin condicionales
+        xlabel = "Mean Time (seconds - log scale)" if time_log_scale else "Mean Time (seconds)"
+        ax.set_xlabel(xlabel, weight='bold', size=12)
 
     # --- LEYENDA Y AJUSTES FINALES ---
     if show_legend:
@@ -1097,8 +1134,9 @@ def multi_pareto_plot_experiment_5(df_master, subplots_col, models_to_plot, pale
             for mod in models_to_plot
         ]
         
-        axes[0].legend(
-            handles=legend_elements, loc='upper left', bbox_to_anchor=(1.02, 1),
+        # Colocamos la leyenda en el último subplot para que no se superponga
+        axes[-1].legend(
+            handles=legend_elements, loc='center left', bbox_to_anchor=(1.05, 0.5),
             ncol=1, fontsize=10, frameon=True, title="Models", title_fontsize=11
         )
 
@@ -1106,7 +1144,9 @@ def multi_pareto_plot_experiment_5(df_master, subplots_col, models_to_plot, pale
         title = "Pareto Front Comparison: Adjusted Accuracy vs. Computational Time"
 
     fig.suptitle(title, fontsize=title_size, fontweight='bold', y=title_height)
-    fig.subplots_adjust(top=0.92, bottom=0.08, right=0.82, hspace=hspace, wspace=wspace)
+    
+    # Ajustar para que no colisionen los elementos
+    fig.subplots_adjust(top=0.85, bottom=0.15, right=0.85, wspace=wspace)
     
     if save_path:
         fig.savefig(save_path, format='png', dpi=300, bbox_inches="tight", pad_inches=0.2)
@@ -1115,55 +1155,55 @@ def multi_pareto_plot_experiment_5(df_master, subplots_col, models_to_plot, pale
 
 ########################################################################################################################################################################
 
-import numpy as np
-import pandas as pd
-import polars as pl
-import matplotlib.pyplot as plt
-import seaborn as sns
-
-def dimensions_plot_experiment_5(df, dimensions_dict, dimensions_formatted=None, models_to_plot=None, models_formatted_names=None, palette=None,
-                                title="Comprehensive Sensitivity & Robustness Analysis", time_log_scale=False, title_height=0.98, title_size=15,
-                                hspace=0.5, wspace=0.3, save_path=None):
+def dimension_effect_plot_experiment_5(df, dimensions_dict, figsize=(15,10), dimensions_formatted=None, models_to_plot=None, models_formatted_names=None, palette=None,
+                                       title=None, time_log_scale=False, show_variability=False, include_ari=True, 
+                                       annotate_lines=True, 
+                                       title_height=0.98, title_size=15, hspace=0.5, wspace=0.3, save_path=None):
     """
     Genera un grid combinado para publicación.
     Métricas en el eje Y de los lineplots.
     Dimensión analizada como título (subtitle) del subplot central.
     Nombres de los modelos en el eje Y del heatmap coloreados según la leyenda.
+    Etiquetas directas en los lineplots ajustadas con adjustText y con márgenes dinámicos.
     """
 
     metrics = [
         {'col': 'mean_adj_accuracy', 'std': 'std_adj_accuracy', 'name': 'Adj Accuracy', 
-         'is_time': False, 'ylim': None, #(0, 1.05), 
-         'heat_label': '% Drop', 'cmap': sns.light_palette("darkred", as_cmap=True)},
-        {'col': 'mean_ari', 'std': 'std_ari', 'name': 'Adjusted Rand Index', 
-         'is_time': False, 'ylim': None, #(-0.05, 1.05), 
-         'heat_label': '% Drop', 'cmap': sns.light_palette("darkred", as_cmap=True)},
-        {'col': 'mean_time', 'std': 'std_time', 'name': 'Computation Time (s)', 
-         'is_time': True, 'ylim': None, 'heat_label': '% Increase', 'cmap': sns.light_palette("indigo", as_cmap=True)}
+         'is_time': False, 'ylim': None, 
+         'heat_label': '% Change', 'cmap': sns.light_palette("darkred", as_cmap=True, reverse=True)}
     ]
+    
+    if include_ari:
+        metrics.append(
+            {'col': 'mean_ari', 'std': 'std_ari', 'name': 'Adjusted Rand Index', 
+             'is_time': False, 'ylim': None, 
+             'heat_label': '% Change', 'cmap': sns.light_palette("darkred", as_cmap=True, reverse=True)}
+        )
+        
+    metrics.append(
+        {'col': 'mean_time', 'std': 'std_time', 'name': 'Computation Time (s)', 
+         'is_time': True, 'ylim': None, 'heat_label': '% Change', 'cmap': sns.light_palette("indigo", as_cmap=True)}
+    )
 
     if models_to_plot:
         df = df.filter(pl.col('model_name').is_in(models_to_plot))
 
-    # --- CREAR MAPEO INVERSO DE COLORES ---
-    # Necesitamos saber qué color le toca a cada 'display_name' para pintar los labels del heatmap
     display_to_color = {}
     if palette:
-        # Obtenemos todos los modelos únicos del df filtrado
         unique_models = df.get_column('model_name').unique().to_list()
         for mod in unique_models:
             disp_name = models_formatted_names.get(mod, mod) if models_formatted_names else mod
             display_to_color[disp_name] = palette.get(mod, 'black')
 
     num_dims = len(dimensions_dict)
-    num_metrics = len(metrics)
+    num_metrics = len(metrics) 
     
     total_rows = num_dims * 2 
     
     sns.set_theme(style="whitegrid", context="paper", font_scale=1.1)
     
     fig, axes = plt.subplots(total_rows, num_metrics, 
-                             figsize=(6.5 * num_metrics, 5.0 * num_dims + 3.5 * num_dims), 
+                             figsize=figsize, 
                              squeeze=False)
 
     for dim_idx, (dim_name, data_ids) in enumerate(dimensions_dict.items()):
@@ -1177,17 +1217,12 @@ def dimensions_plot_experiment_5(df, dimensions_dict, dimensions_formatted=None,
         else:
             x_labels = [str(d).replace('simulation_', '').replace('_', ' ').title() for d in data_ids]
 
-        # --- TÍTULO DE DIMENSIÓN (En el subplot central) ---
-        ax_mid_line = axes[row_line, 1]
-        dim_formatted = f"Dimension: {dim_name.replace('_', ' ').upper()}"
-        
-        ax_mid_line.set_title(dim_formatted, weight='bold', size=14, pad=15)
-
         for col_idx, met in enumerate(metrics):
             ax_line = axes[row_line, col_idx]
             ax_heat = axes[row_heat, col_idx]
             
             heat_data = []
+            texts = []
 
             for model in df_dim['model_name'].unique():
                 df_model = df_dim[df_dim['model_name'] == model]
@@ -1196,6 +1231,8 @@ def dimensions_plot_experiment_5(df, dimensions_dict, dimensions_formatted=None,
                 # --- PARTE 1: LINE PLOT ---
                 y_mean = np.array(df_model_aligned[met['col']].values, dtype=float)
                 y_std = np.array(df_model_aligned[met['std']].values, dtype=float)
+                lower_bound = y_mean - y_std
+                upper_bound = y_mean + y_std  
                 
                 color = palette.get(model, 'black') if palette else None
                 display_name = models_formatted_names.get(model, model) if models_formatted_names else model
@@ -1203,15 +1240,18 @@ def dimensions_plot_experiment_5(df, dimensions_dict, dimensions_formatted=None,
                 ax_line.plot(x_positions, y_mean, marker='o', markersize=6, label=display_name,
                              color=color, linewidth=2)
                 
-                lower_bound = y_mean - y_std
-                upper_bound = y_mean + y_std
+                if annotate_lines and not pd.isna(y_mean[-1]):
+                    txt = ax_line.text(x_positions[-1] + 0.1, y_mean[-1], display_name, 
+                                       color=color, fontweight='bold', fontsize=10, va='center')
+                    texts.append(txt)
                 
                 if met['is_time']:
                     if time_log_scale:
                         ax_line.set_yscale('log')
                     lower_bound = np.clip(lower_bound, a_min=1e-5, a_max=None)
                     
-                ax_line.fill_between(x_positions, lower_bound, upper_bound, color=color, alpha=0.1)
+                if show_variability:
+                    ax_line.fill_between(x_positions, lower_bound, upper_bound, color=color, alpha=0.1)
 
                 # --- PARTE 2: DATOS HEATMAP ---
                 val_base = y_mean[0] 
@@ -1222,10 +1262,7 @@ def dimensions_plot_experiment_5(df, dimensions_dict, dimensions_formatted=None,
                     if pd.isna(val_base) or pd.isna(val_perturbed) or val_base == 0:
                         change = np.nan
                     else:
-                        if met['is_time']:
-                            change = ((val_perturbed - val_base) / np.abs(val_base)) * 100
-                        else:
-                            change = ((val_base - val_perturbed) / np.abs(val_base)) * 100
+                        change = ((val_perturbed - val_base) / np.abs(val_base)) * 100
                     
                     heat_data.append({
                         'Model': display_name, 
@@ -1235,32 +1272,59 @@ def dimensions_plot_experiment_5(df, dimensions_dict, dimensions_formatted=None,
 
             # --- ESTILIZAR LINE PLOT ---
             ax_line.set_xticks(x_positions)
-            ax_line.set_xticklabels(x_labels, rotation=0, weight='bold', size=10) 
+            ax_line.set_xticklabels(x_labels, rotation=0, weight='bold', size=12) 
             
-            if met['ylim']: ax_line.set_ylim(met['ylim'])
-            
-            ax_line.set_ylabel(met['name'], weight='bold', size=12)
+            if annotate_lines:
+                ax_line.set_xlim(-0.2, x_positions[-1] + 1.2) 
+            else:
+                ax_line.set_xlim(-0.2, x_positions[-1] + 0.2)
+                
+            if met['ylim']: 
+                ax_line.set_ylim(met['ylim'])
+
+            # --- NUEVO: AUMENTAR EL EJE Y DINÁMICAMENTE ---
+            if annotate_lines:
+                ymin, ymax = ax_line.get_ylim()
+                if met['is_time'] and time_log_scale:
+                    # En escala logarítmica es mejor multiplicar para dar espacio al techo
+                    ax_line.set_ylim(ymin / 2, ymax * 2.0)
+                else:
+                    # En escala lineal, añadimos un 15% del rango total como margen
+                    y_margin = (ymax - ymin) * 0.15
+                    ax_line.set_ylim(ymin - y_margin, ymax + y_margin)
+                    
+            ax_line.set_ylabel(met['name'], weight='bold', size=13)
+
+            # --- APLICAR ADJUST_TEXT ---
+            if annotate_lines and texts:
+                adjust_text(texts, ax=ax_line, only_move={'text': 'y'})
 
             # --- DIBUJAR HEATMAP ---
+            if met['is_time']: 
+                vmin = 0
+                ascending = False
+            else:
+                vmin = None
+                ascending = True
+
             df_heat = pd.DataFrame(heat_data).pivot(index='Model', columns='Scenario', values='Change')
             
             perturbed_labels = x_labels[1:]
             df_heat = df_heat[perturbed_labels]
             
-            df_heat['Mean_Degradation'] = df_heat.mean(axis=1)
-            df_heat = df_heat.sort_values('Mean_Degradation', ascending=True)
-            df_heat = df_heat.drop(columns=['Mean_Degradation'])
-
+            df_heat['Mean_Change'] = df_heat.mean(axis=1)
+            df_heat = df_heat.sort_values('Mean_Change', ascending=ascending)
+            df_heat = df_heat.drop(columns=['Mean_Change'])
+            
             sns.heatmap(df_heat, ax=ax_heat, annot=True, fmt=".1f", cmap=met['cmap'], 
-                        linewidths=.5, cbar_kws={'label': met['heat_label']}, vmin=0)
+                        linewidths=.5, cbar_kws={'label': met['heat_label']}, vmin=vmin)          
             
             # --- ESTILIZAR HEATMAP ---
             ax_heat.set_ylabel("")
             ax_heat.set_xlabel("")
-            ax_heat.set_xticklabels(ax_heat.get_xticklabels(), rotation=0, weight='bold')
+            ax_heat.set_xticklabels(ax_heat.get_xticklabels(), rotation=0, weight='bold', size=11)
             ax_heat.set_yticklabels(ax_heat.get_yticklabels(), size=9, rotation=0)
 
-            # --- NUEVO: COLOREAR LOS LABELS DEL EJE Y DEL HEATMAP ---
             for tick_label in ax_heat.get_yticklabels():
                 model_text = tick_label.get_text()
                 if model_text in display_to_color:
@@ -1268,20 +1332,22 @@ def dimensions_plot_experiment_5(df, dimensions_dict, dimensions_formatted=None,
                     tick_label.set_fontweight('bold')
 
     # --- LEYENDA LATERAL ---
-    handles, labels = axes[0, 0].get_legend_handles_labels()
-    by_label = dict(zip(labels, handles))
-    
-    top_right_ax = axes[0, num_metrics - 1]
-    top_right_ax.legend(by_label.values(), by_label.keys(),
-                        loc='center left',             
-                        bbox_to_anchor=(1.05, 0.5),    
-                        ncol=1,                        
-                        frameon=False, 
-                        fontsize=11,
-                        title="Models",                
-                        title_fontsize=12)
+    if not annotate_lines:
+        handles, labels = axes[0, 0].get_legend_handles_labels()
+        by_label = dict(zip(labels, handles))
+        
+        top_right_ax = axes[0, num_metrics - 1]
+        top_right_ax.legend(by_label.values(), by_label.keys(),
+                            loc='center left',             
+                            bbox_to_anchor=(1.05, 0.5),    
+                            ncol=1,                        
+                            frameon=False, 
+                            fontsize=11,
+                            title="Models",                
+                            title_fontsize=12)
 
-    plt.suptitle(title, weight='bold', size=title_size, y=title_height)
+    if title:
+        plt.suptitle(title, weight='bold', size=title_size, y=title_height)
     
     fig.subplots_adjust(bottom=0.05, wspace=wspace, hspace=hspace) 
 

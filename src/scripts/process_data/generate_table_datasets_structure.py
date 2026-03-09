@@ -66,16 +66,42 @@ def main():
     simulation_names = list(SIMULATION_CONFIGS.keys())
     DATA_IDS = simulation_names + REAL_DATASET_KEYS
     
+    # =====================================================================
+    # NUEVO: LÓGICA DE PROCESAMIENTO INCREMENTAL
+    # =====================================================================
+    existing_df = None
+    processed_ids = set()
+
+    if os.path.exists(output_save_path):
+        try:
+            existing_df = pl.read_parquet(output_save_path)
+            
+            id_column_name = 'data_id'  
+            if id_column_name in existing_df.columns:
+                processed_ids = set(existing_df[id_column_name].to_list())
+                logging.info(f"  > Found existing file with {len(processed_ids)} already processed datasets.")
+            else:
+                logging.warning(f"  > Could not find an ID column in existing Parquet. Will process all.")
+        except Exception as e:
+            logging.warning(f"  > Could not read existing file. Starting fresh. Error: {e}")
+
+    # Filtramos los IDs para quedarnos solo con los que no están en el archivo
+    PENDING_DATA_IDS = [d_id for d_id in DATA_IDS if d_id not in processed_ids]
+    
+    if not PENDING_DATA_IDS:
+        logging.info("  ✅ All datasets have already been processed. Nothing to do. Exiting.")
+        return # Termina la ejecución limpiamente
+    
     experiment_seeds = get_experiment_seeds()
     #experiment_seeds = experiment_seeds[:20]
     
-    logging.info(f"  > Generated {len(experiment_seeds)} seeds for simulation averaging.")
-    logging.info(f"  > Total datasets to process: {len(DATA_IDS)} ({len(simulation_names)} sims, {len(REAL_DATASET_KEYS)} real)")
+    logging.info(f"  > Generated {len(experiment_seeds)} seeds for simulation averaging.")
+    logging.info(f"  > Total datasets to process this run: {len(PENDING_DATA_IDS)} out of {len(DATA_IDS)}")
     
     df_structure_list = []
 
-    for data_id in DATA_IDS:
-        logging.info(f"  ⚙️ Processing dataset: {data_id.upper()}")
+    for data_id in PENDING_DATA_IDS:
+        logging.info(f"  ⚙️ Processing dataset: {data_id.upper()}")
 
         # =====================================================================
         # 1. FLUJO PARA SIMULACIONES (Con promedio de semillas)
@@ -86,7 +112,7 @@ def main():
             
             # Iteramos sobre todas las semillas del experimento
             for seed in experiment_seeds:
-                logging.info(f"    ➡️ Processing for random state: {seed}")
+                logging.info(f"    ➡️ Processing for random state: {seed}")
                 try:
                     X, y = generate_simulation(
                         **simulation_config,
@@ -113,7 +139,7 @@ def main():
                         metrics_accumulator[k].append(v)
                         
                 except Exception as e:
-                    logging.error(f"  ❌ Error generating sim {data_id} for seed {seed}: {e}")
+                    logging.error(f"  ❌ Error generating sim {data_id} for seed {seed}: {e}")
                     continue
 
             # Consolidar resultados promediando
@@ -138,9 +164,9 @@ def main():
                         avg_structure[key] = first_val
                 
                 df_structure_list.append(pl.DataFrame([avg_structure]))
-                logging.info(f"    ✅ Averaged structure (mean & std) extracted successfully.")
+                logging.info(f"    ✅ Averaged structure (mean & std) extracted successfully.")
             else:
-                logging.error(f"    ❌ No successful seeds processed for simulation {data_id}.")
+                logging.error(f"    ❌ No successful seeds processed for simulation {data_id}.")
 
         # =====================================================================
         # 2. FLUJO PARA DATASETS REALES (Sin promedio)
@@ -151,7 +177,7 @@ def main():
             processed_data_path = os.path.join(processed_data_dir, f'{data_id}_processed.parquet')
             
             if not os.path.exists(metadata_path) or not os.path.exists(processed_data_path):
-                 logging.warning(f"  ⚠️ Data or metadata not found for real dataset {data_id}. Skipping...")
+                 logging.warning(f"  ⚠️ Data or metadata not found for real dataset {data_id}. Skipping...")
                  continue
             
             try:
@@ -182,30 +208,36 @@ def main():
                         data_structure[f"{key}_std"] = 0.0
 
                 df_structure_list.append(pl.DataFrame([data_structure]))
-                logging.info(f"  ✅ Real data structure extracted successfully.")
+                logging.info(f"  ✅ Real data structure extracted successfully.")
                 
             except Exception as e:
-                logging.error(f"  ❌ Error loading/calculating metrics for real dataset {data_id}: {e}")
+                logging.error(f"  ❌ Error loading/calculating metrics for real dataset {data_id}: {e}")
                 continue
 
     # =====================================================================
     # 3. JOIN AND SAVE FINAL TABLE
     # =====================================================================
     if df_structure_list:
-        # Polars puede tener problemas si el orden de las columnas varía o faltan columnas
-        # how='diagonal' es más seguro si hay desajustes menores en el schema.
-        df_structure_concat = pl.concat(df_structure_list, how='diagonal')
-        logging.info(f"  📊 Final structure table shape: {df_structure_concat.shape}")
+        # Concatenamos los datos procesados en esta ejecución
+        df_structure_new = pl.concat(df_structure_list, how='diagonal')
+        
+        # NUEVO: Si existían datos previos, los unimos a los nuevos
+        if existing_df is not None:
+            df_structure_concat = pl.concat([existing_df, df_structure_new], how='diagonal')
+            logging.info("  🔗 Appended new datasets to existing data.")
+        else:
+            df_structure_concat = df_structure_new
+
+        logging.info(f"  📊 Final structure table shape: {df_structure_concat.shape}")
 
         try:
             df_structure_concat.write_parquet(output_save_path)
-            logging.info(f"  💾 Final file saved: {output_save_path}")
+            logging.info(f"  💾 Final file saved: {output_save_path}")
         except Exception as e:
-            logging.error(f"  ❌ Failed to save final file: {e}")
+            logging.error(f"  ❌ Failed to save final file: {e}")
             sys.exit(1)
     else:
-        logging.error("  ❌ No data was processed. Master table not created.")
-        sys.exit(1)
+        logging.warning("  ⚠️ No new data was successfully processed in this run.")
 
     logging.info("✅ DATASET STRUCTURE PIPELINE FINISHED SUCCESSFULLY")
 

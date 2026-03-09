@@ -147,6 +147,14 @@ SIMULATION_CONFIGS = {
         'feature_types': {'n_binary': 25, 'n_multiclass': 25, 'n_bins_multiclass': 4},
     },
 
+    'simulation_dim_3': { # dim increase, adding useful info (not noise) --> increase clusters separation
+        'n_samples': 10000,
+        'centers': 3,
+        'cluster_std': [2, 2, 3],
+        'n_features': 25, 
+        'feature_types': {'n_binary': 6, 'n_multiclass': 7, 'n_bins_multiclass': 4},
+    },
+
 #######################################################################################################################
     
     # NUMBER CLUSTERS 
@@ -190,16 +198,6 @@ SIMULATION_CONFIGS = {
     },
 
     'simulation_separation_3': {
-        'n_samples': 10000,
-        'centers': 3,
-        'cluster_std': [2, 2, 3],
-        'n_features': 8,
-        'feature_types': {'n_binary': 2, 'n_multiclass': 2, 'n_bins_multiclass': 4},
-        'separation_factor': 0.7
-    },
-
-
-    'simulation_separation_4': {
         'n_samples': 10000,
         'centers': 3,
         'cluster_std': [2, 2, 3],
@@ -368,7 +366,7 @@ SIMULATION_CONFIGS = {
 
 #######################################################################################################################
 
-    # SPHERICITY 
+    # SPHERICITY / GEOMETRY
 
     'simulation_sphericity_1': {
         'n_samples': 10000,
@@ -401,30 +399,30 @@ SIMULATION_CONFIGS = {
 
 # GEOMETRY 
     
-    'simulation_geometry_1': {
-        'n_samples': 10000,
-        'centers': 3,
-        'cluster_std': [2, 2, 3],
-        'n_features': 8,
-        'feature_types': {'n_binary': 2, 'n_multiclass': 2, 'n_bins_multiclass': 4},
-        'geometry': 'moons'
-    },
+    # 'simulation_geometry_1': {
+    #     'n_samples': 10000,
+    #     'centers': 3,
+    #     'cluster_std': [2, 2, 3],
+    #     'n_features': 8,
+    #     'feature_types': {'n_binary': 2, 'n_multiclass': 2, 'n_bins_multiclass': 4},
+    #     'geometry': 'moons'
+    # },
 
-    'simulation_geometry_2': {
-        'n_samples': 10000,
-        'centers': 3,
-        'cluster_std': [2, 2, 3],
-        'n_features': 8,
-        'feature_types': {'n_binary': 2, 'n_multiclass': 2, 'n_bins_multiclass': 4},
-        'geometry': 'circles'
-    },
+    # 'simulation_geometry_2': {
+    #     'n_samples': 10000,
+    #     'centers': 3,
+    #     'cluster_std': [2, 2, 3],
+    #     'n_features': 8,
+    #     'feature_types': {'n_binary': 2, 'n_multiclass': 2, 'n_bins_multiclass': 4},
+    #     'geometry': 'circles'
+    # },
 
 #######################################################################################################################
 
    # SIZE : OUTLIERS 
 
-    'simulation_size_outliers_1': {  # simulation_outliers_2 with more size
-        'n_samples': 25000,
+    'simulation_size_outliers_1': {  # simulation_outliers_2 with double size
+        'n_samples': 20000,
         'centers': 3,
         'cluster_std': [2, 2, 3],
         'n_features': 8,
@@ -438,8 +436,8 @@ SIMULATION_CONFIGS = {
         }
     },
 
-    'simulation_size_outliers_2': { # simulation_outliers_6 with more size
-        'n_samples': 10000,
+    'simulation_size_outliers_2': { # simulation_outliers_6 with double size
+        'n_samples': 20000,
         'centers': 3,
         'cluster_std': [2, 2, 3],
         'n_features': 8,
@@ -449,28 +447,130 @@ SIMULATION_CONFIGS = {
                 'n_groups': 2, 'group_proportions': [0.05, 0.1], 'geometry': 'anisotropic', 'anisotropy_factor': 12, 'distance': 50
             }
         }
-    }
+    },
 
-
+    'simulation_size_outliers_3': { # simulation_outliers_3 with double size
+        'n_samples': 20000,
+        'centers': 3,
+        'cluster_std': [2, 2, 3],
+        'n_features': 8,
+        'feature_types': {'n_binary': 2, 'n_multiclass': 2, 'n_bins_multiclass': 4},
+        'outliers_config': { # grouped outliers (convex)
+            'grouped': {
+                'prop_outliers': 0.1, 'n_groups': 2, 'distance': 60, 'dispersion_factor': 1
+            }
+        }
+    },
 
 #######################################################################################################################
 
    # SPHERICITY : OUTLIERS 
 
-   # TODO
+    'simulation_sphericity_outliers_1': {  # simulation_outliers_2 with simulation_sphericity_3
+        'n_samples': 10000,
+        'centers': 3,
+        'cluster_std': [2, 2, 3],
+        'n_features': 8,
+        'feature_types': {'n_binary': 2, 'n_multiclass': 2, 'n_bins_multiclass': 4},
+        'anisotropy_factor': 10,
+        'outliers_config': { # disperse univariate outliers
+            'feature_specific': [ 
+                {'col_idx': 0, 'prop_above': 0.1, 'sigma': 5},
+                {'col_idx': 1, 'prop_below': 0.1, 'sigma': 2},
+                {'col_idx': 2, 'prop_below': 0.1, 'sigma': 2}
+            ]
+        }
+    },
+
+    'simulation_sphericity_outliers_2': { # simulation_outliers_6 with simulation_sphericity_3
+        'n_samples': 10000,
+        'centers': 3,
+        'cluster_std': [2, 2, 3],
+        'n_features': 8,
+        'feature_types': {'n_binary': 2, 'n_multiclass': 2, 'n_bins_multiclass': 4},
+        'anisotropy_factor': 10,
+        'outliers_config': { # grouped outliers (not convex, higher anisotropy_factor)
+            'grouped': {
+                'n_groups': 2, 'group_proportions': [0.05, 0.1], 'geometry': 'anisotropic', 'anisotropy_factor': 12, 'distance': 50
+            }
+        }
+    },
+
+    'simulation_sphericity_outliers_3': { # simulation_outliers_3 with simulation_sphericity_3
+        'n_samples': 10000,
+        'centers': 3,
+        'cluster_std': [2, 2, 3],
+        'n_features': 8,
+        'feature_types': {'n_binary': 2, 'n_multiclass': 2, 'n_bins_multiclass': 4},
+        'anisotropy_factor': 10,
+        'outliers_config': { # grouped outliers (convex)
+            'grouped': {
+                'prop_outliers': 0.1, 'n_groups': 2, 'distance': 60, 'dispersion_factor': 1
+            }
+        }
+    },
 
 #######################################################################################################################
 
    # IMBALANCE : OUTLIERS 
 
-   # TODO
+    'simulation_imbalance_outliers_1': {  # simulation_outliers_2 with simulation_imbalance_1
+        'n_samples': 10000,
+        'centers': 3,
+        'cluster_std': [2, 2, 3],
+        'n_features': 8,
+        'feature_types': {'n_binary': 2, 'n_multiclass': 2, 'n_bins_multiclass': 4},
+        'cluster_proportions': [0.15, 0.2, 0.65],
+        'outliers_config': { # disperse univariate outliers
+            'feature_specific': [ 
+                {'col_idx': 0, 'prop_above': 0.1, 'sigma': 5},
+                {'col_idx': 1, 'prop_below': 0.1, 'sigma': 2},
+                {'col_idx': 2, 'prop_below': 0.1, 'sigma': 2}
+            ]
+        }
+    },
 
+    'simulation_imbalance_outliers_2': { # simulation_outliers_6 with simulation_imbalance_1
+        'n_samples': 10000,
+        'centers': 3,
+        'cluster_std': [2, 2, 3],
+        'n_features': 8,
+        'feature_types': {'n_binary': 2, 'n_multiclass': 2, 'n_bins_multiclass': 4},
+        'cluster_proportions': [0.15, 0.2, 0.65],
+        'outliers_config': { # grouped outliers (not convex, higher anisotropy_factor)
+            'grouped': {
+                'n_groups': 2, 'group_proportions': [0.05, 0.1], 'geometry': 'anisotropic', 'anisotropy_factor': 12, 'distance': 50
+            }
+        }
+    },
+
+    'simulation_imbalance_outliers_3': { # simulation_outliers_3 with simulation_imbalance_1
+        'n_samples': 10000,
+        'centers': 3,
+        'cluster_std': [2, 2, 3],
+        'n_features': 8,
+        'feature_types': {'n_binary': 2, 'n_multiclass': 2, 'n_bins_multiclass': 4},
+        'cluster_proportions': [0.15, 0.2, 0.65],
+        'outliers_config': { # grouped outliers (convex)
+            'grouped': {
+                'prop_outliers': 0.1, 'n_groups': 2, 'distance': 60, 'dispersion_factor': 1
+            }
+        }
+    },
 
 #######################################################################################################################
 
    # SPHERICITY : IMBALANCE 
 
-   # TODO
+    'simulation_sphericity_imbalance_1': {  # simulation_imbalance_1 with simulation_sphericity_3
+        'n_samples': 10000,
+        'centers': 3,
+        'cluster_std': [2, 2, 3],
+        'n_features': 8,
+        'feature_types': {'n_binary': 2, 'n_multiclass': 2, 'n_bins_multiclass': 4},
+        'cluster_proportions': [0.15, 0.2, 0.65],
+        'anisotropy_factor': 10,
+    },
 
 }
 

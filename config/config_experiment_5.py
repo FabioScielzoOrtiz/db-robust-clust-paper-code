@@ -91,39 +91,263 @@ for data_id, config in CONFIG_EXPERIMENT.items():
 
 ########################################################################################################################################################################
 
+SCENARIOS = {
+
+    'simulation_base': 'base',
+    
+    'simulation_size_1': 'big_data',
+    'simulation_size_2': 'big_data',
+
+    'simulation_dim_1': 'high_dimensionality',
+    'simulation_dim_2': 'high_dimensionality',
+
+    'simulation_num_clusters_1': 'high_num_clusters',
+    'simulation_num_clusters_2': 'high_num_clusters',
+
+    'simulation_separation_1': 'low_separation',
+    'simulation_separation_2': 'low_separation',
+
+    'simulation_base': 'high_separation',
+    'simulation_separation_3': 'high_separation',
+
+    'simulation_corr_1': 'high_correlation',
+    'simulation_corr_2': 'high_correlation',
+    
+    'simulation_outliers_1': 'disperse_outliers',
+    'simulation_outliers_2': 'disperse_outliers',
+
+    'simulation_outliers_3': 'grouped_outliers_convex',
+    'simulation_outliers_4': 'grouped_outliers_convex',    
+
+    'simulation_outliers_5': 'grouped_outliers_non_convex',
+    'simulation_outliers_6': 'grouped_outliers_non_convex',    
+
+    'simulation_imbalance_1': 'imbalance_clusters',
+    'simulation_imbalance_2': 'imbalance_clusters',
+
+    'simulation_sphericity_1': 'non_convexity',
+    'simulation_sphericity_2': 'non_convexity',
+    'simulation_sphericity_3': 'non_convexity',
+
+    'simulation_size_outliers_1': 'big_data_with_disperse_outliers',
+    'simulation_size_outliers_2': 'big_data_with_grouped_outliers_non_convex',
+    'simulation_size_outliers_3': 'big_data_with_grouped_outliers_convex',
+
+    'simulation_sphericity_outliers_1': 'low_sphericity_with_disperse_outliers',
+    'simulation_sphericity_outliers_2': 'low_sphericity_with_grouped_outliers_non_convex',
+    'simulation_sphericity_outliers_3': 'low_sphericity_with_grouped_outliers_convex',
+
+    'simulation_imbalance_outliers_1': 'imbalance_clusters_with_disperse_outliers',
+    'simulation_imbalance_outliers_2': 'imbalance_clusters_with_grouped_outliers_non_convex',
+    'simulation_imbalance_outliers_3': 'imbalance_clusters_with_grouped_outliers_convex',
+
+    'simulation_sphericity_imbalance_1': 'low_sphericity_with_imbalance_clusters'
+}
+
+########################################################################################################################################################################
+
+DIMENSIONS = {
+
+    'size': ['simulation_base', 'simulation_size_1'],
+
+    'dimensionality': ['simulation_base', 'simulation_dim_3', 'simulation_dim_1', 'simulation_dim_2'],
+
+    'num_clusters': ['simulation_base','simulation_num_clusters_1', 'simulation_num_clusters_2'],
+    
+    'separation': [
+        'simulation_separation_1', 'simulation_separation_2', 'simulation_base', 'simulation_separation_3'],
+
+    'correlation': ['simulation_base', 'simulation_corr_1', 'simulation_corr_2'],
+
+    'disperse_outliers': ['simulation_base', 'simulation_outliers_1', 'simulation_outliers_2'],
+
+    'grouped_outliers_convex': ['simulation_base', 'simulation_outliers_3'], # ['simulation_base', 'simulation_outliers_3', 'simulation_outliers_4'],
+
+    'grouped_outliers_non_convex': ['simulation_base', 'simulation_outliers_5', 'simulation_outliers_6'],
+
+    'imbalance': ['simulation_base', 'simulation_imbalance_1', 'simulation_imbalance_2'],
+
+    'sphericity': ['simulation_base', 'simulation_sphericity_1', 'simulation_sphericity_2', 'simulation_sphericity_3'],
+
+    'size_disperse_outliers': ['simulation_base', 'simulation_outliers_2', 'simulation_size_outliers_1'],
+    'size_grouped_outliers_non_convex': ['simulation_base', 'simulation_size_outliers_2'],
+    'size_grouped_outliers_convex': ['simulation_base', 'simulation_size_outliers_3'],
+
+    'sphericity_disperse_outliers': ['simulation_base', 'simulation_sphericity_outliers_1'],
+    'sphericity_grouped_outliers_non_convex': ['simulation_base', 'simulation_sphericity_outliers_2'],
+    'sphericity_grouped_outliers_convex': ['simulation_base', 'simulation_sphericity_outliers_3'],
+
+    'sphericity_imbalance': ['simulation_base', 'simulation_sphericity_imbalance_1']
+}
+
+########################################################################################################################################################################
+
+DIMENSIONS_FORMATTED = {
+    
+    'size': {
+        'simulation_base': 'num rows 10000',
+        'simulation_size_1': 'num rows 35000',
+        'simulation_size_2': 'num rows 50000'
+    },
+
+    'dimensionality': {
+        'simulation_base': 'num cols 8',
+        'simulation_dim_3': 'num cols 25',
+        'simulation_dim_1': 'num cols 50',
+        'simulation_dim_2': 'num cols 100'
+    },
+
+    'num_clusters': {
+        'simulation_base': 'num clusters 3',
+        'simulation_num_clusters_1': 'num clusters 5',
+        'simulation_num_clusters_2': 'num clusters 7'
+    },
+
+    'separation': {
+        'simulation_separation_1': 'separation factor 0.2',
+        'simulation_separation_2': 'separation factor 0.5',
+        'simulation_base': 'separation factor 1',
+        'simulation_separation_3': 'separation factor 2'
+    },
+
+    'correlation': {
+        'simulation_base': 'prop high corr 0.297',
+        'simulation_corr_1': 'prop high corr 0.385',
+        'simulation_corr_2': 'prop high corr 0.592'
+    },
+
+    'disperse_outliers': {
+        'simulation_base': 'without outliers\n mean prop outliers 0.002',
+        'simulation_outliers_1': 'disperse outliers\n mean prop outliers 0.047',
+        'simulation_outliers_2': 'disperse outliers\n mean prop outliers 0.071',
+    },
+
+    'grouped_outliers_convex': {
+        'simulation_base': 'without outliers\n mean prop outliers 0.002',
+        'simulation_outliers_3': 'grouped convex outliers\n mean prop outliers 0.044\n outliers dispersion factor 1',
+        #'simulation_outliers_4': 'grouped convex outliers\n mean prop outliers 0.058\n outliers dispersion factor 4',
+    },   
+
+    'grouped_outliers_non_convex': {
+        'simulation_base': 'without outliers\n mean prop outliers 0.002',
+        'simulation_outliers_5': 'grouped non convex outliers\n mean prop outliers 0.063\n outliers anisotropy factor 4',
+        'simulation_outliers_6': 'grouped non convex outliers\n mean prop outliers 0.073\n outliers anisotropy factor 12',
+    }, 
+
+    'imbalance': {
+        'simulation_base': 'clusters perfect balance',
+        'simulation_imbalance_1': 'clusters props [0.15, 0.2, 0.65]',
+        'simulation_imbalance_2': 'clusters props [0.25, 0.75]',
+    },
+
+    'sphericity': {
+        'simulation_base': 'anisotropy factor 1',
+        'simulation_sphericity_1': 'anisotropy factor 4',
+        'simulation_sphericity_2': 'anisotropy factor 6',
+        'simulation_sphericity_3': 'anisotropy factor 10'
+    },
+
+    'size_disperse_outliers': {
+        'simulation_base': 'num rows 10000\n without outliers\n mean prop outliers 0.002', 
+        'simulation_outliers_2': 'num rows 10000\n disperse outliers\n mean prop outliers 0.071',
+        'simulation_size_outliers_1': 'num rows 20000\n disperse outliers\n mean prop outliers 0.071'
+    },
+
+    'size_grouped_outliers_non_convex': {
+        'simulation_base': 'num rows 10000\n without outliers\n mean prop outliers 0.002', 
+        'simulation_size_outliers_2': 'num rows 20000\n grouped non convex outliers\n mean prop outliers 0.073'
+    },
+
+    'size_grouped_outliers_convex': {
+        'simulation_base': 'num rows 10000\n without outliers\n mean prop outliers 0.002', 
+        'simulation_size_outliers_3': 'num rows 20000\n grouped convex outliers\n mean prop outliers 0.044'
+    },
+
+    'sphericity_disperse_outliers': {
+        'simulation_base': 'anisotropy factor 1\n without outliers\n mean prop outliers 0.002', 
+        'simulation_sphericity_outliers_1': 'anisotropy factor 10\n disperse outliers\n mean prop outliers 0.071'
+    },
+
+    'sphericity_grouped_outliers_non_convex': {
+        'simulation_base': 'anisotropy factor 1\n without outliers\n mean prop outliers 0.002', 
+        'simulation_sphericity_outliers_2': 'anisotropy factor 10\n grouped non convex outliers\n mean prop outliers 0.073'
+    },
+
+    'sphericity_grouped_outliers_convex': {
+        'simulation_base': 'anisotropy factor 1\n without outliers\n mean prop outliers 0.002', 
+        'simulation_sphericity_outliers_3': 'anisotropy factor 10\n grouped convex outliers\n mean prop outliers 0.044'
+    },
+
+    'imbalance_disperse_outliers': {
+        'simulation_base': 'clusters perfect balance\n without outliers\n mean prop outliers 0.002', 
+        'simulation_imbalance_outliers_1': 'clusters props [0.15, 0.2, 0.65]\n disperse outliers\n mean prop outliers 0.071'
+    },
+
+    'imbalance_grouped_outliers_non_convex': {
+        'simulation_base': 'clusters perfect balance\n without outliers\n mean prop outliers 0.002', 
+        'simulation_imbalance_outliers_2': 'clusters props [0.15, 0.2, 0.65]\n grouped non convex outliers\n mean prop outliers 0.073'
+    },
+
+    'imbalance_grouped_outliers_convex': {
+        'simulation_base': 'clusters perfect balance\n without outliers\n mean prop outliers 0.002', 
+        'simulation_imbalance_outliers_3': 'clusters props [0.15, 0.2, 0.65]\n grouped convex outliers\n mean prop outliers 0.044'
+    },
+
+    'sphericity_imbalance': {
+        'simulation_base': 'anisotropy factor 1\n clusters perfect balance', 
+        'simulation_sphericity_imbalance_1': 'anisotropy factor 10\n clusters props [0.15, 0.2, 0.65]'
+    },
+
+}
+
+########################################################################################################################################################################
+
+REFERENCE_MODELS = [
+    'FoldFastKmedoidsGGower-robust_mahalanobis_winsorized-sokal-hamming',
+    'FastKmedoidsGGower-robust_mahalanobis_winsorized-sokal-hamming',  
+    'KMeans',
+    'MiniBatchKMeans',
+    'KMedoids-pam',
+    'KMedoids-fastpam',
+    'KMedoids-fasterpam',
+    'KMedoids-fastermsc',
+    'CLARA',
+    'GaussianMixture',
+    'AgglomerativeClustering',
+    'SpectralCoclustering',
+] 
+
+########################################################################################################################################################################
+
+REFERENCE_MODELS_PALETTE = {
+    'FoldFastKmedoidsGGower-robust_mahalanobis_winsorized-sokal-hamming': "#e82727", 
+    'FastKmedoidsGGower-robust_mahalanobis_winsorized-sokal-hamming': "#c51313",      
+    'KMeans': "#2c2cf5",  
+    'MiniBatchKMeans': "#6774d6",
+    'CLARA': "#52C812", 
+    'GaussianMixture': "#d38e25",      
+    'AgglomerativeClustering': "#1A7C0C", 
+    'SpectralCoclustering': "#26cce2" ,
+    'KMedoids-pam': "#6909c4",
+    'KMedoids-fastpam': "#8e39e4",
+    'KMedoids-fasterpam': "#a162e1",
+    'KMedoids-fastermsc': "#bf29d0",  
+}
+
+########################################################################################################################################################################
+
+REFERENCE_MODELS_FORMATTED_NAMES = {k: k for k in REFERENCE_MODELS}
+
+REFERENCE_MODELS_FORMATTED_NAMES.update({
+    'FoldFastKmedoidsGGower-robust_mahalanobis_winsorized-sokal-hamming': 'Fold Fast KMedoids',
+    'FastKmedoidsGGower-robust_mahalanobis_winsorized-sokal-hamming': 'Fast KMedoids',
+})
 
 ########################################################################################################################################################################
 
 ADDITIONAL_METHODS_MDS = {
-    'simulation_base': ['KMeans', 'KMedoids-pam'],
-    'simulation_size_1': ['KMeans', 'CLARA'],
-    'simulation_size_2': ['KMeans', 'CLARA'],
-    'simulation_dim_1': ['KMeans', 'CLARA'],
-    'simulation_dim_2': ['KMeans', 'CLARA'],
-    'simulation_num_clusters_1': ['KMeans', 'CLARA'],
-    'simulation_num_clusters_2': ['KMeans', 'CLARA'],
-    'simulation_separation_1': ['KMeans', 'CLARA'],
-    'simulation_separation_2': ['KMeans', 'CLARA'],
-    'simulation_separation_3': ['KMeans', 'CLARA'],
-    'simulation_separation_4': ['KMeans', 'CLARA'],
-    'simulation_corr_1': ['KMeans', 'CLARA'],
-    'simulation_corr_2': ['KMeans', 'CLARA'],
-    'simulation_outliers_1': ['KMeans', 'CLARA'],
-    'simulation_outliers_2': ['KMeans', 'CLARA'],
-    'simulation_outliers_3': ['KMeans', 'CLARA'],
-    'simulation_outliers_4': ['KMeans', 'CLARA'],
-    'simulation_outliers_5': ['KMeans', 'CLARA'],
-    'simulation_outliers_6': ['KMeans', 'CLARA'],
-    'simulation_imbalance_1': ['KMeans', 'CLARA'],
-    'simulation_imbalance_2': ['KMeans', 'CLARA'],
-    'simulation_sphericity_1': ['KMeans', 'CLARA'],
-    'simulation_sphericity_2': ['KMeans', 'CLARA'],
-    'simulation_sphericity_3': ['KMeans', 'CLARA'],
-    'simulation_geometry_1': ['KMeans', 'CLARA'],
-    'simulation_geometry_2': ['KMeans', 'CLARA'],
-    'heart_disease': ['MiniBatchKMeans', 'CLARA'],
-    'dubai_houses': ['MiniBatchKMeans', 'CLARA'],
-    'kc_houses': ['MiniBatchKMeans', 'CLARA']
+    k:  ['KMeans', 'GaussianMixture', 'KMedoids-pam', 'KMedoids-fasterpam', 'CLARA'] 
+    for k in list(SIMULATION_CONFIGS.keys()) + REAL_DATASET_KEYS
 }
 
 ########################################################################################################################################################################
