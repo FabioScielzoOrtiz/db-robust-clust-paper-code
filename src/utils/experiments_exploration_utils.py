@@ -1476,70 +1476,7 @@ def fast_mds(sample_size, X, d1, d2, d3, robust_method, random_state_mds, random
 
 ########################################################################################################################################################################
 
-def plot_datasets_2d(X, y, title, outliers_idx=None):
-    pca = PCA(n_components=2)
-    X_pca = pca.fit_transform(X)
-    
-    plt.figure(figsize=(8, 6))
-    
-    # 1. Identificar clústeres reales (>= 0) y micro-clústeres agrupados (< 0)
-    real_clusters = sorted([val for val in np.unique(y) if val >= 0])
-    grouped_clusters = sorted([val for val in np.unique(y) if val < 0])
-    
-  
-    # Los dispersos son los que están en outliers_idx PERO pertenecen a un clúster normal
-    outliers_mask = np.zeros(len(y), dtype=bool)
-    if outliers_idx is not None and len(outliers_idx) > 0:
-        outliers_mask[outliers_idx] = True
-    outliers_mask = outliers_mask & (y >= 0) 
-    
-    # Los normales son los que no son ni agrupados ni dispersos
-    mask_normal = (y >= 0) & ~outliers_mask
-    
-    # 3. Dibujar clústeres normales (Círculos, tab10)
-    if mask_normal.sum() > 0:
-        sns.scatterplot(
-            x=X_pca[mask_normal, 0], y=X_pca[mask_normal, 1], 
-            hue=y[mask_normal], hue_order=real_clusters, 
-            palette="tab10", alpha=0.7, edgecolor='k', s=50
-        )
-    
-    # 4. Dibujar Outliers 
-    if outliers_mask.sum() > 0:
-        sns.scatterplot(
-            x=X_pca[outliers_mask, 0], y=X_pca[outliers_mask, 1], 
-            hue=y[outliers_mask], hue_order=real_clusters, 
-            palette="tab10", marker='X', s=80, edgecolor='black', 
-            legend=False
-        )
-
-    plt.title(title, fontweight='bold')
-    plt.xlabel('PCA Component 1')
-    plt.ylabel('PCA Component 2')
-    
-    # 6. Configurar la leyenda dinámica e inteligente
-    handles, labels = plt.gca().get_legend_handles_labels()
-    
-    clean_handles, clean_labels = [], []
-    for h, l in zip(handles, labels):
-        if l not in clean_labels and l not in ['hue', 'y']: 
-            clean_handles.append(h)
-            clean_labels.append(l)
-            
-    # Solo inyectamos en la leyenda lo que realmente existe en el dataset
-    if outliers_mask.sum() > 0:
-        dispersed_proxy = Line2D([0], [0], marker='X', color='w', markerfacecolor='gray', 
-                                 markeredgecolor='black', markersize=9)
-        clean_handles.append(dispersed_proxy)
-        clean_labels.append('Outliers')
-
-    plt.legend(clean_handles, clean_labels, bbox_to_anchor=(1.05, 1), loc='upper left')
-    plt.tight_layout()
-    plt.show()
-
-########################################################################################################################################################################
-
-def plot_dataset_projection(X, y, title, method='pca', outliers_idx=None, **kwargs):
+def plot_dataset_projection(X, y, title, method='pca', outliers_idx=None, save_path=None, **kwargs):
     """
     Proyecta y visualiza datasets de clustering en 2D con la lógica de leyenda original.
     """
@@ -1608,6 +1545,10 @@ def plot_dataset_projection(X, y, title, method='pca', outliers_idx=None, **kwar
 
     plt.legend(clean_handles, clean_labels, bbox_to_anchor=(1.05, 1), loc='upper left')
     plt.tight_layout()
+    
+    if save_path:
+        plt.savefig(save_path, format='png', dpi=300, bbox_inches="tight")
+
     plt.show()
 
 ########################################################################################################################################################################
@@ -1624,8 +1565,7 @@ def get_dataset_structure(X, y, data_id, quant_predictors, n_binary, n_multiclas
         separation_factor = float(simulation_config.get('separation_factor', 1.0))
         n_redundant = int(simulation_config.get('n_redundant', 0))
         anisotropy_factor = float(simulation_config.get('anisotropy_factor', 1.0))
-        outlier_configs = simulation_config.get('outlier_configs', None)
-        grouped_outliers_config = simulation_config.get('grouped_outliers_config', None)
+        outliers_config = simulation_config.get('outliers_config', None)
         # En simulaciones, asumimos que las primeras n_quant son las numéricas
         quant_predictors = X.columns[:n_quant]
         convex_geometry = False if geometry else True
@@ -1634,7 +1574,7 @@ def get_dataset_structure(X, y, data_id, quant_predictors, n_binary, n_multiclas
         n_rows, n_cols = X.shape
         n_clusters = len(np.unique(y))
         n_quant = len(quant_predictors)
-        separation_factor, convex_geometry, n_redundant, anisotropy_factor, outlier_configs, grouped_outliers_config = None, None, None, None, None, None
+        separation_factor, convex_geometry, n_redundant, anisotropy_factor, outliers_config = None, None, None, None, None
 
     prop_categorical = (n_binary + n_multiclass) / n_cols if n_cols > 0 else 0.0
 
@@ -1650,9 +1590,9 @@ def get_dataset_structure(X, y, data_id, quant_predictors, n_binary, n_multiclas
         # --- 1. Outliers mediante IQR ---
         mean_prop_outliers = outliers_table(X[quant_predictors], auto=False, col_names=quant_predictors, h=1.5)['prop_outliers'].mean()
         
-        if outlier_configs:
+        if outliers_config['dispersed']:
             outliers_contamination_type = 'dispersed'
-        if grouped_outliers_config:
+        if outliers_config['grouped']:
             outliers_contamination_type = 'grouped'
 
         # --- 2. Correlación y Redundancia (Ajuste PCA 0.95) ---
@@ -1743,7 +1683,7 @@ def get_dataset_structure(X, y, data_id, quant_predictors, n_binary, n_multiclas
         'outliers_contamination_type': outliers_contamination_type,
         'silhouette_index': round(silhouette_quant, 4),
         'prop_high_corr_quant': round(prop_high_corr, 4),
-        'sphericity_quant': round(sphericity, 4),
+        'sphericity_index': round(sphericity, 4),
         'prop_redundancy_quant': round(prop_redundancy, 4),
         'normalized_balance_entropy': round(norm_entropy, 4),
         'imbalance_ratio': round(imbalance_ratio, 4),

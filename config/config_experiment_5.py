@@ -185,117 +185,117 @@ DIMENSIONS = {
 DIMENSIONS_FORMATTED = {
     
     'size': {
-        'simulation_base': 'num rows 10000',
-        'simulation_size_1': 'num rows 35000',
-        'simulation_size_2': 'num rows 50000'
+        'simulation_base': 'Num rows 10000',
+        'simulation_size_1': 'Num rows 35000',
+        'simulation_size_2': 'Num rows 50000'
     },
 
     'dimensionality': {
-        'simulation_base': 'num cols 8',
-        'simulation_dim_3': 'num cols 25',
-        'simulation_dim_1': 'num cols 50',
-        'simulation_dim_2': 'num cols 100'
+        'simulation_base': 'Num cols 8',
+        'simulation_dim_3': 'Num cols 25',
+        'simulation_dim_1': 'numNum cols 50',
+        'simulation_dim_2': 'Num cols 100'
     },
 
     'num_clusters': {
-        'simulation_base': 'num clusters 3',
-        'simulation_num_clusters_1': 'num clusters 5',
-        'simulation_num_clusters_2': 'num clusters 7'
+        'simulation_base': 'Num clusters 3',
+        'simulation_num_clusters_1': 'Num clusters 5',
+        'simulation_num_clusters_2': 'Num clusters 7'
     },
 
     'separation': {
-        'simulation_separation_1': 'separation factor 0.2',
-        'simulation_separation_2': 'separation factor 0.5',
-        'simulation_base': 'separation factor 1',
-        'simulation_separation_3': 'separation factor 2'
+        'simulation_separation_1': 'Separation factor 0.2',
+        'simulation_separation_2': 'Separation factor 0.5',
+        'simulation_base': 'Separation factor 1',
+        'simulation_separation_3': 'Separation factor 2'
     },
 
     'correlation': {
-        'simulation_base': 'prop high corr 0.297',
-        'simulation_corr_1': 'prop high corr 0.385',
-        'simulation_corr_2': 'prop high corr 0.592'
+        'simulation_base': 'Prop high corr 0.297',
+        'simulation_corr_1': 'Prop high corr 0.385',
+        'simulation_corr_2': 'Prop high corr 0.592'
     },
 
     'disperse_outliers': {
-        'simulation_base': 'without outliers\n mean prop outliers 0.002',
-        'simulation_outliers_1': 'disperse outliers\n mean prop outliers 0.047',
-        'simulation_outliers_2': 'disperse outliers\n mean prop outliers 0.071',
+        'simulation_base': 'Without outliers\n Mean prop outliers 0.002',
+        'simulation_outliers_1': 'Disperse outliers\n Mean prop outliers 0.047',
+        'simulation_outliers_2': 'Disperse outliers\n Mean prop outliers 0.071',
     },
 
     'grouped_outliers_convex': {
-        'simulation_base': 'without outliers\n mean prop outliers 0.002',
-        'simulation_outliers_3': 'grouped convex outliers\n mean prop outliers 0.044\n outliers dispersion factor 1',
+        'simulation_base': 'Without outliers\n Mean prop outliers 0.002',
+        'simulation_outliers_3': 'Grouped convex outliers\n Mean prop outliers 0.044\n Outliers dispersion factor 1',
         #'simulation_outliers_4': 'grouped convex outliers\n mean prop outliers 0.058\n outliers dispersion factor 4',
     },   
 
     'grouped_outliers_non_convex': {
-        'simulation_base': 'without outliers\n mean prop outliers 0.002',
-        'simulation_outliers_5': 'grouped non convex outliers\n mean prop outliers 0.063\n outliers anisotropy factor 4',
-        'simulation_outliers_6': 'grouped non convex outliers\n mean prop outliers 0.073\n outliers anisotropy factor 12',
+        'simulation_base': 'Without outliers\n Mean prop outliers 0.002',
+        'simulation_outliers_5': 'Grouped non convex outliers\n Mean prop outliers 0.063\n Outliers anisotropy factor 4',
+        'simulation_outliers_6': 'Grouped non convex outliers\n Mean prop outliers 0.073\n Outliers anisotropy factor 12',
     }, 
 
     'imbalance': {
-        'simulation_base': 'clusters perfect balance',
-        'simulation_imbalance_1': 'clusters props [0.15, 0.2, 0.65]',
-        'simulation_imbalance_2': 'clusters props [0.25, 0.75]',
+        'simulation_base': 'Clusters perfect balance',
+        'simulation_imbalance_1': 'Clusters props [0.15, 0.2, 0.65]',
+        'simulation_imbalance_2': 'Clusters props [0.25, 0.75]',
     },
 
     'sphericity': {
-        'simulation_base': 'anisotropy factor 1',
-        'simulation_sphericity_1': 'anisotropy factor 4',
-        'simulation_sphericity_2': 'anisotropy factor 6',
-        'simulation_sphericity_3': 'anisotropy factor 10'
+        'simulation_base': 'Anisotropy factor 1',
+        'simulation_sphericity_1': 'Anisotropy factor 4',
+        'simulation_sphericity_2': 'Anisotropy factor 6',
+        'simulation_sphericity_3': 'Anisotropy factor 10'
     },
 
     'size_disperse_outliers': {
-        'simulation_base': 'num rows 10000\n without outliers\n mean prop outliers 0.002', 
-        'simulation_outliers_2': 'num rows 10000\n disperse outliers\n mean prop outliers 0.071',
-        'simulation_size_outliers_1': 'num rows 20000\n disperse outliers\n mean prop outliers 0.071'
+        'simulation_base': 'Num rows 10000\n Without outliers\n Mean prop outliers 0.002', 
+        'simulation_outliers_2': 'Num rows 10000\n Disperse outliers\n Mean prop outliers 0.071',
+        'simulation_size_outliers_1': 'Num rows 20000\n Disperse outliers\n Mean prop outliers 0.071'
     },
 
     'size_grouped_outliers_non_convex': {
-        'simulation_base': 'num rows 10000\n without outliers\n mean prop outliers 0.002', 
-        'simulation_size_outliers_2': 'num rows 20000\n grouped non convex outliers\n mean prop outliers 0.073'
+        'simulation_base': 'Num rows 10000\n Without outliers\n Mean prop outliers 0.002', 
+        'simulation_size_outliers_2': 'Num rows 20000\n Grouped non convex outliers\n Mean prop outliers 0.073'
     },
 
     'size_grouped_outliers_convex': {
-        'simulation_base': 'num rows 10000\n without outliers\n mean prop outliers 0.002', 
-        'simulation_size_outliers_3': 'num rows 20000\n grouped convex outliers\n mean prop outliers 0.044'
+        'simulation_base': 'Num rows 10000\n Without outliers\n Mean prop outliers 0.002', 
+        'simulation_size_outliers_3': 'Num rows 20000\n Grouped convex outliers\n Mean prop outliers 0.044'
     },
 
     'sphericity_disperse_outliers': {
-        'simulation_base': 'anisotropy factor 1\n without outliers\n mean prop outliers 0.002', 
-        'simulation_sphericity_outliers_1': 'anisotropy factor 10\n disperse outliers\n mean prop outliers 0.071'
+        'simulation_base': 'Anisotropy factor 1\n Without outliers\n Mean prop outliers 0.002', 
+        'simulation_sphericity_outliers_1': 'Anisotropy factor 10\n Disperse outliers\n Mean prop outliers 0.071'
     },
 
     'sphericity_grouped_outliers_non_convex': {
-        'simulation_base': 'anisotropy factor 1\n without outliers\n mean prop outliers 0.002', 
-        'simulation_sphericity_outliers_2': 'anisotropy factor 10\n grouped non convex outliers\n mean prop outliers 0.073'
+        'simulation_base': 'Anisotropy factor 1\n Without outliers\n Mean prop outliers 0.002', 
+        'simulation_sphericity_outliers_2': 'Anisotropy factor 10\n Grouped non convex outliers\n Mean prop outliers 0.073'
     },
 
     'sphericity_grouped_outliers_convex': {
-        'simulation_base': 'anisotropy factor 1\n without outliers\n mean prop outliers 0.002', 
-        'simulation_sphericity_outliers_3': 'anisotropy factor 10\n grouped convex outliers\n mean prop outliers 0.044'
+        'simulation_base': 'Anisotropy factor 1\n Without outliers\n Mean prop outliers 0.002', 
+        'simulation_sphericity_outliers_3': 'Anisotropy factor 10\n Grouped convex outliers\n Mean prop outliers 0.044'
     },
 
     'imbalance_disperse_outliers': {
-        'simulation_base': 'clusters perfect balance\n without outliers\n mean prop outliers 0.002', 
-        'simulation_imbalance_outliers_1': 'clusters props [0.15, 0.2, 0.65]\n disperse outliers\n mean prop outliers 0.071'
+        'simulation_base': 'Clusters perfect balance\n Without outliers\n Mean prop outliers 0.002', 
+        'simulation_imbalance_outliers_1': 'Clusters props [0.15, 0.2, 0.65]\n Disperse outliers\n Mean prop outliers 0.071'
     },
 
     'imbalance_grouped_outliers_non_convex': {
-        'simulation_base': 'clusters perfect balance\n without outliers\n mean prop outliers 0.002', 
-        'simulation_imbalance_outliers_2': 'clusters props [0.15, 0.2, 0.65]\n grouped non convex outliers\n mean prop outliers 0.073'
+        'simulation_base': 'Clusters perfect balance\n Without outliers\n Mean prop outliers 0.002', 
+        'simulation_imbalance_outliers_2': 'Clusters props [0.15, 0.2, 0.65]\n Grouped non convex outliers\n Mean prop outliers 0.073'
     },
 
     'imbalance_grouped_outliers_convex': {
-        'simulation_base': 'clusters perfect balance\n without outliers\n mean prop outliers 0.002', 
-        'simulation_imbalance_outliers_3': 'clusters props [0.15, 0.2, 0.65]\n grouped convex outliers\n mean prop outliers 0.044'
+        'simulation_base': 'Clusters perfect balance\n Without outliers\n Mean prop outliers 0.002', 
+        'simulation_imbalance_outliers_3': 'Clusters props [0.15, 0.2, 0.65]\n Grouped convex outliers\n Mean prop outliers 0.044'
     },
 
     'sphericity_imbalance': {
-        'simulation_base': 'anisotropy factor 1\n clusters perfect balance', 
-        'simulation_sphericity_imbalance_1': 'anisotropy factor 10\n clusters props [0.15, 0.2, 0.65]'
+        'simulation_base': 'Anisotropy factor 1\n Clusters perfect balance', 
+        'simulation_sphericity_imbalance_1': 'Anisotropy factor 10\n Clusters props [0.15, 0.2, 0.65]'
     },
 
 }

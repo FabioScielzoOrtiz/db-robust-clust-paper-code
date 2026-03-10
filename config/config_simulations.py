@@ -239,7 +239,7 @@ SIMULATION_CONFIGS = {
         'n_features': 8,
         'feature_types': {'n_binary': 2, 'n_multiclass': 2, 'n_bins_multiclass': 4},
         'outliers_config': { # disperse univariate outliers
-            'feature_specific': [
+            'dispersed': [
                 {'col_idx': 0, 'prop_above': 0.1, 'sigma': 2},
                 {'col_idx': 1, 'prop_below': 0.1, 'sigma': 2}
             ]
@@ -253,7 +253,7 @@ SIMULATION_CONFIGS = {
         'n_features': 8,
         'feature_types': {'n_binary': 2, 'n_multiclass': 2, 'n_bins_multiclass': 4},
         'outliers_config': { # disperse univariate outliers
-            'feature_specific': [ 
+            'dispersed': [ 
                 {'col_idx': 0, 'prop_above': 0.1, 'sigma': 5},
                 {'col_idx': 1, 'prop_below': 0.1, 'sigma': 2},
                 {'col_idx': 2, 'prop_below': 0.1, 'sigma': 2}
@@ -428,7 +428,7 @@ SIMULATION_CONFIGS = {
         'n_features': 8,
         'feature_types': {'n_binary': 2, 'n_multiclass': 2, 'n_bins_multiclass': 4},
         'outliers_config': { # disperse univariate outliers
-            'feature_specific': [ 
+            'dispersed': [ 
                 {'col_idx': 0, 'prop_above': 0.1, 'sigma': 5},
                 {'col_idx': 1, 'prop_below': 0.1, 'sigma': 2},
                 {'col_idx': 2, 'prop_below': 0.1, 'sigma': 2}
@@ -474,7 +474,7 @@ SIMULATION_CONFIGS = {
         'feature_types': {'n_binary': 2, 'n_multiclass': 2, 'n_bins_multiclass': 4},
         'anisotropy_factor': 10,
         'outliers_config': { # disperse univariate outliers
-            'feature_specific': [ 
+            'dispersed': [ 
                 {'col_idx': 0, 'prop_above': 0.1, 'sigma': 5},
                 {'col_idx': 1, 'prop_below': 0.1, 'sigma': 2},
                 {'col_idx': 2, 'prop_below': 0.1, 'sigma': 2}
@@ -522,7 +522,7 @@ SIMULATION_CONFIGS = {
         'feature_types': {'n_binary': 2, 'n_multiclass': 2, 'n_bins_multiclass': 4},
         'cluster_proportions': [0.15, 0.2, 0.65],
         'outliers_config': { # disperse univariate outliers
-            'feature_specific': [ 
+            'dispersed': [ 
                 {'col_idx': 0, 'prop_above': 0.1, 'sigma': 5},
                 {'col_idx': 1, 'prop_below': 0.1, 'sigma': 2},
                 {'col_idx': 2, 'prop_below': 0.1, 'sigma': 2}

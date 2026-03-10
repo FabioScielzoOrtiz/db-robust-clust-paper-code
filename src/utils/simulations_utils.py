@@ -79,8 +79,7 @@ def inject_outliers(X, y, config, random_state=123):
     
     # Extraemos las configuraciones (si no existen, serán None)
     grouped_config = config.get('grouped', None)
-    feature_configs = config.get('feature_specific', None)
-    scattered_config = config.get('scattered', None)
+    disperse_configs = config.get('dispersed', None)
 
     # -------------------------------------------------------------------------
     # TIPO 1: OUTLIERS AGRUPADOS (Satélites)
@@ -161,10 +160,10 @@ def inject_outliers(X, y, config, random_state=123):
     # -------------------------------------------------------------------------
     # TIPO 2: OUTLIERS DE SUBESPACIO (Fallos en variables específicas)
     # -------------------------------------------------------------------------
-    if feature_configs:
+    if disperse_configs:
         rng = np.random.RandomState(random_state + 2)
         
-        for f_config in feature_configs:
+        for f_config in disperse_configs:
             prop_below = f_config.get('prop_below', 0.0)
             prop_above = f_config.get('prop_above', 0.0)
             col_idx = f_config.get('col_idx', 0)
@@ -194,78 +193,6 @@ def inject_outliers(X, y, config, random_state=123):
                     X_out[idx_above, col_idx] = rng.uniform(
                         upper_bound, upper_bound + sigma*np.abs(upper_bound), size=n_above)
                     all_outlier_indices.extend(idx_above)
-
-    # -------------------------------------------------------------------------
-    # TIPO 3: OUTLIERS DISPERSOS (Ruido uniforme multivariante)
-    # -------------------------------------------------------------------------
-    if scattered_config:
-        rng = np.random.RandomState(random_state + 3)
-        prop = scattered_config.get('prop_outliers', 0.05)
-        
-        n_scattered = int(n_total * prop)
-        available_idx = np.setdiff1d(np.arange(n_total), all_outlier_indices)
-        n_scattered = min(n_scattered, len(available_idx))
-        
-        if n_scattered > 0:
-            replace_idx = rng.choice(available_idx, size=n_scattered, replace=False)
-            
-            min_vals = np.min(X_out, axis=0)
-            max_vals = np.max(X_out, axis=0)
-            margin = (max_vals - min_vals) * 0.2
-            
-            noise_matrix = rng.uniform(low=min_vals - margin, high=max_vals + margin, 
-                                       size=(n_scattered, n_features))
-            
-            X_out[replace_idx] = noise_matrix
-            all_outlier_indices.extend(replace_idx)
-
-    # -------------------------------------------------------------------------
-    # TIPO 4: OUTLIERS MULTIVARIANTES LOCALIZADOS (Halos alrededor de clústeres)
-    # -------------------------------------------------------------------------
-    if 'cluster_localized' in config:
-        c_config = config['cluster_localized']
-        prop_outliers = c_config.get('prop_outliers', 0.05)
-        # Ahora el scale_factor es un empuje extra MÁS ALLÁ del borde del clúster
-        scale_factor = c_config.get('scale_factor', 1.5) 
-        
-        n_outliers = int(n_total * prop_outliers)
-        available_idx = np.setdiff1d(np.arange(n_total), all_outlier_indices)
-        
-        if n_outliers > 0 and len(available_idx) > 0:
-            n_outliers = min(n_outliers, len(available_idx))
-            rng_loc = np.random.RandomState(random_state + 4)
-            idx_outliers = rng_loc.choice(available_idx, size=n_outliers, replace=False)
-            
-            unique_clusters = np.unique(y)
-            cluster_stats = {}
-            for c in unique_clusters:
-                c_mask = (y == c)
-                cluster_points = X_out[c_mask]
-                centroid = cluster_points.mean(axis=0)
-                
-                # NUEVO: Calculamos el punto más lejano de este clúster (el "borde")
-                distances = np.linalg.norm(cluster_points - centroid, axis=1)
-                max_radius = np.max(distances)
-                
-                cluster_stats[c] = {
-                    'centroid': centroid,
-                    'max_radius': max_radius
-                }
-            
-            for idx in idx_outliers:
-                c_label = y[idx]
-                stats = cluster_stats[c_label]
-                
-                # Dirección aleatoria
-                direction = rng_loc.randn(n_features)
-                direction /= np.linalg.norm(direction) 
-                
-                # NUEVO: Posicionamos el punto en el BORDE del clúster + un empuje extra
-                # scale_factor = 1.2 significa un 20% más lejos del punto más extremo del clúster
-                push_distance = stats['max_radius'] * scale_factor
-                X_out[idx] = stats['centroid'] + (direction * push_distance)
-                
-            all_outlier_indices.extend(idx_outliers)
 
     return X_out, y_out, all_outlier_indices
 
