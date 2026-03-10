@@ -90,7 +90,7 @@ def main(force=False): # <-- NUEVO: Parámetro force
             logging.warning(f"  > Could not read existing file. Starting fresh. Error: {e}")
 
     # Filtramos los IDs para quedarnos solo con los que no están en el archivo
-    PENDING_DATA_IDS = [d_id for d_id in DATA_IDS if d_id not in processed_ids]
+    PENDING_DATA_IDS = [d_id for d_id in DATA_IDS if d_id not in processed_ids] 
     
     if not PENDING_DATA_IDS:
         logging.info("  ✅ All datasets have already been processed. Nothing to do. Exiting.")

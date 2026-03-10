@@ -21,7 +21,9 @@ from config.config_simulations import SIMULATION_CONFIGS, REAL_DATASET_KEYS
 
 data_dir = os.path.join(project_path, 'data', 'processed_data')
 data_path = os.path.join(data_dir, 'datasets_structure.parquet') 
-datasets_structure = pl.read_parquet(data_path)
+datasets_structure = None
+if os.path.exists(data_path):
+    datasets_structure = pl.read_parquet(data_path)
 
 ########################################################################################################################################################################
 
@@ -77,17 +79,19 @@ CONFIG_EXPERIMENT = {
 
 ########################################################################################################################################################################
 
-for data_id, config in CONFIG_EXPERIMENT.items():
-    row = datasets_structure.filter(pl.col('data_id') == data_id)
-    if not row.is_empty():
-        config.update({
-            'p1': row['n_quant'][0],
-            'p2': row['n_binary'][0],
-            'p3': row['n_multiclass'][0],
-            'n_clusters': row['n_clusters'][0],
-            'alpha': 0.1 if 'outliers' in data_id else 0.05,
-            'score_metric': accuracy_score if row['is_balanced'][0] else balanced_accuracy_score
-        })
+if datasets_structure:
+    
+    for data_id, config in CONFIG_EXPERIMENT.items():
+        row = datasets_structure.filter(pl.col('data_id') == data_id)
+        if not row.is_empty():
+            config.update({
+                'p1': row['n_quant'][0],
+                'p2': row['n_binary'][0],
+                'p3': row['n_multiclass'][0],
+                'n_clusters': row['n_clusters'][0],
+                'alpha': 0.1 if 'outliers' in data_id else 0.05,
+                'score_metric': accuracy_score if row['is_balanced'][0] else balanced_accuracy_score
+            })
 
 ########################################################################################################################################################################
 

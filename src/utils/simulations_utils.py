@@ -34,38 +34,6 @@ def generate_categorical_features(X, feature_types=None):
     return X
 
 ########################################################################################################################################################################
-'''
-def outlier_contamination(X, col_name, prop_below=None, prop_above=None, sigma=2, random_state=123):
-   
-    X_new = X.copy()
-    Q25 = X_new[col_name].quantile(0.25)
-    Q75 = X_new[col_name].quantile(0.75)
-    IQR = Q75 - Q25
-    lower_bound = Q25 - 1.5 * IQR
-    upper_bound = Q75 + 1.5 * IQR
-    
-    np.random.seed(random_state)
-    outlier_idx = []
-    n_total = len(X_new)
-    available_idx = np.arange(n_total)
-    
-    if prop_below is not None and prop_below > 0:
-        n_below = int(n_total * prop_below)
-        idx_below = np.random.choice(available_idx, size=n_below, replace=False)
-        X_new.loc[idx_below, col_name] = np.random.uniform(lower_bound - sigma*np.abs(lower_bound), lower_bound, size=n_below)
-        outlier_idx.extend(idx_below)
-        available_idx = np.setdiff1d(available_idx, idx_below) 
-        
-    if prop_above is not None and prop_above > 0:
-        n_above = int(n_total * prop_above)
-        idx_above = np.random.choice(available_idx, size=n_above, replace=False)
-        X_new.loc[idx_above, col_name] = np.random.uniform(upper_bound, upper_bound + sigma*np.abs(upper_bound), size=n_above)
-        outlier_idx.extend(idx_above)
-
-    return X_new, np.array(outlier_idx)
-'''
-
-########################################################################################################################################################################
 
 def inject_outliers(X, y, config, random_state=123):
     """
@@ -145,9 +113,7 @@ def inject_outliers(X, y, config, random_state=123):
                     S_g = np.eye(n_features)
                     S_g[0, 0] = grouped_config.get('anisotropy_factor', 4.0)
                     X_g = np.dot(X_g, np.dot(Q_g, S_g))
-            
-            # (Falta tu código de posicionar los X_g y guardarlos, ¡asumo que lo tienes debajo!)
-            
+                       
             # Posicionar como satélite
             centroid = np.mean(X_out[y == target_cluster], axis=0)
             direction = rng.randn(n_features)
