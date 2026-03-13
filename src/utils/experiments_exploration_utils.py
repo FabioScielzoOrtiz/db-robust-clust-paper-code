@@ -748,12 +748,19 @@ def plot_experiment_5_results(df_avg, figsize=(15,11), title=None, title_height=
             label.set_color('red') 
 
     # 5. Crear Leyenda Personalizada
-    legend_elements = [
-        mlines.Line2D([0], [0], color='darkviolet', lw=6, label='Fast $k$-Medoids'),
-        mlines.Line2D([0], [0], color='green', lw=6, label='$q$-Fold Fast $k$-Medoids'),
-        mlines.Line2D([0], [0], color='black', lw=6, label='Other clustering methods'),
-        mlines.Line2D([0], [0], color='red', lw=6, label='Not feasible clustering methods')
-    ]
+    if len(not_feasible_methods) > 0:
+        legend_elements = [
+            mlines.Line2D([0], [0], color='darkviolet', lw=6, label='Fast $k$-Medoids'),
+            mlines.Line2D([0], [0], color='green', lw=6, label='$q$-Fold Fast $k$-Medoids'),
+            mlines.Line2D([0], [0], color='black', lw=6, label='Other clustering methods'),
+            mlines.Line2D([0], [0], color='red', lw=6, label='Not feasible clustering methods') 
+        ]
+    else:
+        legend_elements = [
+            mlines.Line2D([0], [0], color='darkviolet', lw=6, label='Fast $k$-Medoids'),
+            mlines.Line2D([0], [0], color='green', lw=6, label='$q$-Fold Fast $k$-Medoids'),
+            mlines.Line2D([0], [0], color='black', lw=6, label='Other clustering methods'),
+        ]        
 
     # Añadir leyenda al primer gráfico (movida hacia la derecha para centrar globalmente abajo)
     # Ajuste del bbox_to_anchor para que quede centrada respecto a la figura global
@@ -863,8 +870,7 @@ def multi_plot_experiment_5_results(df_master, subplots_col, subplot_col_target_
             
             # Título único centrado
             if col_idx == 1:
-                subplot_col_value_clean = subplot_col_value.replace('_', ' ').capitalize()
-                ax.set_title(subplot_col_value_clean, size=15, weight='bold', pad=15)
+                ax.set_title(subplot_col_value, size=15, weight='bold', pad=15)
             else:
                 ax.set_title("") 
 
@@ -885,12 +891,19 @@ def multi_plot_experiment_5_results(df_master, subplots_col, subplot_col_target_
                 ax.set_yticklabels([])
 
     # Leyenda
-    legend_elements = [
-        mlines.Line2D([0], [0], color='darkviolet', lw=6, label='Fast $k$-Medoids'),
-        mlines.Line2D([0], [0], color='green', lw=6, label='$q$-Fold Fast $k$-Medoids'),
-        mlines.Line2D([0], [0], color='black', lw=6, label='Other clustering methods'),
-        mlines.Line2D([0], [0], color='red', lw=6, label='Not feasible clustering methods')
-    ]
+    if len(not_feasible_methods) > 0:
+        legend_elements = [
+            mlines.Line2D([0], [0], color='darkviolet', lw=6, label='Fast $k$-Medoids'),
+            mlines.Line2D([0], [0], color='green', lw=6, label='$q$-Fold Fast $k$-Medoids'),
+            mlines.Line2D([0], [0], color='black', lw=6, label='Other clustering methods'),
+            mlines.Line2D([0], [0], color='red', lw=6, label='Not feasible clustering methods') 
+        ]
+    else:
+        legend_elements = [
+            mlines.Line2D([0], [0], color='darkviolet', lw=6, label='Fast $k$-Medoids'),
+            mlines.Line2D([0], [0], color='green', lw=6, label='$q$-Fold Fast $k$-Medoids'),
+            mlines.Line2D([0], [0], color='black', lw=6, label='Other clustering methods'),
+        ]     
 
     # Ajustado el bbox_to_anchor para compensar el nuevo margen inferior
     axes[num_subplots-1, 1].legend(
@@ -1012,7 +1025,7 @@ def pareto_plot_experiment_5_results(df, models_to_plot, palette, models_formatt
     
     # 7. Guardar y mostrar
     if save_path:
-        fig.savefig(save_path, format='pdf', dpi=300, bbox_inches="tight")
+        fig.savefig(save_path, format='png', dpi=300, bbox_inches="tight", pad_inches=0.2)
         
     plt.show()
 
@@ -1113,8 +1126,7 @@ def multi_pareto_plot_experiment_5(df_master, subplots_col, models_to_plot, pale
             adjust_text(texts, ax=ax, arrowprops=dict(arrowstyle="-", color='gray', lw=0.5))
             
         # --- TÍTULOS Y EJES CORREGIDOS ---
-        subplot_col_value_clean = str(subplot_col_value).replace('_', ' ').capitalize()
-        ax.set_title(subplot_col_value_clean, size=15, weight='bold', pad=10)
+        ax.set_title(subplot_col_value, size=15, weight='bold', pad=10)
         
         # El título del eje Y solo se escribe en el primer subplot (índice 0)
         if row_idx == 0:
@@ -1155,6 +1167,208 @@ def multi_pareto_plot_experiment_5(df_master, subplots_col, models_to_plot, pale
 
 ########################################################################################################################################################################
 
+def dimension_effect_plot_experiment_5(df, dimensions_dict, figsize=(15,10), dimensions_formatted=None, models_to_plot=None, models_formatted_names=None, palette=None,
+                                       title=None, time_log_scale=False, show_variability=False, include_ari=True, 
+                                       annotate_lines=True, 
+                                       title_height=0.98, title_size=15, hspace=0.5, wspace=0.3, save_path=None):
+    """
+    Genera un grid combinado para publicación.
+    Métricas en el eje Y de los lineplots.
+    Dimensión analizada como título (subtitle) del subplot central.
+    Nombres de los modelos en el eje Y del heatmap coloreados según la leyenda.
+    Etiquetas directas en los lineplots ajustadas con adjustText y con márgenes dinámicos.
+    """
+
+    metrics = [
+        {'col': 'mean_adj_accuracy', 'std': 'std_adj_accuracy', 'name': 'Adj Accuracy', 
+         'is_time': False, 'ylim': None, 
+         'heat_label': '% Change', 'cmap': sns.light_palette("darkred", as_cmap=True, reverse=True)}
+    ]
+    
+    if include_ari:
+        metrics.append(
+            {'col': 'mean_ari', 'std': 'std_ari', 'name': 'Adjusted Rand Index', 
+             'is_time': False, 'ylim': None, 
+             'heat_label': '% Change', 'cmap': sns.light_palette("darkred", as_cmap=True, reverse=True)}
+        )
+        
+    metrics.append(
+        {'col': 'mean_time', 'std': 'std_time', 'name': 'Computation Time (s)', 
+         'is_time': True, 'ylim': None, 'heat_label': '% Change', 'cmap': sns.light_palette("indigo", as_cmap=True)}
+    )
+
+    if models_to_plot:
+        df = df.filter(pl.col('model_name').is_in(models_to_plot))
+
+    display_to_color = {}
+    if palette:
+        unique_models = df.get_column('model_name').unique().to_list()
+        for mod in unique_models:
+            disp_name = models_formatted_names.get(mod, mod) if models_formatted_names else mod
+            display_to_color[disp_name] = palette.get(mod, 'black')
+
+    num_dims = len(dimensions_dict)
+    num_metrics = len(metrics) 
+    
+    total_rows = num_dims * 2 
+    
+    sns.set_theme(style="whitegrid", context="paper", font_scale=1.1)
+    
+    fig, axes = plt.subplots(total_rows, num_metrics, 
+                             figsize=figsize, 
+                             squeeze=False)
+
+    for dim_idx, (dim_name, data_ids) in enumerate(dimensions_dict.items()):
+        row_line = dim_idx * 2
+        row_heat = dim_idx * 2 + 1
+        
+        df_dim = df.filter(pl.col('data_id').is_in(data_ids)).to_pandas()
+        x_positions = np.arange(len(data_ids))
+        if dimensions_formatted:
+            x_labels = [dimensions_formatted[dim_name][d] for d in data_ids]
+        else:
+            x_labels = [str(d).replace('simulation_', '').replace('_', ' ').title() for d in data_ids]
+
+        for col_idx, met in enumerate(metrics):
+            ax_line = axes[row_line, col_idx]
+            ax_heat = axes[row_heat, col_idx]
+            
+            heat_data = []
+            texts = []
+
+            for model in df_dim['model_name'].unique():
+                df_model = df_dim[df_dim['model_name'] == model]
+                df_model_aligned = df_model.set_index('data_id').reindex(data_ids)
+                
+                # --- PARTE 1: LINE PLOT ---
+                y_mean = np.array(df_model_aligned[met['col']].values, dtype=float)
+                y_std = np.array(df_model_aligned[met['std']].values, dtype=float)
+                lower_bound = y_mean - y_std
+                upper_bound = y_mean + y_std  
+                
+                color = palette.get(model, 'black') if palette else None
+                display_name = models_formatted_names.get(model, model) if models_formatted_names else model
+                
+                ax_line.plot(x_positions, y_mean, marker='o', markersize=6, label=display_name,
+                             color=color, linewidth=2)
+                
+                if annotate_lines and not pd.isna(y_mean[-1]):
+                    txt = ax_line.text(x_positions[-1] + 0.1, y_mean[-1], display_name, 
+                                       color=color, fontweight='bold', fontsize=10, va='center')
+                    texts.append(txt)
+                
+                if met['is_time']:
+                    if time_log_scale:
+                        ax_line.set_yscale('log')
+                    lower_bound = np.clip(lower_bound, a_min=1e-5, a_max=None)
+                    
+                if show_variability:
+                    ax_line.fill_between(x_positions, lower_bound, upper_bound, color=color, alpha=0.1)
+
+                # --- PARTE 2: DATOS HEATMAP ---
+                val_base = y_mean[0] 
+                
+                for step_idx in range(1, len(y_mean)):
+                    val_perturbed = y_mean[step_idx]
+                    
+                    if pd.isna(val_base) or pd.isna(val_perturbed) or val_base == 0:
+                        change = np.nan
+                    else:
+                        change = ((val_perturbed - val_base) / np.abs(val_base)) * 100
+                    
+                    heat_data.append({
+                        'Model': display_name, 
+                        'Scenario': x_labels[step_idx], 
+                        'Change': change
+                    })
+
+            # --- ESTILIZAR LINE PLOT ---
+            ax_line.set_xticks(x_positions)
+            ax_line.set_xticklabels(x_labels, rotation=0, weight='bold', size=12) 
+            
+            if annotate_lines:
+                ax_line.set_xlim(-0.2, x_positions[-1] + 1.2) 
+            else:
+                ax_line.set_xlim(-0.2, x_positions[-1] + 0.2)
+                
+            if met['ylim']: 
+                ax_line.set_ylim(met['ylim'])
+
+            # --- NUEVO: AUMENTAR EL EJE Y DINÁMICAMENTE ---
+            if annotate_lines:
+                ymin, ymax = ax_line.get_ylim()
+                if met['is_time'] and time_log_scale:
+                    # En escala logarítmica es mejor multiplicar para dar espacio al techo
+                    ax_line.set_ylim(ymin / 2, ymax * 2.0)
+                else:
+                    # En escala lineal, añadimos un 15% del rango total como margen
+                    y_margin = (ymax - ymin) * 0.15
+                    ax_line.set_ylim(ymin - y_margin, ymax + y_margin)
+                    
+            ax_line.set_ylabel(met['name'], weight='bold', size=13)
+
+            # --- APLICAR ADJUST_TEXT ---
+            if annotate_lines and texts:
+                adjust_text(texts, ax=ax_line, only_move={'text': 'y'})
+
+            # --- DIBUJAR HEATMAP ---
+            if met['is_time']: 
+                vmin = 0
+                ascending = False
+            else:
+                vmin = None
+                ascending = True
+
+            df_heat = pd.DataFrame(heat_data).pivot(index='Model', columns='Scenario', values='Change')
+            
+            perturbed_labels = x_labels[1:]
+            df_heat = df_heat[perturbed_labels]
+            
+            # --- MODIFICACIÓN: ORDENAR POR LA ÚLTIMA COLUMNA ---
+            last_col = perturbed_labels[-1]
+            df_heat = df_heat.sort_values(by=last_col, ascending=ascending)
+            
+            sns.heatmap(df_heat, ax=ax_heat, annot=True, fmt=".1f", cmap=met['cmap'], 
+                        linewidths=.5, cbar_kws={'label': met['heat_label']}, vmin=vmin)          
+            
+            # --- ESTILIZAR HEATMAP ---
+            ax_heat.set_ylabel("")
+            ax_heat.set_xlabel("")
+            ax_heat.set_xticklabels(ax_heat.get_xticklabels(), rotation=0, weight='bold', size=11)
+            ax_heat.set_yticklabels(ax_heat.get_yticklabels(), size=9, rotation=0)
+
+            for tick_label in ax_heat.get_yticklabels():
+                model_text = tick_label.get_text()
+                if model_text in display_to_color:
+                    tick_label.set_color(display_to_color[model_text])
+                    tick_label.set_fontweight('bold')
+
+    # --- LEYENDA LATERAL ---
+    if not annotate_lines:
+        handles, labels = axes[0, 0].get_legend_handles_labels()
+        by_label = dict(zip(labels, handles))
+        
+        top_right_ax = axes[0, num_metrics - 1]
+        top_right_ax.legend(by_label.values(), by_label.keys(),
+                            loc='center left',             
+                            bbox_to_anchor=(1.05, 0.5),    
+                            ncol=1,                        
+                            frameon=False, 
+                            fontsize=11,
+                            title="Models",                
+                            title_fontsize=12)
+
+    if title:
+        plt.suptitle(title, weight='bold', size=title_size, y=title_height)
+    
+    fig.subplots_adjust(bottom=0.05, wspace=wspace, hspace=hspace) 
+
+    if save_path:
+        fig.savefig(save_path, format='png', dpi=300, bbox_inches="tight")
+
+    plt.show()
+
+'''
 def dimension_effect_plot_experiment_5(df, dimensions_dict, figsize=(15,10), dimensions_formatted=None, models_to_plot=None, models_formatted_names=None, palette=None,
                                        title=None, time_log_scale=False, show_variability=False, include_ari=True, 
                                        annotate_lines=True, 
@@ -1355,7 +1569,8 @@ def dimension_effect_plot_experiment_5(df, dimensions_dict, figsize=(15,10), dim
         fig.savefig(save_path, format='png', dpi=300, bbox_inches="tight")
 
     plt.show()
-    
+'''
+
 ########################################################################################################################################################################
 
 def plot_experiment_6_results(df, num_realizations, save_path, 

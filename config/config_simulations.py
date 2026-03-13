@@ -356,11 +356,11 @@ SIMULATION_CONFIGS = {
 
     'simulation_imbalance_2': {
         'n_samples': 10000,
-        'centers': 2,
-        'cluster_std': [2, 3],
+        'centers': 3,
+        'cluster_std': [2, 2, 3],
         'n_features': 8,
         'feature_types': {'n_binary': 2, 'n_multiclass': 2, 'n_bins_multiclass': 4},
-        'cluster_proportions': [0.25, 0.75],
+        'cluster_proportions': [0.3, 0.25, 0.45],
     },    
 
 
@@ -537,7 +537,7 @@ SIMULATION_CONFIGS = {
         'n_features': 8,
         'feature_types': {'n_binary': 2, 'n_multiclass': 2, 'n_bins_multiclass': 4},
         'cluster_proportions': [0.15, 0.2, 0.65],
-        'outliers_config': { # grouped outliers (not convex, higher anisotropy_factor)
+        'outliers_config': { # grouped outliers (non convex, higher anisotropy_factor)
             'grouped': {
                 'n_groups': 2, 'group_proportions': [0.05, 0.1], 'geometry': 'anisotropic', 'anisotropy_factor': 12, 'distance': 50
             }
@@ -569,6 +569,16 @@ SIMULATION_CONFIGS = {
         'n_features': 8,
         'feature_types': {'n_binary': 2, 'n_multiclass': 2, 'n_bins_multiclass': 4},
         'cluster_proportions': [0.15, 0.2, 0.65],
+        'anisotropy_factor': 10,
+    },
+
+    'simulation_sphericity_imbalance_2': {  # simulation_imbalance_2 with simulation_sphericity_3
+        'n_samples': 10000,
+        'centers': 3,
+        'cluster_std': [2, 2, 3],
+        'n_features': 8,
+        'feature_types': {'n_binary': 2, 'n_multiclass': 2, 'n_bins_multiclass': 4},
+        'cluster_proportions': [0.3, 0.25, 0.45],
         'anisotropy_factor': 10,
     },
 
