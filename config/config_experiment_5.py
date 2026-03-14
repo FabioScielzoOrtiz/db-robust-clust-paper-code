@@ -77,6 +77,14 @@ CONFIG_EXPERIMENT = {
 
 }
 
+CONFIG_EXPERIMENT.update({
+    'heart_disease': {
+        'frac_sample_size_sample_dist_clust': 0.5,
+        'frac_sample_size_fold_sample_dist_clust': 0.7,
+        'n_splits': 3
+    }
+})
+
 ########################################################################################################################################################################
 
 if datasets_structure is not None:

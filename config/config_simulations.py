@@ -582,6 +582,36 @@ SIMULATION_CONFIGS = {
         'anisotropy_factor': 10,
     },
 
+#######################################################################################################################
+
+    'simulation_separation_outliers': { # simulation_separation_2 + simulation_outliers_2
+        'n_samples': 10000,
+        'centers': 3,
+        'cluster_std': [2, 2, 3],
+        'n_features': 8,
+        'feature_types': {'n_binary': 2, 'n_multiclass': 2, 'n_bins_multiclass': 4},
+        'separation_factor': 0.5,
+        'outliers_config': { # disperse univariate outliers
+            'dispersed': [ 
+                {'col_idx': 0, 'prop_above': 0.1, 'sigma': 5},
+                {'col_idx': 1, 'prop_below': 0.1, 'sigma': 2},
+                {'col_idx': 2, 'prop_below': 0.1, 'sigma': 2}
+            ]
+        }
+    },
+
+#######################################################################################################################
+
+    'simulation_separation_sphericity': { # simulation_separation_2 + simulation_sphericity_3
+        'n_samples': 10000,
+        'centers': 3,
+        'cluster_std': [2, 2, 3],
+        'n_features': 8,
+        'feature_types': {'n_binary': 2, 'n_multiclass': 2, 'n_bins_multiclass': 4},
+        'separation_factor': 0.5,
+        'anisotropy_factor': 10
+    }
+
 }
 
 #######################################################################################################################

@@ -1,7 +1,18 @@
 ################################################################################################
 
-import os, json
+import os, json, argparse
 import polars as pl
+
+################################################################################################
+
+# Configuración del parámetro de entrada
+parser = argparse.ArgumentParser(description="Procesar datos de KC Houses.")
+parser.add_argument('--mode', type=str, choices=['binary', 'ternary'], required=True,
+                    help="Define si la variable de respuesta será 'binary' (2 clases) o 'ternary' (3 clases).")
+args = parser.parse_args()
+mode = args.mode
+
+print(f"Iniciando procesamiento en modo: {mode.upper()}")
 
 ################################################################################################
 
@@ -31,20 +42,24 @@ cat_variables = ['view', 'grade']
 
 ################################################################################################
 
+# Cuantiles necesarios
 q10 = df[response].quantile(0.10)
-q15 = df[response].quantile(0.15)
-q25 = df[response].quantile(0.25)
-q75 = df[response].quantile(0.75)
-q85 = df[response].quantile(0.85)
 q90 = df[response].quantile(0.90)
-q50 = df[response].quantile(0.50)
-mean = df[response].mean()
 
+# Lógica condicional basada en el parámetro 'mode'
+if mode == 'binary':
+    breaks = [q90]
+    labels = ['c1', 'c2']
+    response_encoding = {'c1': 0, 'c2': 1}
+else: # ternary
+    breaks = [q10, q90]
+    labels = ['c1', 'c2', 'c3']
+    response_encoding = {'c1': 0, 'c2': 1, 'c3': 2}
+
+# Aplicar los cortes dinámicamente
 df = df.with_columns(pl.col(response).cut(
-    breaks=[q10, q90],
-    #breaks=[q90],
-    labels=['c1', 'c2', 'c3'],
-    #labels=['c1', 'c2'],
+    breaks=breaks,
+    labels=labels,
     left_closed=True
 ).alias(response))
 
@@ -59,15 +74,14 @@ for col in cat_variables:
 
 ################################################################################################
 
-encoding[response] = {'c1': 0, 'c2': 1, 'c3': 2}
-#encoding[response] = {'c1': 0, 'c2': 1}
+# Aplicar el encoding de la variable de respuesta según el modo
+encoding[response] = response_encoding
 
 encoding['floors'] = { # 1, 2, 3
     1.5: 1,
     2.5: 2,
     3.5: 3
 }
-
 
 for col in encoding.keys(): 
     try:
@@ -113,8 +127,10 @@ metadata = {
 
 ################################################################################################
 
-metadata_file_name = "metadata_kc_houses.json"
-processed_data_file_name = "kc_houses_processed.parquet"
+# Nombres de archivo dinámicos según el modo
+metadata_file_name = f"metadata_kc_houses_{mode}.json"
+processed_data_file_name = f"kc_houses_{mode}_processed.parquet"
+
 metadata_file_path = os.path.join(processed_data_dir, metadata_file_name)
 processed_data_file_path = os.path.join(processed_data_dir, processed_data_file_name)
 
@@ -123,6 +139,6 @@ with open(metadata_file_path, 'w', encoding='utf-8') as f:
 
 df.write_parquet(processed_data_file_path)
 
-print(f'✅ Outputs saved successfully at {processed_data_dir}')
+print(f'✅ Outputs ({mode}) saved successfully at {processed_data_dir}')
 
 ################################################################################################
