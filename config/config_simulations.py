@@ -572,19 +572,19 @@ SIMULATION_CONFIGS = {
         'anisotropy_factor': 10,
     },
 
-    'simulation_sphericity_imbalance_2': {  # simulation_imbalance_2 with simulation_sphericity_3
-        'n_samples': 10000,
-        'centers': 3,
-        'cluster_std': [2, 2, 3],
-        'n_features': 8,
-        'feature_types': {'n_binary': 2, 'n_multiclass': 2, 'n_bins_multiclass': 4},
-        'cluster_proportions': [0.3, 0.25, 0.45],
-        'anisotropy_factor': 10,
-    },
+    # 'simulation_sphericity_imbalance_2': {  # simulation_imbalance_2 with simulation_sphericity_3
+    #     'n_samples': 10000,
+    #     'centers': 3,
+    #     'cluster_std': [2, 2, 3],
+    #     'n_features': 8,
+    #     'feature_types': {'n_binary': 2, 'n_multiclass': 2, 'n_bins_multiclass': 4},
+    #     'cluster_proportions': [0.3, 0.25, 0.45],
+    #     'anisotropy_factor': 10,
+    # },
 
 #######################################################################################################################
 
-    'simulation_separation_outliers': { # simulation_separation_2 + simulation_outliers_2
+    'simulation_separation_outliers_1': { # simulation_separation_2 + simulation_outliers_2
         'n_samples': 10000,
         'centers': 3,
         'cluster_std': [2, 2, 3],
@@ -602,7 +602,7 @@ SIMULATION_CONFIGS = {
 
 #######################################################################################################################
 
-    'simulation_separation_sphericity': { # simulation_separation_2 + simulation_sphericity_3
+    'simulation_separation_sphericity_1': { # simulation_separation_2 + simulation_sphericity_3
         'n_samples': 10000,
         'centers': 3,
         'cluster_std': [2, 2, 3],
@@ -618,7 +618,8 @@ SIMULATION_CONFIGS = {
 
 REAL_DATASET_KEYS = [
     'dubai_houses', 
-    'kc_houses',
+    'kc_houses_ternary',
+    'kc_houses_binary',
     'heart_disease'
 ]
 

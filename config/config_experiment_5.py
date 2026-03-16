@@ -154,7 +154,7 @@ SCENARIOS = {
     'simulation_imbalance_outliers_3': 'imbalance_clusters_with_grouped_outliers_convex',
 
     'simulation_sphericity_imbalance_1': 'non_convexity_with_imbalance_clusters',
-    'simulation_sphericity_imbalance_2': 'non_convexity_with_imbalance_clusters',
+    #'simulation_sphericity_imbalance_2': 'non_convexity_with_imbalance_clusters',
 }
 
 ########################################################################################################################################################################
@@ -183,18 +183,23 @@ DIMENSIONS = {
     'sphericity': ['simulation_base', 'simulation_sphericity_1', 'simulation_sphericity_2', 'simulation_sphericity_3'],
 
     'size_disperse_outliers': ['simulation_base', 'simulation_outliers_2', 'simulation_size_outliers_1'],
-    'size_grouped_outliers_non_convex': ['simulation_base', 'simulation_size_outliers_2'],
-    'size_grouped_outliers_convex': ['simulation_base', 'simulation_size_outliers_3'],
+    'size_grouped_outliers_non_convex': ['simulation_base', 'simulation_outliers_6', 'simulation_size_outliers_2'],
+    'size_grouped_outliers_convex': ['simulation_base', 'simulation_outliers_3', 'simulation_size_outliers_3'],
 
-    'sphericity_disperse_outliers': ['simulation_base', 'simulation_sphericity_outliers_1'],
-    'sphericity_grouped_outliers_non_convex': ['simulation_base', 'simulation_sphericity_outliers_2'],
-    'sphericity_grouped_outliers_convex': ['simulation_base', 'simulation_sphericity_outliers_3'],
+    'sphericity_disperse_outliers': ['simulation_base', 'simulation_sphericity_3', 'simulation_sphericity_outliers_1'],
+    'sphericity_grouped_outliers_non_convex': ['simulation_base', 'simulation_sphericity_3', 'simulation_sphericity_outliers_2'],
+    'sphericity_grouped_outliers_convex': ['simulation_base', 'simulation_sphericity_3', 'simulation_sphericity_outliers_3'],
 
     'imbalance_disperse_outliers': ['simulation_base', 'simulation_imbalance_1', 'simulation_imbalance_outliers_1'],
     'imbalance_grouped_outliers_non_convex': ['simulation_base', 'simulation_imbalance_1', 'simulation_imbalance_outliers_2'],
     'imbalance_grouped_outliers_convex': ['simulation_base', 'simulation_imbalance_1', 'simulation_imbalance_outliers_3'],
 
-    'sphericity_imbalance': ['simulation_base', 'simulation_sphericity_imbalance_1']
+    'sphericity_imbalance': ['simulation_base', 'simulation_imbalance_1', 'simulation_sphericity_imbalance_1'],
+
+    'separation_outliers': ['simulation_base', 'simulation_separation_2', 'simulation_separation_outliers_1'],
+
+    'separation_sphericity': ['simulation_base', 'simulation_separation_2', 'simulation_separation_sphericity_1']
+
 }
 
 ########################################################################################################################################################################
@@ -272,26 +277,31 @@ DIMENSIONS_FORMATTED = {
 
     'size_grouped_outliers_non_convex': {
         'simulation_base': 'Num rows 10000\n Without outliers', 
+        'simulation_outliers_6': 'Num rows 10000\n Grouped non convex outliers\n Mean prop outliers 0.073',
         'simulation_size_outliers_2': 'Num rows 20000\n Grouped non convex outliers\n Mean prop outliers 0.073'
     },
 
     'size_grouped_outliers_convex': {
         'simulation_base': 'Num rows 10000\n Without outliers', 
+        'simulation_outliers_3': 'Num rows 10000\n Grouped convex outliers\n Mean prop outliers 0.044',
         'simulation_size_outliers_3': 'Num rows 20000\n Grouped convex outliers\n Mean prop outliers 0.044'
     },
 
     'sphericity_disperse_outliers': {
         'simulation_base': 'Anisotropy factor 1\n Without outliers', 
+        'simulation_sphericity_3': 'Anisotropy factor 10\n Without outliers',
         'simulation_sphericity_outliers_1': 'Anisotropy factor 10\n Disperse outliers\n Mean prop outliers 0.071'
     },
 
     'sphericity_grouped_outliers_non_convex': {
         'simulation_base': 'Anisotropy factor 1\n Without outliers', 
+        'simulation_sphericity_3': 'Anisotropy factor 10\n Without outliers',
         'simulation_sphericity_outliers_2': 'Anisotropy factor 10\n Grouped non convex outliers\n Mean prop outliers 0.073'
     },
 
     'sphericity_grouped_outliers_convex': {
         'simulation_base': 'Anisotropy factor 1\n Without outliers', 
+        'simulation_sphericity_3': 'Anisotropy factor 10\n Without outliers',
         'simulation_sphericity_outliers_3': 'Anisotropy factor 10\n Grouped convex outliers\n Mean prop outliers 0.044'
     },
 
@@ -319,6 +329,18 @@ DIMENSIONS_FORMATTED = {
         'simulation_sphericity_imbalance_1': 'Clusters props [0.15, 0.2, 0.65]\n Balance ratio 4.3\n Anisotropy factor 10',
     },
 
+    'separation_outliers': {
+        'simulation_base': 'Separation factor 1\n Without outliers',
+        'simulation_separation_2': 'Separation factor 0.5\n Without outliers',
+        'simulation_separation_outliers_1': 'Separation factor 0.5\n Disperse outliers\n Mean prop outliers 0.071'
+    },
+
+    'separation_sphericity': {
+        'simulation_base': 'Separation factor 1\n Anisotropy factor 1',
+        'simulation_separation_2': 'Separation factor 0.5\n Anisotropy factor 1',
+        'simulation_separation_sphericity_1': 'Separation factor 0.5\n Anisotropy factor 10'        
+    }
+
 }
 
 ########################################################################################################################################################################
@@ -336,6 +358,7 @@ REFERENCE_MODELS = [
     'GaussianMixture',
     'AgglomerativeClustering',
     'SpectralCoclustering',
+    'LDAKmeans'
 ] 
 
 ########################################################################################################################################################################
@@ -345,6 +368,7 @@ REFERENCE_MODELS_PALETTE = {
     'FastKmedoidsGGower-robust_mahalanobis_winsorized-sokal-hamming': "#c51313",      
     'KMeans': "#2c2cf5",  
     'MiniBatchKMeans': "#6774d6",
+    'LDAKmeans': "#8dbdf0",
     'CLARA': "#52C812", 
     'GaussianMixture': "#d38e25",      
     'AgglomerativeClustering': "#1A7C0C", 
