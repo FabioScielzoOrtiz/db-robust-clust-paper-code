@@ -345,9 +345,23 @@ DIMENSIONS_FORMATTED = {
 
 ########################################################################################################################################################################
 
-REFERENCE_MODELS = [
-    'FoldFastKmedoidsGGower-robust_mahalanobis_winsorized-sokal-hamming',
-    'FastKmedoidsGGower-robust_mahalanobis_winsorized-sokal-hamming',  
+# 1. Definición de las propuestas por dataset
+PROPOSALS_REFERENCE_MODELS = {}
+PROPOSALS_REFERENCE_MODELS = {
+    'dubai_houses': [
+        'FoldFastKmedoidsGGower-robust_mahalanobis_winsorized-jaccard-hamming',
+        'FastKmedoidsGGower-robust_mahalanobis_winsorized-jaccard-hamming'
+        ],
+    'global': [
+        'FoldFastKmedoidsGGower-robust_mahalanobis_winsorized-sokal-hamming',
+        'FastKmedoidsGGower-robust_mahalanobis_winsorized-sokal-hamming',  
+    ]
+}
+
+########################################################################################################################################################################
+
+# 2. Definición de competidores
+COMPETITORS_REFERENCE_MODELS = [
     'KMeans',
     'MiniBatchKMeans',
     'KMedoids-pam',
@@ -359,13 +373,24 @@ REFERENCE_MODELS = [
     'AgglomerativeClustering',
     'SpectralCoclustering',
     'LDAKmeans'
-] 
+]
 
 ########################################################################################################################################################################
 
+# 3. Mapeo final de modelos por dataset
+REFERENCE_MODELS = {k: PROPOSALS_REFERENCE_MODELS[k] + COMPETITORS_REFERENCE_MODELS for k in PROPOSALS_REFERENCE_MODELS.keys()}
+
+########################################################################################################################################################################
+
+# 4. Paleta de colores (Actualizada con las variantes Jaccard)
 REFERENCE_MODELS_PALETTE = {
+    # Variantes Sokal
     'FoldFastKmedoidsGGower-robust_mahalanobis_winsorized-sokal-hamming': "#e82727", 
     'FastKmedoidsGGower-robust_mahalanobis_winsorized-sokal-hamming': "#c51313",      
+    # Variantes Jaccard (Mismos colores para mantener consistencia visual)
+    'FoldFastKmedoidsGGower-robust_mahalanobis_winsorized-jaccard-hamming': "#e82727", 
+    'FastKmedoidsGGower-robust_mahalanobis_winsorized-jaccard-hamming': "#c51313", 
+    # Competidores
     'KMeans': "#2c2cf5",  
     'MiniBatchKMeans': "#6774d6",
     'LDAKmeans': "#8dbdf0",
@@ -381,11 +406,23 @@ REFERENCE_MODELS_PALETTE = {
 
 ########################################################################################################################################################################
 
-REFERENCE_MODELS_FORMATTED_NAMES = {k: k for k in REFERENCE_MODELS}
+# 5. Nombres formateados (Corregido el bucle e incluidas las variantes Jaccard)
+# Primero extraemos todos los modelos únicos del diccionario y la lista
+ALL_UNIQUE_MODELS = set(COMPETITORS_REFERENCE_MODELS)
+for models in PROPOSALS_REFERENCE_MODELS.values():
+    ALL_UNIQUE_MODELS.update(models)
 
+# Inicializamos el diccionario de nombres base correctamente
+REFERENCE_MODELS_FORMATTED_NAMES = {m: m for m in ALL_UNIQUE_MODELS}
+
+# Actualizamos con los nombres limpios para las visualizaciones
 REFERENCE_MODELS_FORMATTED_NAMES.update({
+    # Sokal
     'FoldFastKmedoidsGGower-robust_mahalanobis_winsorized-sokal-hamming': 'Fold Fast KMedoids',
     'FastKmedoidsGGower-robust_mahalanobis_winsorized-sokal-hamming': 'Fast KMedoids',
+    # Jaccard
+    'FoldFastKmedoidsGGower-robust_mahalanobis_winsorized-jaccard-hamming': 'Fold Fast KMedoids',
+    'FastKmedoidsGGower-robust_mahalanobis_winsorized-jaccard-hamming': 'Fast KMedoids',
 })
 
 ########################################################################################################################################################################
