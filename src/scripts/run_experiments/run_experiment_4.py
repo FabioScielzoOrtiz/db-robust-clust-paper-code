@@ -15,7 +15,7 @@ logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 
 ###########################################################################################
 # --- ARGUMENT PARSING ---
-parser = argparse.ArgumentParser(description="Run Experiment 5 Simulations")
+parser = argparse.ArgumentParser(description="Run Experiment 4 Simulations")
 parser.add_argument('--data_id', type=str, required=True, help="ID of the simulation data configuration (e.g., 'simulation_size_1')")
 parser.add_argument('--force', action='store_true', help="Force execution. By default, forces all models. Use with --force_models to restrict.")
 # NUEVO: Argumento que acepta una lista separada por espacios de nombres de modelos
@@ -58,9 +58,9 @@ from config.config_simulations import SIMULATION_CONFIGS
 
 def main():
     """
-    Main execution flow of the Experiment 5 pipeline with Incremental Model Update Capability.
+    Main execution flow of the Experiment 4 pipeline with Incremental Model Update Capability.
     """
-    logging.info(f"▶️ STARTING EXPERIMENT 5 FOR DATA_ID: {DATA_ID}")
+    logging.info(f"▶️ STARTING Experiment 4 FOR DATA_ID: {DATA_ID}")
     logging.info(f"▶️ FORCE EXECUTION: {FORCE_EXECUTION}")
     if FORCE_EXECUTION and FORCE_MODELS_LIST:
         logging.info(f"▶️ FORCING SPECIFIC MODELS: {FORCE_MODELS_LIST}")
@@ -102,7 +102,7 @@ def main():
     # =========================================================================
     # 3. Load Global Merged History 
     # =========================================================================
-    final_filename = f'results_exp_5_{DATA_ID}.pkl'
+    final_filename = f'results_exp_4_{DATA_ID}.pkl'
     final_save_path = os.path.join(results_dir, final_filename)
     
     GLOBAL_MERGED_DATA = {} 
@@ -210,7 +210,7 @@ def main():
         logging.info(f"📦 STARTING CHUNK {chunk_id}/{total_chunks - 1} | Contains {len(chunk_seeds)} seeds")
         logging.info(f"="*50)
 
-        chunk_filename = f'results_exp_5_{DATA_ID}_chunk_{chunk_id}.pkl'
+        chunk_filename = f'results_exp_4_{DATA_ID}_chunk_{chunk_id}.pkl'
         chunk_path = os.path.join(results_dir, chunk_filename)
         
         chunk_results = {}
@@ -327,7 +327,7 @@ def main():
     n_total = len(all_chunks)
     
     for chunk_id in range(n_total):
-        chunk_filename = f'results_exp_5_{DATA_ID}_chunk_{chunk_id}.pkl'
+        chunk_filename = f'results_exp_4_{DATA_ID}_chunk_{chunk_id}.pkl'
         chunk_path = os.path.join(results_dir, chunk_filename)
         
         if not os.path.exists(chunk_path):
