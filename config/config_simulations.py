@@ -442,7 +442,7 @@ SIMULATION_CONFIGS = {
         'cluster_std': [2, 2, 3],
         'n_features': 8,
         'feature_types': {'n_binary': 2, 'n_multiclass': 2, 'n_bins_multiclass': 4},
-        'outliers_config': { # grouped outliers (not convex, higher anisotropy_factor)
+        'outliers_config': { # grouped outliers (non-convex, higher anisotropy_factor)
             'grouped': {
                 'n_groups': 2, 'group_proportions': [0.05, 0.1], 'geometry': 'anisotropic', 'anisotropy_factor': 12, 'distance': 50
             }
