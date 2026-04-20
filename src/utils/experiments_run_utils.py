@@ -251,7 +251,7 @@ def make_experiment_4(data_sizes, centers, cluster_std, n_features, outlier_conf
 
 ########################################################################################################################################################################
 
-def make_experiment_5(X, y, models, score_metric, 
+def make_experiment_4(X, y, models, score_metric, 
                       max_duration_mins=20 
                       ):  
     
@@ -451,7 +451,7 @@ def get_clustering_models_experiment_4(experiment_config, random_state):
 
 ########################################################################################################################################################################
 
-def get_clustering_models_experiment_5(experiment_config, random_state, mixed_distances_names):
+def get_clustering_models_experiment_4(experiment_config, random_state, mixed_distances_names):
 
     kmedoids_pam = KMedoids(
                 n_clusters=experiment_config['n_clusters'], 

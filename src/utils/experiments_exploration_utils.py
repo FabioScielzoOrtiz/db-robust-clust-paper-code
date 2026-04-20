@@ -176,7 +176,7 @@ def process_experiment_4_results(results_path):
 
 ########################################################################################################################################################################
 
-def process_experiment_5_results(results_path, prop_errors_threshold, not_feasible_methods_to_add=None):   
+def process_experiment_4_results(results_path, prop_errors_threshold, not_feasible_methods_to_add=None):   
 
     if not os.path.exists(results_path):
         raise ValueError("❌ Error: El archivo no existe. Revisa el DATA_ID o la ruta.")
@@ -649,7 +649,7 @@ def plot_experiment_4_results(df, df_avg, num_realizations, save_path,
 
 ########################################################################################################################################################################
 
-def plot_experiment_5_results(df_avg, figsize=(15,11), title=None, title_height=1.03, 
+def plot_experiment_4_results(df_avg, figsize=(15,11), title=None, title_height=1.03, 
                               data_name=None, num_realizations=None, 
                               time_log_scale=False, save_path=None, 
                               our_methods_1=None, our_methods_2=None, 
@@ -790,7 +790,7 @@ def plot_experiment_5_results(df_avg, figsize=(15,11), title=None, title_height=
 
 ########################################################################################################################################################################
 
-def multi_plot_experiment_5_results(df_master, subplots_col, subplot_col_target_values=None, title=None, title_height=1.03,
+def multi_plot_experiment_4_results(df_master, subplots_col, subplot_col_target_values=None, title=None, title_height=1.03,
                                     num_realizations=None, time_log_scale=False, save_path=None, 
                                     our_methods_1=None, our_methods_2=None, 
                                     other_methods=None, not_feasible_methods=None,
@@ -933,7 +933,7 @@ def multi_plot_experiment_5_results(df_master, subplots_col, subplot_col_target_
 
 ########################################################################################################################################################################
 
-def pareto_plot_experiment_5_results(df, models_to_plot, palette, models_formatted_names=None, show_variability=True,
+def pareto_plot_experiment_4_results(df, models_to_plot, palette, models_formatted_names=None, show_variability=True,
                                      title=None, title_height=0.98, title_size=15, text_annotations_size=10, 
                                      text_annotations_y_extra_space=0, text_annotations_x_extra_space=0,
                                      time_log_scale=False, show_legend=False, save_path=None):
@@ -1031,7 +1031,7 @@ def pareto_plot_experiment_5_results(df, models_to_plot, palette, models_formatt
 
 ########################################################################################################################################################################
 
-def multi_pareto_plot_experiment_5(df_master, subplots_col, models_to_plot, palette, models_formatted_names=None,
+def multi_pareto_plot_experiment_4(df_master, subplots_col, models_to_plot, palette, models_formatted_names=None,
                                    subplot_col_target_values=None, title=None, title_height=0.98, title_size=15, 
                                    time_log_scale=False, save_path=None, show_variability=False, show_legend=False,
                                    text_annotations_size=10, text_annotations_y_extra_space=0, text_annotations_x_extra_space=0,
@@ -1167,7 +1167,7 @@ def multi_pareto_plot_experiment_5(df_master, subplots_col, models_to_plot, pale
 
 ########################################################################################################################################################################
 
-def dimension_effect_plot_experiment_5(df, dimensions_dict, figsize=(15,10), dimensions_formatted=None, models_to_plot=None, models_formatted_names=None, palette=None,
+def dimension_effect_plot_experiment_4(df, dimensions_dict, figsize=(15,10), dimensions_formatted=None, models_to_plot=None, models_formatted_names=None, palette=None,
                                        title=None, time_log_scale=False, show_variability=False, include_ari=True, 
                                        annotate_lines=True, 
                                        title_height=0.98, title_size=15, hspace=0.5, wspace=0.3, save_path=None):
@@ -1369,7 +1369,7 @@ def dimension_effect_plot_experiment_5(df, dimensions_dict, figsize=(15,10), dim
     plt.show()
 
 '''
-def dimension_effect_plot_experiment_5(df, dimensions_dict, figsize=(15,10), dimensions_formatted=None, models_to_plot=None, models_formatted_names=None, palette=None,
+def dimension_effect_plot_experiment_4(df, dimensions_dict, figsize=(15,10), dimensions_formatted=None, models_to_plot=None, models_formatted_names=None, palette=None,
                                        title=None, time_log_scale=False, show_variability=False, include_ari=True, 
                                        annotate_lines=True, 
                                        title_height=0.98, title_size=15, hspace=0.5, wspace=0.3, save_path=None):

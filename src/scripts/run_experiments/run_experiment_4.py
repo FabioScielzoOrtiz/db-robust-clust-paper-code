@@ -31,20 +31,20 @@ FORCE_MODELS_LIST = args.force_models # Será None si no se especifica, o una li
 script_path = os.path.dirname(os.path.abspath(__file__))
 project_path = os.path.join(script_path, '..', '..', '..')
 processed_data_dir = os.path.join(project_path, 'data', 'processed_data')
-results_dir = os.path.join(project_path, 'results', 'experiment_5', DATA_ID)
+results_dir = os.path.join(project_path, 'results', 'experiment_4', DATA_ID)
 sys.path.append(project_path)
 
 ###########################################################################################
 # --- CUSTOM IMPORTS ---
 from src.utils.experiments_run_utils import (
     split_list_in_chunks,
-    get_clustering_models_experiment_5,
+    get_clustering_models_experiment_4,
     get_mixed_distances_names,
-    make_experiment_5
+    make_experiment_4
 )
 from src.utils.simulations_utils import generate_simulation
 
-from config.config_experiment_5 import (
+from config.config_experiment_4 import (
     CONFIG_EXPERIMENT, 
     EXPERIMENT_RANDOM_STATE,
     N_REALIZATIONS, 
@@ -91,7 +91,7 @@ def main():
         ROBUST_METHOD_NAMES
     )
     
-    dummy_models = get_clustering_models_experiment_5(
+    dummy_models = get_clustering_models_experiment_4(
         random_state=42,
         experiment_config=experiment_config,
         mixed_distances_names=mixed_distances_names
@@ -268,7 +268,7 @@ def main():
                     models_random_state = random_state
 
                 # 3. Instanciar modelos necesarios
-                all_models_instances = get_clustering_models_experiment_5(
+                all_models_instances = get_clustering_models_experiment_4(
                     random_state=models_random_state,
                     experiment_config=experiment_config,
                     mixed_distances_names=mixed_distances_names
@@ -280,8 +280,8 @@ def main():
                     continue
 
                 # 4. Ejecutar nuevos modelos
-                logging.info(f"       ⚙️ Handing over to make_experiment_5 with {list(models_subset.keys())}...")
-                new_results = make_experiment_5(
+                logging.info(f"       ⚙️ Handing over to make_experiment_4 with {list(models_subset.keys())}...")
+                new_results = make_experiment_4(
                     X=X, y=y, models=models_subset,
                     score_metric=experiment_config['score_metric'],
                     max_duration_mins=MAX_DURATION_MINS

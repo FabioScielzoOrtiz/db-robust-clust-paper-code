@@ -34,8 +34,8 @@ sys.path.append(project_path)
 
 # --- CUSTOM IMPORTS ---
 
-from src.utils.experiments_exploration_utils import process_experiment_5_results
-from config.config_experiment_5 import CONFIG_EXPERIMENT, PROP_ERRORS_THRESHOLD
+from src.utils.experiments_exploration_utils import process_experiment_4_results
+from config.config_experiment_4 import CONFIG_EXPERIMENT, PROP_ERRORS_THRESHOLD
 
 ###########################################################################################
 
@@ -68,7 +68,7 @@ def main():
             continue
 
         try:
-            _, df_avg, _, _ = process_experiment_5_results(
+            _, df_avg, _, _ = process_experiment_4_results(
                 results_path=dataset_results_path, 
                 prop_errors_threshold=PROP_ERRORS_THRESHOLD,
             )

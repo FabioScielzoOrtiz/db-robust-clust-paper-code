@@ -48,7 +48,7 @@ sys.path.append(project_path)
 from src.utils.simulations_utils import generate_simulation
 from src.utils.experiments_exploration_utils import get_dataset_structure  
 from config.config_simulations import SIMULATION_CONFIGS, REAL_DATASET_KEYS
-from config.config_experiment_5 import EXPERIMENT_RANDOM_STATE, N_REALIZATIONS
+from config.config_experiment_4 import EXPERIMENT_RANDOM_STATE, N_REALIZATIONS
 
 ###########################################################################################
 # --- MAIN EXECUTION ---
