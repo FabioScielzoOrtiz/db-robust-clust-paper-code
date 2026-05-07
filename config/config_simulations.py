@@ -313,33 +313,6 @@ SIMULATION_CONFIGS = {
         }
     },
 
-    # 'simulation_outliers_6': {
-    #     'n_samples': 10000,
-    #     'centers': 3,
-    #     'cluster_std': [2, 2, 3],
-    #     'n_features': 8,
-    #     'feature_types': {'n_binary': 2, 'n_multiclass': 2, 'n_bins_multiclass': 4},
-    #     'outliers_config': { # disperse multivariate outliers
-    #         'scattered': {
-    #             'prop_outliers': 0.1
-    #         }
-    #     }
-    # },
-
-    # 'simulation_outliers_7': {
-    #     'n_samples': 10000,
-    #     'centers': 3,
-    #     'cluster_std': [2, 2, 3],
-    #     'n_features': 8,
-    #     'feature_types': {'n_binary': 2, 'n_multiclass': 2, 'n_bins_multiclass': 4},
-    #     'outliers_config': { # disperse multivariate outliers
-    #         'cluster_localized': { 
-    #             'prop_outliers': 0.1,
-    #             'scale_factor': 2
-    #         }
-    #     }
-    # },
-
 #######################################################################################################################
 
     # IMBALANCE

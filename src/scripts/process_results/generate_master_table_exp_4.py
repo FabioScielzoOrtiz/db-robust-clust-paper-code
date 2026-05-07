@@ -28,6 +28,9 @@ os.makedirs(results_dir, exist_ok=True)
 # Path for the pre-calculated datasets structure
 structure_data_path = os.path.join(project_path, 'data', 'processed_data', 'datasets_structure.parquet')
 
+# Path for the pre-calculated skm results
+skm_budiaji_avg_results_path = os.path.join(project_path, 'data', 'skm_budiaji', 'results', 'avg_results_exp_4_skm_budiaji.csv')
+
 sys.path.append(project_path)
 
 ###########################################################################################
@@ -61,7 +64,7 @@ def main():
     for data_id in DATA_IDS:
         
         logging.info(f"  > Processing dataset results: {data_id}")
-        dataset_results_path = os.path.join(results_dir, data_id, f'results_exp_4_{data_id}.pkl')
+        dataset_results_path = os.path.join(results_dir, data_id, f'results_exp_5_{data_id}.pkl')
         
         if not os.path.exists(dataset_results_path):
             logging.warning(f"  ⚠️ Not found: {dataset_results_path}. Skipping...")
@@ -88,7 +91,14 @@ def main():
     if df_avg_results_list:
         logging.info("  > Concatenating experiment results...")
         df_avg_results_concat = pl.concat(df_avg_results_list, how='vertical')
-        
+
+        if skm_budiaji_avg_results_path:
+            skm_budiaji_avg_results = pl.read_csv(skm_budiaji_avg_results_path)
+            skm_budiaji_avg_results = skm_budiaji_avg_results.with_columns(
+                pl.col('prop_status_error').cast(pl.Float64)
+                ).select(df_avg_results_concat.columns)
+            df_avg_results_concat = pl.concat([df_avg_results_concat, skm_budiaji_avg_results], how='vertical')
+       
         logging.info("  > Joining results with dataset structure metadata...")
         df_master = df_avg_results_concat.join(df_structure, on='data_id', how='left')
         

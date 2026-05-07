@@ -54,12 +54,11 @@ def make_experiment_1(data_sizes, random_state, centers, cluster_std, n_features
                 random_state=random_state)
             model.fit(X)
             end_time = time.time()
-            results[n] = end_time - start_time
+            results[n_samples] = end_time - start_time
         except Exception as e:
-            results[n] = e
+            results[n_samples] = e
     
     return results
-
 
 ########################################################################################################################################################################
 
