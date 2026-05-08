@@ -557,6 +557,8 @@ SIMULATION_CONFIGS = {
 
 #######################################################################################################################
 
+   # SEPARATION : OUTLIERS 
+
     'simulation_separation_outliers_1': { # simulation_separation_2 + simulation_outliers_2
         'n_samples': 10000,
         'centers': 3,
@@ -574,6 +576,8 @@ SIMULATION_CONFIGS = {
     },
 
 #######################################################################################################################
+
+   # SEPARATION : SPHERICITY 
 
     'simulation_separation_sphericity_1': { # simulation_separation_2 + simulation_sphericity_3
         'n_samples': 10000,

@@ -91,12 +91,15 @@ def main():
     if df_avg_results_list:
         logging.info("  > Concatenating experiment results...")
         df_avg_results_concat = pl.concat(df_avg_results_list, how='vertical')
-
-        if skm_budiaji_avg_results_path:
+         
+        # Include SKM Budiaji results if available
+        if os.path.exists(skm_budiaji_avg_results_path):
             skm_budiaji_avg_results = pl.read_csv(skm_budiaji_avg_results_path)
             skm_budiaji_avg_results = skm_budiaji_avg_results.with_columns(
                 pl.col('prop_status_error').cast(pl.Float64)
-                ).select(df_avg_results_concat.columns)
+                ).select(
+                    df_avg_results_concat.columns
+                )#.filter(pl.col('data_id').is_in([]))
             df_avg_results_concat = pl.concat([df_avg_results_concat, skm_budiaji_avg_results], how='vertical')
        
         logging.info("  > Joining results with dataset structure metadata...")
