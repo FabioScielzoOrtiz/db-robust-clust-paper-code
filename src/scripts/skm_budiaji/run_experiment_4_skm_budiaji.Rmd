@@ -1,0 +1,208 @@
+---
+title: "run_experiment_4_skm_budiaji"
+output: html_document
+---
+
+```{r}
+library(kmed)
+library(mclust)
+library(dplyr)
+
+# ── Funciones ─────────────────────────────────────────
+permutations <- function(x) {
+  if (length(x) == 1) return(matrix(x))
+  do.call(rbind, lapply(seq_along(x), function(i) {
+    cbind(x[i], permutations(x[-i]))
+  }))
+}
+
+adjusted_score <- function(y_pred, y_true, metric) {
+  unique_pred <- sort(unique(y_pred))
+  unique_true <- sort(unique(y_true))
+  perms_list  <- permutations(unique_true)
+  
+  best_score  <- -Inf
+  best_labels <- NULL
+  
+  for (i in seq_len(nrow(perms_list))) {
+    perm            <- perms_list[i, ]
+    perm_dict       <- setNames(perm, unique_pred)
+    permuted_labels <- perm_dict[as.character(y_pred)]
+    score           <- metric(y_true, permuted_labels)
+    
+    if (score > best_score) {
+      best_score  <- score
+      best_labels <- permuted_labels
+    }
+  }
+  
+  return(list(
+    adj_score          = best_score,
+    adj_cluster_labels = unname(best_labels)
+  ))
+}
+
+accuracy <- function(y_true, y_pred) {
+  mean(as.integer(y_true) == as.integer(y_pred))
+}
+
+# ── Cargar datos ───────────────────────────────────────
+ruta_folder      <- "../../../data/skm_budiaji/simulations_data"
+rutas_completas  <- list.files(path = ruta_folder, pattern = "\\.csv$", full.names = TRUE)
+nombres_archivos <- tools::file_path_sans_ext(basename(rutas_completas))
+lista_csvs       <- lapply(rutas_completas, read.csv)
+names(lista_csvs) <- nombres_archivos
+
+# ── Configuración ─────────────────────────────────────
+EXPERIMENT_RANDOM_STATE <- 123
+DATA_IDS <- c(
+  "simulation_base",
+  "simulation_outliers_2",
+  "simulation_outliers_6",
+  "simulation_sphericity_3",
+  "simulation_sphericity_outliers_1",
+  "simulation_sphericity_outliers_2",
+  "simulation_imbalance_1",
+  "simulation_imbalance_outliers_1",
+  "simulation_sphericity_imbalance_1",
+  "simulation_separation_2",
+  "simulation_separation_outliers_1",
+  "simulation_separation_sphericity_1",
+  "simulation_size_outliers_1"
+)
+ITERS        <- 0:29
+NCLUST_SKM   <- 3
+SEEDING_SKM  <- 20
+ITERATE_SKM  <- 10
+IDNUM_SKM    <- 1:4
+IDBIN_SKM    <- 5:6
+IDCAT_SKM    <- 7:8
+DISTANCE_SKM <- "gower"
+
+# ── Directorios ───────────────────────────────────────
+output_dir <- "../../../data/skm_budiaji/results"
+temp_dir   <- file.path(output_dir, "temp")
+dir.create(temp_dir, recursive = TRUE, showWarnings = FALSE)
+
+# ── Loop principal ────────────────────────────────────
+for (data_id in DATA_IDS) {
+  
+  temp_file <- file.path(temp_dir, sprintf("results_%s.csv", data_id))
+  
+  # Si ya existe el temporal, saltar este data_id
+  if (file.exists(temp_file)) {
+    cat(sprintf("⏭️  %s ya procesado, saltando...\n", data_id))
+    next
+  }
+  
+  results_data_id <- data.frame(
+    data_id      = character(),
+    iteration    = integer(),
+    adj_acc      = numeric(),
+    ARI          = numeric(),
+    elapsed_time = numeric()
+  )
+  
+  all_ok <- TRUE  # flag para saber si todas las iteraciones fueron exitosas
+  
+  for (i in ITERS) {
+    
+    x_key <- sprintf("X_%s_iter_%d", data_id, i)
+    y_key <- sprintf("y_%s_iter_%d", data_id, i)
+    
+    cat(sprintf("Procesando %s, iter %d ...\n", data_id, i))
+    
+    tryCatch({
+      
+      X_df <- as.data.frame(lista_csvs[[x_key]])
+      y_df <- as.data.frame(lista_csvs[[y_key]])
+      
+      start <- proc.time()
+      
+      dist_X <- distmix(X_df, method = DISTANCE_SKM,
+                        idnum = IDNUM_SKM, idbin = IDBIN_SKM, idcat = IDCAT_SKM)
+      
+      set.seed(EXPERIMENT_RANDOM_STATE)
+      clustering_result <- skm(dist_X, ncluster = NCLUST_SKM,
+                               seeding = SEEDING_SKM, iterate = ITERATE_SKM)
+      
+      end <- proc.time()
+      
+      y_true <- as.integer(y_df[,1])
+      y_pred <- clustering_result$cluster
+      
+      results_data_id <- rbind(results_data_id, data.frame(
+        data_id      = data_id,
+        iteration    = i,
+        adj_acc      = adjusted_score(y_pred, y_true, accuracy)$adj_score,
+        ARI          = adjustedRandIndex(y_true, y_pred),
+        elapsed_time = (end - start)["elapsed"]
+      ))
+      
+    }, error = function(e) {
+      cat(sprintf("  !! Error en %s iter %d: %s\n", data_id, i, e$message))
+      all_ok <<- FALSE  # <<- para modificar la variable del scope exterior
+    })
+  }
+  
+  # Guardar temporal solo si todas las iteraciones fueron exitosas
+  if (all_ok) {
+    write.csv(results_data_id, temp_file, row.names = FALSE)
+    cat(sprintf("✅ %s completado y guardado en temporal.\n", data_id))
+  } else {
+    cat(sprintf("⚠️  %s completado con errores, no se guarda temporal.\n", data_id))
+  }
+}
+
+# ── Consolidación final ───────────────────────────────
+temp_files <- list.files(temp_dir, pattern = "\\.csv$", full.names = TRUE)
+
+expected_files <- file.path(temp_dir, sprintf("results_%s.csv", DATA_IDS))
+missing        <- expected_files[!file.exists(expected_files)]
+available      <- expected_files[file.exists(expected_files)]
+
+if (length(missing) > 0) {
+  cat("⚠️  Faltan temporales para:\n")
+  cat(paste(" -", basename(missing), collapse = "\n"), "\n")
+}
+
+if (length(available) == 0) {
+  cat("❌ No hay ningún temporal disponible. No se genera resultado final.\n")
+} else {
+  cat(sprintf("✅ Consolidando %d/%d data_ids completados...\n", length(available), length(DATA_IDS)))
+  
+  results <- do.call(rbind, lapply(available, read.csv))
+  
+  summary_results <- results %>%
+    group_by(data_id) %>%
+    summarise(
+      mean_adj_accuracy = mean(adj_acc,      na.rm = TRUE),
+      std_adj_accuracy  = sd(adj_acc,        na.rm = TRUE),
+      mean_ari          = mean(ARI,          na.rm = TRUE),
+      std_ari           = sd(ARI,            na.rm = TRUE),
+      mean_time         = mean(elapsed_time, na.rm = TRUE),
+      std_time          = sd(elapsed_time,   na.rm = TRUE),
+      prop_status_error = 0.0,
+      model_name        = "skm"
+    )
+  
+  write.csv(results,
+            file.path(output_dir, "results_exp_4_skm_budiaji.csv"),
+            row.names = FALSE)
+  
+  write.csv(summary_results,
+            file.path(output_dir, "avg_results_exp_4_skm_budiaji.csv"),
+            row.names = FALSE)
+  
+  cat("💾 Resultados finales guardados.\n")
+}
+```
+
+
+``` {r}
+results
+```
+
+```{r}
+summary_results
+```
