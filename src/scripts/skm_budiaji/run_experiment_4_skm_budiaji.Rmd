@@ -63,6 +63,7 @@ DATA_IDS <- c(
   "simulation_sphericity_outliers_1",
   "simulation_sphericity_outliers_2",
   "simulation_imbalance_1",
+  "simulation_imbalance_2",
   "simulation_imbalance_outliers_1",
   "simulation_sphericity_imbalance_1",
   "simulation_separation_2",

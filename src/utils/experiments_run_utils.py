@@ -387,6 +387,7 @@ def split_list_in_chunks(list, chunk_size):
 
 ########################################################################################################################################################################
 
+'''
 def get_clustering_models_experiment_4(experiment_config, random_state):
 
     d1=experiment_config['d1']
@@ -447,6 +448,7 @@ def get_clustering_models_experiment_4(experiment_config, random_state):
     }
         
     return models
+'''
 
 ########################################################################################################################################################################
 
@@ -459,7 +461,6 @@ def get_clustering_models_experiment_4(experiment_config, random_state, mixed_di
                 init='build',
                 random_state=random_state,
     )
-
 
     models = {
 

@@ -38,6 +38,8 @@ N_REALIZATIONS = 30
 DATA_IDS = [
     'simulation_base', 
     'simulation_outliers_2',
+    'simulation_outliers_2a',
+    'simulation_outliers_2b',
     'simulation_outliers_6',
     'simulation_sphericity_3',
     'simulation_sphericity_outliers_1',

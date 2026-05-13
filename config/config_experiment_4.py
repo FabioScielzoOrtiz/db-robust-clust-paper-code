@@ -87,6 +87,15 @@ CONFIG_EXPERIMENT.update({
 
 ########################################################################################################################################################################
 
+alpha_outliers = {
+    data_id: (0.1 if 'outliers' in data_id else 0.05)
+    for data_id in list(SIMULATION_CONFIGS.keys()) + REAL_DATASET_KEYS
+}
+alpha_outliers['simulation_outliers_2a'] = 0.13
+alpha_outliers['simulation_outliers_2b'] = 0.22
+
+########################################################################################################################################################################
+
 if datasets_structure is not None:
     
     for data_id, config in CONFIG_EXPERIMENT.items():
@@ -97,7 +106,7 @@ if datasets_structure is not None:
                 'p2': row['n_binary'][0],
                 'p3': row['n_multiclass'][0],
                 'n_clusters': row['n_clusters'][0],
-                'alpha': 0.1 if 'outliers' in data_id else 0.05,
+                'alpha': alpha_outliers[data_id],
                 'score_metric': accuracy_score if row['is_balanced'][0] else balanced_accuracy_score
             })
 
@@ -435,3 +444,5 @@ ADDITIONAL_METHODS_MDS = {
 }
 
 ########################################################################################################################################################################
+
+print(alpha_outliers)

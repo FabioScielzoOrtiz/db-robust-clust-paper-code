@@ -261,6 +261,38 @@ SIMULATION_CONFIGS = {
         }
     },
 
+
+    'simulation_outliers_2a': {
+        'n_samples': 10000,
+        'centers': 3,
+        'cluster_std': [2, 2, 3],
+        'n_features': 8,
+        'feature_types': {'n_binary': 2, 'n_multiclass': 2, 'n_bins_multiclass': 4},
+        'outliers_config': { # disperse univariate outliers
+            'dispersed': [ 
+                {'col_idx': 0, 'prop_above': 0.20, 'sigma': 5},
+                {'col_idx': 1, 'prop_below': 0.20, 'sigma': 5},
+                {'col_idx': 2, 'prop_below': 0.20, 'sigma': 5},
+            ]
+        }
+    },
+
+    'simulation_outliers_2b': {
+        'n_samples': 10000,
+        'centers': 3,
+        'cluster_std': [2, 2, 3],
+        'n_features': 8,
+        'feature_types': {'n_binary': 2, 'n_multiclass': 2, 'n_bins_multiclass': 4},
+        'outliers_config': { # disperse univariate outliers
+            'dispersed': [ 
+                {'col_idx': 0, 'prop_above': 0.20, 'sigma': 5},
+                {'col_idx': 1, 'prop_below': 0.20, 'prop_above': 0.15, 'sigma': 5},
+                {'col_idx': 2, 'prop_below': 0.20, 'sigma': 5},
+                {'col_idx': 3, 'prop_below': 0.20, 'prop_above': 0.15, 'sigma': 5}
+            ]
+        }
+    },
+
     'simulation_outliers_3': {
         'n_samples': 10000,
         'centers': 3,
