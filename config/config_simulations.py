@@ -345,6 +345,45 @@ SIMULATION_CONFIGS = {
         }
     },
 
+    'simulation_outliers_6a': {
+        'n_samples': 10000,
+        'centers': 3,
+        'cluster_std': [2, 2, 3],
+        'n_features': 8,
+        'feature_types': {'n_binary': 2, 'n_multiclass': 2, 'n_bins_multiclass': 4},
+        'outliers_config': { # grouped outliers (not convex, higher anisotropy_factor)
+            'grouped': {
+                'n_groups': 2, 'group_proportions': [0.15, 0.1], 'geometry': 'anisotropic', 'anisotropy_factor': 12, 'distance': 75
+            }
+        }
+    },
+
+    'simulation_outliers_7': {
+        'n_samples': 10000,
+        'centers': 3,
+        'cluster_std': [2, 2, 3],
+        'n_features': 8,
+        'feature_types': {'n_binary': 2, 'n_multiclass': 2, 'n_bins_multiclass': 4},
+        'outliers_config': { # multivariate outliers  
+            'multivariate': {
+                'p1': 4, 'prop_outliers': 0.25, 'alpha': 0.99
+            }
+        }
+    },
+
+    'simulation_outliers_8': {
+        'n_samples': 10000,
+        'centers': 3,
+        'cluster_std': [2, 2, 3],
+        'n_features': 8,
+        'feature_types': {'n_binary': 2, 'n_multiclass': 2, 'n_bins_multiclass': 4},
+        'outliers_config': { # multivariate outliers  
+            'multivariate': {
+                'p1': 4, 'prop_outliers': 0.35, 'alpha': 0.99
+            }
+        }
+    },
+
 #######################################################################################################################
 
     # IMBALANCE

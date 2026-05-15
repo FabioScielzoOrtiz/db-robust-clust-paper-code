@@ -93,6 +93,9 @@ alpha_outliers = {
 }
 alpha_outliers['simulation_outliers_2a'] = 0.13
 alpha_outliers['simulation_outliers_2b'] = 0.22
+alpha_outliers['simulation_outliers_6a'] = 0.13
+alpha_outliers['simulation_outliers_7'] = 0.25
+alpha_outliers['simulation_outliers_8'] = 0.35
 
 ########################################################################################################################################################################
 
@@ -444,5 +447,3 @@ ADDITIONAL_METHODS_MDS = {
 }
 
 ########################################################################################################################################################################
-
-print(alpha_outliers)

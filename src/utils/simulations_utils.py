@@ -4,6 +4,8 @@ import pandas as pd
 import polars as pl
 import numpy as np
 from sklearn.datasets import make_blobs, make_moons, make_circles
+from sklearn.covariance import MinCovDet
+from scipy.stats import chi2
 
 ########################################################################################################################################################################
 
@@ -35,6 +37,61 @@ def generate_categorical_features(X, feature_types=None):
 
 ########################################################################################################################################################################
 
+def inject_multivariate_outliers(X, y, p1, prop=0.05,
+                                  alpha=0.975, random_state=123):
+    """
+    Tipo 3: Outliers multivariantes definidos por distancia de Mahalanobis
+    sobre la parte continua. Reemplaza puntos existentes conservando su
+    etiqueta y variables discretas. Criterio: D²_M > chi2(p, alpha).
+
+    Parámetros
+    ----------
+    X          : array (n, p1 + n_disc)  — continuas primero
+    y          : array (n,)
+    p1     : número de columnas continuas (deben ser las primeras)
+    prop       : proporción de puntos a reemplazar
+    alpha      : cuantil chi2 para el umbral (0.975 es el estándar)
+    random_state
+    """
+    rng     = np.random.default_rng(random_state)
+    n_total = X.shape[0]
+    n_out   = int(n_total * prop)
+    X_out   = X.copy()
+
+    X_cont = X[:, :p1]
+
+    # MCD: estimadores robustos de mu y Sigma — necesario porque la
+    # estructura de clusters contaminaría la media/covarianza globales
+    mcd       = MinCovDet(random_state=random_state).fit(X_cont)
+    mu        = mcd.location_
+    sigma     = mcd.covariance_
+    sigma_inv = np.linalg.inv(sigma)
+    L         = np.linalg.cholesky(sigma)
+    threshold = chi2.ppf(alpha, df=p1)
+
+    # Generar parte continua fuera del umbral de Mahalanobis
+    outliers = []
+    while len(outliers) < n_out:
+        z          = rng.standard_normal((n_out * 10, p1))
+        z_unit     = z / np.linalg.norm(z, axis=1, keepdims=True)
+        r          = rng.uniform(np.sqrt(threshold), np.sqrt(threshold) * 2,
+                                 size=(n_out * 10, 1))
+        candidates = mu + (L @ (z_unit * r).T).T
+        diff       = candidates - mu
+        d2         = np.sum(diff @ sigma_inv * diff, axis=1)
+        outliers.extend(candidates[d2 > threshold].tolist())
+
+    X_cont_out = np.array(outliers[:n_out])
+
+    # Reemplazar índices aleatorios
+    # Las columnas discretas se conservan intactas del punto original
+    replace_idx = rng.choice(n_total, size=n_out, replace=False)
+    X_out[replace_idx, :p1] = X_cont_out
+
+    return X_out, y, replace_idx
+
+########################################################################################################################################################################
+
 def inject_outliers(X, y, config, random_state=123):
     """
     Inyecta hasta tres tipos de outliers en un dataset X, y.
@@ -48,6 +105,7 @@ def inject_outliers(X, y, config, random_state=123):
     # Extraemos las configuraciones (si no existen, serán None)
     grouped_config = config.get('grouped', None)
     disperse_configs = config.get('dispersed', None)
+    multivariate_config = config.get('multivariate', None)  
 
     # -------------------------------------------------------------------------
     # TIPO 1: OUTLIERS AGRUPADOS (Satélites)
@@ -159,6 +217,27 @@ def inject_outliers(X, y, config, random_state=123):
                     X_out[idx_above, col_idx] = rng.uniform(
                         upper_bound, upper_bound + sigma*np.abs(upper_bound), size=n_above)
                     all_outlier_indices.extend(idx_above)
+
+    # -------------------------------------------------------------------------
+    # TIPO 3: OUTLIERS MULTIVARIANTES (Mahalanobis sobre parte continua)
+    # -------------------------------------------------------------------------
+    if multivariate_config:
+        p1 = multivariate_config.get('p1')
+        prop   = multivariate_config.get('prop_outliers', 0.05)
+        alpha  = multivariate_config.get('alpha', 0.975)
+
+        available_idx = np.setdiff1d(np.arange(n_total), all_outlier_indices)
+
+        X_out, _, replace_idx = inject_multivariate_outliers(
+            X=X_out, y=y_out,
+            p1=p1,
+            prop=prop,
+            alpha=alpha,
+            random_state=random_state
+        )
+        # Restringir a índices no usados por otros tipos
+        replace_idx = np.intersect1d(replace_idx, available_idx)
+        all_outlier_indices.extend(replace_idx.tolist())
 
     return X_out, y_out, all_outlier_indices
 

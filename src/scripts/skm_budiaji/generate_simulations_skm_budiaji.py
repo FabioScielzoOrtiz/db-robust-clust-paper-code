@@ -8,10 +8,10 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
     handlers=[
-        logging.StreamHandler(sys.stdout),
-        logging.FileHandler("generate_simulations.log", mode="w")
+        logging.StreamHandler(sys.stdout)
     ]
 )
+
 log = logging.getLogger(__name__)
 
 # ── Paths ──────────────────────────────────────────────────────────────────────
@@ -41,6 +41,10 @@ DATA_IDS = [
     'simulation_outliers_2a',
     'simulation_outliers_2b',
     'simulation_outliers_6',
+    'simulation_outliers_6a',
+    'simulation_outliers_7',
+    'simulation_outliers_8',
+    'simulation_outliers_9',
     'simulation_sphericity_3',
     'simulation_sphericity_outliers_1',
     'simulation_sphericity_outliers_2',
@@ -51,7 +55,7 @@ DATA_IDS = [
     "simulation_separation_2",
     "simulation_separation_outliers_1",
     "simulation_separation_sphericity_1",
-    "simulation_size_outliers_1"
+    "simulation_size_outliers_1",
 ]
 
 log.info(f"N_REALIZATIONS       : {N_REALIZATIONS}")

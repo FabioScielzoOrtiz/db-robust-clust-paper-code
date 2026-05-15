@@ -58,6 +58,8 @@ EXPERIMENT_RANDOM_STATE <- 123
 DATA_IDS <- c(
   "simulation_base",
   "simulation_outliers_2",
+  "simulation_outliers_2a",
+  "simulation_outliers_2b",
   "simulation_outliers_6",
   "simulation_sphericity_3",
   "simulation_sphericity_outliers_1",

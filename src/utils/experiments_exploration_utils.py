@@ -18,6 +18,8 @@ from BigEDA.descriptive import outliers_table
 from sklearn.metrics import silhouette_score
 from sklearn.manifold import TSNE
 from adjustText import adjust_text
+from sklearn.covariance import MinCovDet
+from scipy.stats import chi2
 
 ########################################################################################################################################################################
 
@@ -1799,17 +1801,30 @@ def get_dataset_structure(X, y, data_id, quant_predictors, n_binary, n_multiclas
     outliers_contamination_type = 'not_contaminated'
 
     if n_quant > 0:
-        # Extraemos variables cuantitativas (Polars maneja bien X[quant_predictors])
         X_quant = X[quant_predictors].to_numpy()
-        
-        # --- 1. Outliers mediante IQR ---
-        mean_prop_outliers = outliers_table(X[quant_predictors], auto=False, col_names=quant_predictors, h=1.5)['prop_outliers'].mean()
-        
+
+        # --- 1. Proporción de outliers ---
+        if outliers_config and 'multivariate' in outliers_config:
+            # Criterio de Mahalanobis — consistente con cómo se generaron
+            mcd       = MinCovDet(random_state=0).fit(X_quant)
+            d2        = mcd.mahalanobis(X_quant)
+            alpha     = outliers_config['multivariate'].get('alpha', 0.975)
+            threshold = chi2.ppf(alpha, df=n_quant)
+            mean_prop_outliers = float(np.mean(d2 > threshold))
+        else:
+            # Criterio IQR univariante — para dispersed y grouped
+            mean_prop_outliers = outliers_table(
+                X[quant_predictors], auto=False,
+                col_names=quant_predictors, h=1.5
+            )['prop_outliers'].mean()
+
         if outliers_config:
             if 'dispersed' in outliers_config.keys():
                 outliers_contamination_type = 'dispersed'
             if 'grouped' in outliers_config.keys():
                 outliers_contamination_type = 'grouped'
+            if 'multivariate' in outliers_config.keys():
+                outliers_contamination_type = 'multivariate'
 
         # --- 2. Correlación y Redundancia (Ajuste PCA 0.95) ---
         if n_quant > 1:

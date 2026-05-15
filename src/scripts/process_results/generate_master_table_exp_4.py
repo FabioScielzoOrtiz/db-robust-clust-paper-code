@@ -64,7 +64,7 @@ def main():
     for data_id in DATA_IDS:
         
         logging.info(f"  > Processing dataset results: {data_id}")
-        dataset_results_path = os.path.join(results_dir, data_id, f'results_exp_5_{data_id}.pkl')
+        dataset_results_path = os.path.join(results_dir, data_id, f'results_exp_4_{data_id}.pkl')
         
         if not os.path.exists(dataset_results_path):
             logging.warning(f"  ⚠️ Not found: {dataset_results_path}. Skipping...")
@@ -94,9 +94,9 @@ def main():
          
         # Include SKM Budiaji results if available
         if os.path.exists(skm_budiaji_avg_results_path):
-            skm_budiaji_avg_results = pl.read_csv(skm_budiaji_avg_results_path)
+            skm_budiaji_avg_results = pl.read_csv(skm_budiaji_avg_results_path, null_values="NA")
             skm_budiaji_avg_results = skm_budiaji_avg_results.with_columns(
-                pl.col('prop_status_error').cast(pl.Float64)
+                pl.col(col).cast(pl.Float64) for col in ['std_ari', 'std_adj_accuracy', 'std_time', 'prop_status_error']
                 ).select(
                     df_avg_results_concat.columns
                 )#.filter(pl.col('data_id').is_in([]))
