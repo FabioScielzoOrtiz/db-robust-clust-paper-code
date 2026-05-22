@@ -29,6 +29,8 @@ data_file_path = os.path.join(raw_dat_dir, data_filename)
 
 df = pl.read_excel(data_file_path)
 
+print(df['floors'].value_counts())
+
 ################################################################################################
 
 response = 'price'
@@ -78,9 +80,12 @@ for col in cat_variables:
 encoding[response] = response_encoding
 
 encoding['floors'] = { # 1, 2, 3
-    1.5: 1,
-    2.5: 2,
-    3.5: 3
+    1.0: 0,
+    1.5: 0,
+    2.0: 1,
+    2.5: 1,
+    3.0: 2,
+    3.5: 2
 }
 
 for col in encoding.keys(): 
@@ -140,5 +145,7 @@ with open(metadata_file_path, 'w', encoding='utf-8') as f:
 df.write_parquet(processed_data_file_path)
 
 print(f'✅ Outputs ({mode}) saved successfully at {processed_data_dir}')
+
+print(df['floors'].value_counts())
 
 ################################################################################################
