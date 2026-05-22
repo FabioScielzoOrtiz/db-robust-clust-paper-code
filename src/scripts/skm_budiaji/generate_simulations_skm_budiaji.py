@@ -34,27 +34,9 @@ from config.config_experiment_4 import (
 )
 
 # ── Config ─────────────────────────────────────────────────────────────────────
-N_REALIZATIONS = 30
+N_REALIZATIONS = 100
 DATA_IDS = [
-    'simulation_base', 
-    'simulation_outliers_2',
-    'simulation_outliers_2a',
-    'simulation_outliers_2b',
-    'simulation_outliers_6',
-    'simulation_outliers_6a',
-    'simulation_outliers_7',
-    'simulation_outliers_8',
-    'simulation_outliers_9',
-    'simulation_sphericity_3',
-    'simulation_sphericity_outliers_1',
-    'simulation_sphericity_outliers_2',
-    "simulation_imbalance_1",
-    "simulation_imbalance_2",
-    "simulation_imbalance_outliers_1",
-    "simulation_sphericity_imbalance_1",
-    "simulation_separation_2",
-    "simulation_separation_outliers_1",
-    "simulation_separation_sphericity_1",
+    "simulation_base", 
     "simulation_size_outliers_1",
 ]
 
