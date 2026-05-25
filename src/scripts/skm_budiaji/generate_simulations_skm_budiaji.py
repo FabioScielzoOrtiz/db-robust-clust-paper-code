@@ -37,7 +37,11 @@ from config.config_experiment_4 import (
 N_REALIZATIONS = 100
 DATA_IDS = [
     "simulation_base", 
+    "simulation_outliers_2",
     "simulation_size_outliers_1",
+    "simulation_dim_1",
+    "simulation_dim_2",
+    "simulation_dim_3"
 ]
 
 log.info(f"N_REALIZATIONS       : {N_REALIZATIONS}")
